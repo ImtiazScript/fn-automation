@@ -39,6 +39,7 @@ const UsersDataTable = ({ users }) => {
       toast.success("User Blocked Successfully.");
       setUserIdToBlock(null); // Clear the user ID to block
       setShowBlockingConfirmation(false); // Close the blocking confirmation dialog
+      window.location.reload();
 
     } catch (err) {
       toast.error(err?.data?.errors[0]?.message || err?.error);
@@ -51,6 +52,7 @@ const UsersDataTable = ({ users }) => {
       toast.success("User Unblocked Successfully.");
       setUserIdToUnblock(null); // Clear the user ID to unblock
       setShowUnblockingConfirmation(false); // Close the unblocking confirmation dialog
+      window.location.reload();
 
     } catch (err) {
       toast.error(err?.data?.errors[0]?.message || err?.error);
@@ -117,6 +119,7 @@ const UsersDataTable = ({ users }) => {
                   type="button"
                   variant="danger"
                   className="mt-3"
+                  disabled={user.blocked}
                   onClick={() => {
                     setUserIdToBlock(user._id);
                     setShowBlockingConfirmation(true);
@@ -130,6 +133,7 @@ const UsersDataTable = ({ users }) => {
                   type="button"
                   variant="success"
                   className="mt-3"
+                  disabled={!user.blocked}
                   onClick={() => {
                     setUserIdToUnblock(user._id);
                     setShowUnblockingConfirmation(true);
