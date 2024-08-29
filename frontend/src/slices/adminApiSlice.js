@@ -7,7 +7,8 @@ import {
     ADMIN_USERS_DATA_FETCH_URL,
     ADMIN_BLOCK_USER_URL,
     ADMIN_UNBLOCK_USER_URL,
-    ADMIN_UPDATE_USER_URL
+    ADMIN_UPDATE_USER_URL,
+    ADMIN_CRONS_DATA_FETCH_URL
 } from '../utils/constants.js';
 
 
@@ -85,7 +86,15 @@ export const adminApiSlice = apiSlice.injectEndpoints({
                 body: data
             })
 
-        })
+        }),
+        getCronsData: builder.mutation({
+            
+            query: () => ({
+                url: ADMIN_CRONS_DATA_FETCH_URL,
+                method: 'GET'
+            })
+
+        }),
 
     })
 
@@ -101,6 +110,7 @@ export const {
     useGetUsersDataMutation,
     useBlockUserMutation,
     useUnblockUserMutation,
-    useUpdateUserByAdminMutation
+    useUpdateUserByAdminMutation,
+    useGetCronsDataMutation
 
 } = adminApiSlice;

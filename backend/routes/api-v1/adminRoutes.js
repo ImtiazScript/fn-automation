@@ -21,7 +21,10 @@ import {
   getAllUsers,
   updateUserData,
   blockUser,
-  unBlockUser
+  unBlockUser,
+  addCron,
+  updateCron,
+  getAllCrons
 } from "../../controllers/adminController.js";
 
 // Data validation configuration
@@ -30,6 +33,8 @@ import {
   adminSignUpDataValidation,
   adminUserBlockingDataValidation,
   adminUserUpdateDataValidation,
+  addCronDataValidation,
+  updateCronDataValidation,
 } from "./backendDataValidationConfig.js";
 
 //? =============================== Routes ===============================
@@ -61,5 +66,11 @@ router.patch("/block-user", requireAuth, verifyAdmin, adminUserBlockingDataValid
 router.patch("/unblock-user", requireAuth, verifyAdmin, adminUserBlockingDataValidation, validateRequest, unBlockUser);
 
 router.put("/update-user", requireAuth, verifyAdmin, adminUserUpdateDataValidation, validateRequest, updateUserData);
+
+router.post("/add-cron", requireAuth, verifyAdmin, addCronDataValidation, validateRequest, addCron);
+
+router.put("/update-cron", requireAuth, verifyAdmin, updateCronDataValidation, validateRequest, updateCron);
+
+router.get("/get-crons", requireAuth, verifyAdmin, getAllCrons);
 
 export default router;

@@ -25,6 +25,11 @@ const AdminHero = () => {
                     Manage Users
                     </Button>
                 </LinkContainer>
+                <LinkContainer to='/admin/manage-crons'>
+                    <Button variant='primary' className='me-3'>
+                    Manage Crons
+                    </Button>
+                </LinkContainer>
               </div>
             </>
             : 

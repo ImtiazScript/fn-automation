@@ -3,6 +3,7 @@
 // ===================== Importing necessary modules/files =====================
 import asyncHandler from "express-async-handler";
 import AdminModel from "../models/adminModel.js";
+import CronModel from "../models/cronModel.js";
 
 import { BadRequestError, NotAuthorizedError, NotFoundError } from "base-error-handler";
 
@@ -273,6 +274,132 @@ const updateUserData = asyncHandler(async (req, res) => {
   }
 });
 
+
+/*
+  # Desc: Add a new cron
+  # Route: POST /api/v1/admin/add-cron
+  # Access: PRIVATE
+*/
+const addCron = asyncHandler(async (req, res) => {
+  try {
+    const { userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, status, deleted } = req.body;
+
+    const cron = await CronModel.create({
+      userId: userId,
+      centerZip: centerZip,
+      cronStartAt: cronStartAt,
+      cronEndAt: cronEndAt,
+      workingWindowStartAt: workingWindowStartAt,
+      workingWindowEndAt: workingWindowEndAt,
+      drivingRadius: drivingRadius,
+      requestedWoIds: requestedWoIds,
+      totalRequested: totalRequested,
+      status: status,
+      deleted: deleted
+    });
+    if (cron) {
+      res.status(201).json({ message: "Successfully added the cron", cron: cron });
+    }
+  } catch (error) {
+    console.error("Error adding cron:", error.message); // Print the error message to the console
+    res.status(500).json({ message: "Failed to add cron", error: error.message }); // Send a response with the error message
+  }
+});
+
+
+/*
+   # Desc: Update an existing cron
+   # Route: PUT /api/v1/admin/update-cron
+   # Access: PRIVATE
+  */
+const updateCron = asyncHandler(async (req, res) => {
+  const { cronId, userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, status, deleted } = req.body;
+
+  if (!cronId) {
+    throw new BadRequestError("Cron id is missing in the request - cron updating failed.");
+  }
+
+  try {
+    // Find the existing cron by Id
+    const cronExist = await CronModel.findOne({ cronId });
+
+    if (cronExist) {
+      // Update only the fields that are provided in the request
+      const updatedFields = {};
+      if (userId !== undefined) updatedFields.userId = userId;
+      if (centerZip !== undefined) updatedFields.centerZip = centerZip;
+      if (cronStartAt !== undefined) updatedFields.cronStartAt = cronStartAt;
+      if (cronEndAt !== undefined) updatedFields.cronEndAt = cronEndAt;
+      if (workingWindowStartAt !== undefined) updatedFields.workingWindowStartAt = workingWindowStartAt;
+      if (workingWindowEndAt !== undefined) updatedFields.workingWindowEndAt = workingWindowEndAt;
+      if (drivingRadius !== undefined) updatedFields.drivingRadius = drivingRadius;
+      if (requestedWoIds !== undefined) updatedFields.requestedWoIds = requestedWoIds;
+      if (totalRequested !== undefined) updatedFields.totalRequested = totalRequested;
+      if (status !== undefined) updatedFields.status = status;
+      if (deleted !== undefined) updatedFields.deleted = deleted;
+
+      // Perform the update
+      const updatedCron = await CronModel.findByIdAndUpdate(cronExist._id, updatedFields, { new: true });
+
+      res.status(200).json({ message: "Successfully updated the cron", cron: updatedCron });
+    } else {
+      throw new BadRequestError("Cron not found - updating failed.");
+    }
+  } catch (error) {
+    console.error("Error updating cron:", error.message);
+    res.status(500).json({ message: "Failed to update cron", error: error.message });
+  }
+});
+
+
+/*
+   # Desc: Get all crons
+   # Route: PUT /api/v1/admin/get-crons
+   # Access: PRIVATE
+  */
+const getAllCrons = asyncHandler(async (req, res) => {
+  try {
+    const cronsData = await CronModel.aggregate([
+      {
+        $lookup: {
+          from: 'users', // The collection name in MongoDB
+          localField: 'userId',
+          foreignField: 'userId',
+          as: 'userDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$userDetails',
+          preserveNullAndEmptyArrays: true // This will keep crons even if there is no matching user
+        }
+      },
+      {
+        $project: {
+          cronId: 1,
+          userId: 1,
+          centerZip: 1,
+          cronStartAt: 1,
+          cronEndAt: 1,
+          workingWindowStartAt: 1,
+          workingWindowEndAt: 1,
+          drivingRadius: 1,
+          requestedWoIds: 1,
+          totalRequested: 1,
+          status: 1,
+          deleted: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          name: { $ifNull: ['$userDetails.name', 'Unknown'] } // Provide a default name if not found
+        }
+      }
+    ]);
+    res.status(200).json({ cronsData });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to get crons", error: error.message });
+  }
+})
+
 export {
   authAdmin,
   registerAdmin,
@@ -283,4 +410,7 @@ export {
   blockUser,
   unBlockUser,
   updateUserData,
+  addCron,
+  updateCron,
+  getAllCrons,
 };
