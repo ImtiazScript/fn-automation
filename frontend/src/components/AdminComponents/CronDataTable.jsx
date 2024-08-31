@@ -3,6 +3,7 @@ import { Button, Modal, Table, Form as BootstrapForm } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { useBlockUserMutation, useUnblockUserMutation, useUpdateUserByAdminMutation } from "../../slices/adminApiSlice";
 import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
 
 const CronsDataTable = ({ crons }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -108,13 +109,10 @@ const CronsDataTable = ({ crons }) => {
             <tr>
               <th>Cron Id</th>
               <th>Provider Name</th>
-              <th>Cron Start At</th>
-              <th>Cron End At</th>
-              <th>Work Start</th>
-              <th>Work End</th>
               <th>Driving Radius</th>
               <th>Status</th>
-              <th>#WO Requested</th>
+              <th>Total #WO</th>
+              <th>Configure</th>
             </tr>
           </thead>
           <tbody>
@@ -122,18 +120,6 @@ const CronsDataTable = ({ crons }) => {
               <tr key={index}>
                 <td>{cron.cronId}</td>
                 <td>{cron.name}</td>
-                <td>
-                {format(new Date(cron.cronStartAt), 'yyyy-MM-dd hh:mm a')}
-              </td>
-              <td>
-                {format(new Date(cron.cronEndAt), 'yyyy-MM-dd hh:mm a')}
-              </td>
-              <td>
-                {format(new Date(cron.workingWindowStartAt), 'yyyy-MM-dd hh:mm a')}
-              </td>
-              <td>
-                {format(new Date(cron.workingWindowEndAt), 'yyyy-MM-dd hh:mm a')}
-              </td>
               <td>
                 {cron.drivingRadius}
               </td>
@@ -143,6 +129,13 @@ const CronsDataTable = ({ crons }) => {
               <td>
                 {cron.totalRequested}
               </td>
+                <td>
+                  <Link to={`/admin/configure-cron/${cron.cronId}`}>
+                    <Button type="button" variant="primary" className="mt-3">
+                      Configure
+                    </Button>
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>

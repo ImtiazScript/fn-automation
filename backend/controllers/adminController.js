@@ -4,11 +4,13 @@
 import asyncHandler from "express-async-handler";
 import AdminModel from "../models/adminModel.js";
 import CronModel from "../models/cronModel.js";
+import mongoose from "mongoose";
 
 import { BadRequestError, NotAuthorizedError, NotFoundError } from "base-error-handler";
 
 import generateAuthToken from "../utils/jwtHelpers/generateAuthToken.js";
 import destroyAuthToken from "../utils/jwtHelpers/destroyAuthToken.js";
+import winston, { Logger, format } from "winston";
 
 import {
   fetchAllUsers,
@@ -400,6 +402,113 @@ const getAllCrons = asyncHandler(async (req, res) => {
   }
 })
 
+/*
+   # Desc: Get single cron
+   # Route: PUT /api/v1/admin/get-cron/:cronId
+   # Access: PRIVATE
+  */
+   const getCron = asyncHandler(async (req, res) => {
+    const { cronId } = req.params;
+    try {
+      let cronData = await CronModel.aggregate([
+        {
+          $match: {
+            cronId: parseInt(cronId)
+          }
+        },
+        {
+          $lookup: {
+            from: 'users', // The collection name in MongoDB
+            localField: 'userId',
+            foreignField: 'userId',
+            as: 'userDetails'
+          }
+        },
+        {
+          $unwind: {
+            path: '$userDetails',
+            preserveNullAndEmptyArrays: true // This will keep crons even if there is no matching user
+          }
+        },
+        {
+          $project: {
+            cronId: 1,
+            userId: 1,
+            centerZip: 1,
+            cronStartAt: 1,
+            cronEndAt: 1,
+            workingWindowStartAt: 1,
+            workingWindowEndAt: 1,
+            drivingRadius: 1,
+            requestedWoIds: 1,
+            totalRequested: 1,
+            status: 1,
+            deleted: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            name: { $ifNull: ['$userDetails.name', 'Unknown'] } // Provide a default name if not found
+          }
+        }
+      ]);
+      cronData = cronData.length > 0 ? cronData[0] : null;
+      res.status(200).json({ cronData });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get crons", error: error.message });
+    }
+  });
+
+
+  const getLogs = asyncHandler(async (req, res) => {
+    try {
+      // Define the log model based on the MongoDB collection schema
+      const Log = mongoose.models.Log || mongoose.model('Log', new mongoose.Schema({}, { strict: false, collection: 'server_logs' }));
+  
+      // Define the query options
+      const from = req.body.from ? new Date(req.body.from) : new Date(new Date() - 24 * 60 * 60 * 1000);
+      const until = req.body.until ? new Date(req.body.until) : new Date();
+      const start = req.body.start ? parseInt(req.body.start) : 0;
+      const limit = req.body.limit ? parseInt(req.body.limit) : 10;
+      const sort = { timestamp: -1 }; // Sort by latest first
+
+      const totalLogs = await Log.countDocuments({ timestamp: { $gte: from, $lte: until } });
+  
+      // Query the logs from MongoDB
+      const logs = await Log.find({ timestamp: { $gte: from, $lte: until } })
+        .select('message timestamp level')
+        .skip(start)
+        .limit(limit)
+        .sort(sort)
+        .lean();
+  
+      res.status(200).json({ logs, totalLogs });
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      res.status(500).json({ message: 'Failed to fetch logs', error: error.message });
+    }
+  });
+
+  const getLogById = asyncHandler(async (req, res) => {
+    try {
+      // Define the log model based on the MongoDB collection schema
+      const Log = mongoose.models.Log || mongoose.model('Log', new mongoose.Schema({}, { strict: false, collection: 'server_logs' }));
+  
+      // Get the log ID from the request parameters
+      const { id } = req.params;
+  
+      // Query the log from MongoDB by its _id
+      const log = await Log.findById(id).lean();
+  
+      if (!log) {
+        return res.status(404).json({ message: 'Log not found' });
+      }
+  
+      res.status(200).json({ log });
+    } catch (error) {
+      console.error('Error fetching log:', error);
+      res.status(500).json({ message: 'Failed to fetch log', error: error.message });
+    }
+  });
+
 export {
   authAdmin,
   registerAdmin,
@@ -413,4 +522,7 @@ export {
   addCron,
   updateCron,
   getAllCrons,
+  getCron,
+  getLogs,
+  getLogById,
 };

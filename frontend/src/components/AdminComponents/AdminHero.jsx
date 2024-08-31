@@ -30,6 +30,11 @@ const AdminHero = () => {
                     Manage Crons
                     </Button>
                 </LinkContainer>
+                <LinkContainer to='/admin/logs'>
+                    <Button variant='primary' className='me-3'>
+                    Logs
+                    </Button>
+                </LinkContainer>
               </div>
             </>
             : 

@@ -24,7 +24,10 @@ import {
   unBlockUser,
   addCron,
   updateCron,
-  getAllCrons
+  getAllCrons,
+  getCron,
+  getLogs,
+  getLogById,
 } from "../../controllers/adminController.js";
 
 // Data validation configuration
@@ -72,5 +75,10 @@ router.post("/add-cron", requireAuth, verifyAdmin, addCronDataValidation, valida
 router.put("/update-cron", requireAuth, verifyAdmin, updateCronDataValidation, validateRequest, updateCron);
 
 router.get("/get-crons", requireAuth, verifyAdmin, getAllCrons);
+
+router.get("/get-cron/:cronId", requireAuth, verifyAdmin, getCron);
+
+router.get("/get-logs", requireAuth, verifyAdmin, getLogs);
+router.get("/get-log/:id", requireAuth, verifyAdmin, getLogById);
 
 export default router;

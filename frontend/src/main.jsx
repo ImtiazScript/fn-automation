@@ -26,7 +26,9 @@ import AdminLoginScreen from "./screens/adminScreens/LoginScreen.jsx";
 import AdminRegisterScreen from "./screens/adminScreens/RegisterScreen.jsx";
 import AdminProfileScreen from "./screens/adminScreens/ProfileScreen.jsx";
 import UsersManagementScreen from "./screens/adminScreens/UsersManagementScreen.jsx";
-import CronsManagementScreen from "./screens/userScreens/CronsManagementScreen.jsx";
+import CronsManagementScreen from "./screens/adminScreens/CronsManagementScreen.jsx";
+import CronConfigureScreen from "./screens/adminScreens/CronConfigureScreen.jsx";
+import LogsScreen from "./screens/adminScreens/LogsScreen.jsx";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -57,6 +59,8 @@ const router = createBrowserRouter(
         <Route path="/admin/profile" element={<AdminProfileScreen />} />
         <Route path="/admin/manage-users" element={<UsersManagementScreen />} />
         <Route path="/admin/manage-crons" element={<CronsManagementScreen />} />
+        <Route path="/admin/configure-cron/:cronId" element={<CronConfigureScreen />} />
+        <Route path="/admin/logs" element={<LogsScreen />} />
       </Route>
     </Route>
   )
