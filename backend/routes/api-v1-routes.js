@@ -5,6 +5,7 @@ import express from "express";
 
 import userRoutes from "./api-v1/userRoutes.js"
 import adminRoutes from "./api-v1/adminRoutes.js"
+import workOrderTypesRoutes from './api-v1/workOrderTypesRoutes.js';
 
 // ===================== Configuring Express Router =====================
 const router = express.Router();
@@ -14,5 +15,7 @@ const router = express.Router();
 router.use("/user", userRoutes);
 
 router.use("/admin", adminRoutes);
+
+router.use('/work-order-type', workOrderTypesRoutes);
 
 export default router;

@@ -3,14 +3,21 @@ import pkg from 'mongoose-sequence';
 
 const AutoIncrement = pkg(mongoose);
 
-const cronSchema = mongoose.Schema({
+const serviceTypeSchema = mongoose.Schema({
+    id: Number,
+    name: String
+}, { _id: false });
+
+const legacyTypeOfWorkSchema = mongoose.Schema({
+    id: Number,
+    name: String,
+    industry: String
+}, { _id: false });
+
+const typesOfWorkOrderSchema = mongoose.Schema({
     typeId: {
         type: Number,
         unique: true
-    },
-    typeName: {
-        type: String,
-        required: true
     },
     fnTypeId: {
         type: Number,
@@ -20,18 +27,23 @@ const cronSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    deleted: {
+    level: {
+        type: Number
+    },
+    parentIds: [Number],
+    childrenIds: [Number],
+    legacyTypeOfWork: legacyTypeOfWorkSchema,
+    serviceTypes: [serviceTypeSchema],
+    disabled: {
         type: Boolean,
         default: false,
     }
-},{
-
+}, {
     timestamps: true // This will automatically add timestamps for any operations done.
-
 });
 
-cronSchema.plugin(AutoIncrement, { inc_field: 'typeId' });
+typesOfWorkOrderSchema.plugin(AutoIncrement, { inc_field: 'typeId' });
 
-const typesOfWorkOrder = mongoose.model('typesOfWorkOrder', cronSchema);
+const typesOfWorkOrder = mongoose.model('typesOfWorkOrder', typesOfWorkOrderSchema);
 
 export default typesOfWorkOrder;
