@@ -315,7 +315,7 @@ const addCron = asyncHandler(async (req, res) => {
    # Access: PRIVATE
   */
 const updateCron = asyncHandler(async (req, res) => {
-  const { cronId, userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, status, deleted } = req.body;
+  const { cronId, userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, typesOfWorkOrder, status, deleted } = req.body;
 
   if (!cronId) {
     throw new BadRequestError("Cron id is missing in the request - cron updating failed.");
@@ -337,6 +337,7 @@ const updateCron = asyncHandler(async (req, res) => {
       if (drivingRadius !== undefined) updatedFields.drivingRadius = drivingRadius;
       if (requestedWoIds !== undefined) updatedFields.requestedWoIds = requestedWoIds;
       if (totalRequested !== undefined) updatedFields.totalRequested = totalRequested;
+      if (typesOfWorkOrder !== undefined) updatedFields.typesOfWorkOrder = typesOfWorkOrder;
       if (status !== undefined) updatedFields.status = status;
       if (deleted !== undefined) updatedFields.deleted = deleted;
 
@@ -392,6 +393,7 @@ const getAllCrons = asyncHandler(async (req, res) => {
           deleted: 1,
           createdAt: 1,
           updatedAt: 1,
+          typesOfWorkOrder: 1,
           name: { $ifNull: ['$userDetails.name', 'Unknown'] } // Provide a default name if not found
         }
       }
@@ -446,6 +448,7 @@ const getAllCrons = asyncHandler(async (req, res) => {
             deleted: 1,
             createdAt: 1,
             updatedAt: 1,
+            typesOfWorkOrder: 1,
             name: { $ifNull: ['$userDetails.name', 'Unknown'] } // Provide a default name if not found
           }
         }

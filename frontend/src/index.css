@@ -1,0 +1,10 @@
+.label-item {
+    background-color: #6C757D; /* Bootstrap primary color */
+    color: white;
+    padding: 4px 4px;
+    border-radius: 5px; /* Makes it look like a pill-shaped button */
+    text-align: center;
+    display: inline-block;
+    width: 100%;
+    box-sizing: border-box;
+  }

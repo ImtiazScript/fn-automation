@@ -100,7 +100,7 @@ const LogsDataTable = () => {
             {filteredLogs.map((log, index) => (
               <tr key={log._id}>
                 <td>{index + 1 + (currentPage - 1) * limit}</td>
-                <td>{format(new Date(log.timestamp), "dd-MM-yyyy HH:mm:ss")}</td>
+                <td>{format(new Date(log.timestamp), "MM/dd/yyyy HH:mm:ss")}</td>
                 <td>{log.level}</td>
                 <td>{log.message}</td>
                 <td>
@@ -147,7 +147,7 @@ const LogsDataTable = () => {
         <Modal.Body>
           {selectedLog && (
             <div>
-              <p><strong>Timestamp:</strong> {format(new Date(selectedLog.timestamp), "dd-MM-yyyy HH:mm:ss")}</p>
+              <p><strong>Timestamp:</strong> {format(new Date(selectedLog.timestamp), "MM/dd/yyyy HH:mm:ss")}</p>
               <p><strong>Level:</strong> {selectedLog.level}</p>
               <p><strong>Message:</strong> {selectedLog.message}</p>
               <p><strong>Meta:</strong> {selectedLog.meta ? selectedLog.meta : 'N/A'}</p>

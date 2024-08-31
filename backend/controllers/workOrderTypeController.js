@@ -27,7 +27,7 @@ export const addWorkOrderType = asyncHandler(async (req, res) => {
 export const getAllWorkOrderTypes = asyncHandler(async (req, res) => {
   const workOrderTypes = await typesOfWorkOrder
     .find({ disabled: false })             // Filter for non-disabled types
-    .select('typeId fnTypeId fnTypeName')                // Select only the fnTypeId field, exclude the _id field
+    .select('typeId fnTypeId fnTypeName')                // Select only the fnTypeId field
     .sort({ typeId: 1 })                  // Sort by fnTypeId in ascending order
     .lean();                                // Return plain JavaScript objects instead of Mongoose documents
 

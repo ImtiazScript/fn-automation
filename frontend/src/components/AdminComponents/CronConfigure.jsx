@@ -3,10 +3,12 @@ import { Card, Col, Container, Row, ListGroup, Badge, Button, Modal, Form as Boo
 import { format } from 'date-fns';
 import { useUpdateCronByCronIdMutation } from "../../slices/adminApiSlice";
 import { toast } from "react-toastify";
+import Select from 'react-select'
 
-const CronConfigure = ({ cron }) => {
+const CronConfigure = ({ cron, typesOfWorkOrder }) => {
   const [updateCron] = useUpdateCronByCronIdMutation();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [workOrderTypeOptions, setWorkOrderTypeOptions] = useState([]);
   const [formData, setFormData] = useState({
     cronStartAt: '',
     cronEndAt: '',
@@ -31,8 +33,32 @@ const CronConfigure = ({ cron }) => {
     }
   }, [cron]);
 
+  // Effect to update workOrderTypeOptions based on selectedWorkOrderTypesIds
+  useEffect(() => {
+    if (typesOfWorkOrder.length > 0 && cron.typesOfWorkOrder && cron.typesOfWorkOrder.length > 0) {
+      const previouslySelectedOptions = typesOfWorkOrder
+        .filter(type => cron.typesOfWorkOrder.includes(type.fnTypeId.toString()))
+        .map(type => ({
+          value: type.fnTypeId.toString(),
+          label: type.fnTypeName,
+        }));
+      setWorkOrderTypeOptions(previouslySelectedOptions);
+    }
+  }, [cron.typesOfWorkOrder, typesOfWorkOrder]);
+
+  const allWorkOrderTypeOptions = typesOfWorkOrder.map(type => ({
+    value: type.fnTypeId.toString(), // Convert to string if necessary
+    label: type.fnTypeName
+  }));
+
+  const handleWorkOrderTypeChange = (selectedOptions) => {
+    setWorkOrderTypeOptions(selectedOptions);
+  };
+
+  const selectedFnTypeNames = workOrderTypeOptions.map((workOrderType) => workOrderType.label);
+
   const formatDateTime = (dateTime) => {
-    return dateTime ? format(new Date(dateTime), 'dd-MM-yyyy hh:mm a') : 'N/A';
+    return dateTime ? format(new Date(dateTime), 'MM/dd/yyyy hh:mm a') : 'N/A';
   };
 
   const formatDateForInput = (dateTime) => {
@@ -48,6 +74,7 @@ const CronConfigure = ({ cron }) => {
   };
 
   const handleSaveChanges = async () => {
+    const selectedFnTypeIds = workOrderTypeOptions.map((workOrderType) => workOrderType.value);
     try {
       // Prepare the data to be sent
       const data = {
@@ -59,6 +86,7 @@ const CronConfigure = ({ cron }) => {
         workingWindowEndAt: formData.workingWindowEndAt,
         drivingRadius: formData.drivingRadius,
         status: formData.status,
+        typesOfWorkOrder: selectedFnTypeIds
       };
 
       // Call the mutation function
@@ -82,7 +110,7 @@ const CronConfigure = ({ cron }) => {
         <Card.Header as="h5">Cron Details</Card.Header>
         <Card.Body>
           <Row>
-            <Col md={6}>
+            <Col md={8}>
               <ListGroup variant="flush">
                 <ListGroup.Item>
                   <strong>Cron Id:</strong> {cron.cronId}
@@ -98,34 +126,34 @@ const CronConfigure = ({ cron }) => {
                 </ListGroup.Item>
               </ListGroup>
             </Col>
-            <Col md={6}>
+            <Col md={4}>
               <ListGroup variant="flush">
+                <ListGroup.Item>
+                  <strong>Center Zip:</strong> {cron.centerZip}
+                </ListGroup.Item>
+              <ListGroup.Item>
+                  <strong>Driving Radius:</strong> {cron.drivingRadius} miles
+                </ListGroup.Item>
                 <ListGroup.Item>
                   <strong>Work Start:</strong> {formatDateTime(cron.workingWindowStartAt)}
                 </ListGroup.Item>
                 <ListGroup.Item>
                   <strong>Work End:</strong> {formatDateTime(cron.workingWindowEndAt)}
                 </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Driving Radius:</strong> {cron.drivingRadius} miles
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Status:</strong> <Badge bg={cron.status === 'active' ? 'success' : 'secondary'}>{cron.status}</Badge>
-                </ListGroup.Item>
               </ListGroup>
             </Col>
           </Row>
           <Row className="mt-4">
-            <Col>
+            <Col md={4}>
               <ListGroup variant="flush">
+              <ListGroup.Item>
+                  <strong>Status:</strong> <Badge bg={cron.status === 'active' ? 'success' : 'secondary'}>{cron.status}</Badge>
+                </ListGroup.Item>
                 <ListGroup.Item>
                   <strong>Total Requested:</strong> {cron.totalRequested}
                 </ListGroup.Item>
                 <ListGroup.Item>
                   <strong>WO IDs:</strong> {cron.requestedWoIds && cron.requestedWoIds.length > 0 ? cron.requestedWoIds.join(', ') : 'None'}
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Center Zip:</strong> {cron.centerZip}
                 </ListGroup.Item>
                 <ListGroup.Item>
                   <strong>Created At:</strong> {formatDateTime(cron.createdAt)}
@@ -135,6 +163,33 @@ const CronConfigure = ({ cron }) => {
                 </ListGroup.Item>
               </ListGroup>
             </Col>
+            <Col md={8}>
+              <ListGroup variant="flush">
+                <ListGroup.Item>
+                  <strong>Types or Work Order:</strong>
+                </ListGroup.Item>
+                {selectedFnTypeNames.reduce((result, typeName, index) => {
+                  if (index % 3 === 0) {
+                    // Start a new row for every three items
+                    result.push([typeName]);
+                  } else {
+                    // Add to the existing row
+                    result[result.length - 1].push(typeName);
+                  }
+                  return result;
+                }, []).map((trio, trioIndex) => (
+                  <ListGroup.Item key={trioIndex}>
+                    <Row>
+                      <Col><div className="label-item">{trio[0]}</div></Col>
+                      {trio[1] && <Col><div className="label-item">{trio[1]}</div></Col>}
+                      {trio[2] && <Col><div className="label-item">{trio[2]}</div></Col>}
+                    </Row>
+                  </ListGroup.Item>
+                ))}
+              </ListGroup>
+            </Col>
+
+
           </Row>
           <Row className="mt-4">
             <Col className="d-flex justify-content-end">
@@ -217,6 +272,17 @@ const CronConfigure = ({ cron }) => {
                 value={formData.centerZip || ''}
                 onChange={handleChange}
               />
+            </BootstrapForm.Group>
+            <BootstrapForm.Group controlId="workOrderTypes">
+              <BootstrapForm.Label>Types of Work Order</BootstrapForm.Label>
+              <Select
+                value={workOrderTypeOptions}
+                isMulti
+                name="types_of_work_order"
+                options={allWorkOrderTypeOptions}
+                onChange={(selectedOptions) => handleWorkOrderTypeChange(selectedOptions)}
+                className="basic-multi-select"
+                classNamePrefix="select" />
             </BootstrapForm.Group>
           </BootstrapForm>
         </Modal.Body>

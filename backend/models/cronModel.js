@@ -48,6 +48,10 @@ const cronSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    typesOfWorkOrder: {
+        type: [String],
+        required: false
+    },
     deleted: {
         type: Boolean,
         default: false,

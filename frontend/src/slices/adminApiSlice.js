@@ -111,6 +111,12 @@ export const adminApiSlice = apiSlice.injectEndpoints({
                 body: data
             })
         }),
+        getTypesOfWorkOrder: builder.mutation({
+            query: () => ({
+                url: `/api/v1/work-order-type/all`,
+                method: 'GET'
+            })
+        }),
         getLogs: builder.mutation({
             query: () => ({
                 url: ADMIN_LOGS_DATA_FETCH_URL,
@@ -144,4 +150,5 @@ export const {
     useUpdateCronByCronIdMutation,
     useGetLogsMutation,
     useGetLogByIdMutation,
+    useGetTypesOfWorkOrderMutation,
 } = adminApiSlice;
