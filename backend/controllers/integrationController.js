@@ -61,8 +61,17 @@ const connectAccount = asyncHandler(async (req, res) => {
 // @access  Private
 const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
     const integrationInfo = await Integration.findOne({userId: req.params.id});
+    let lastTimeRefreshTokenGeneratedAt = '';
+    if (integrationInfo && integrationInfo.fnRefreshTokenGeneratedAt) {
+        const fnRefreshTokenGeneratedAt = new Date(integrationInfo.fnRefreshTokenGeneratedAt);
+        const currentDate = new Date();
+
+        const differenceInTime = currentDate - fnRefreshTokenGeneratedAt;
+        let differenceInDays = Math.floor(differenceInTime / (1000 * 3600 * 24));
+        lastTimeRefreshTokenGeneratedAt = `${differenceInDays} ${differenceInDays > 1 ? 'days' : 'day'} ago`;
+    }
     try {
-        res.json({ ...integrationInfo.toObject() });
+        res.json({ ...integrationInfo.toObject(), lastTimeRefreshTokenGeneratedAt });
     } catch (error) {
         console.error('Decryption error:', error);
         res.status(500).json({ message: 'Error decrypting password' });

@@ -11,6 +11,7 @@ const IntegrationScreen = () => {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [integrationStatus, setIntegrationStatus] = useState("");
+  const [lastTimeRefreshTokenGeneratedAt, setLastTimeRefreshTokenGeneratedAt] = useState("");
 
   const [getIntegrationInfoByUserId, { data: integrateUserInfo, isLoading: isLoadingIntegrationInfo }] =
     useIntegrationInfoByUserIdMutation();
@@ -30,6 +31,7 @@ const IntegrationScreen = () => {
     if (integrateUserInfo) {
       setUserName(integrateUserInfo.fnUserName || "");
       setIntegrationStatus(integrateUserInfo.integrationStatus || "");
+      setLastTimeRefreshTokenGeneratedAt(integrateUserInfo.lastTimeRefreshTokenGeneratedAt || "");
     }
   }, [integrateUserInfo]);
 
@@ -66,6 +68,10 @@ const IntegrationScreen = () => {
         {integrationStatus}
       </Badge>
     )}
+  </div>
+
+  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', marginBottom: '10px', marginRight: '20px' }}>
+    <span style={{ fontWeight: '500', marginRight: '5px' }}>Last Connected:</span>{lastTimeRefreshTokenGeneratedAt}
   </div>
 
   <Form onSubmit={submitHandler}>
