@@ -470,7 +470,7 @@ const getAllCrons = asyncHandler(async (req, res) => {
       const from = req.body.from ? new Date(req.body.from) : new Date(new Date() - 24 * 60 * 60 * 1000);
       const until = req.body.until ? new Date(req.body.until) : new Date();
       const start = req.body.start ? parseInt(req.body.start) : 0;
-      const limit = req.body.limit ? parseInt(req.body.limit) : 10;
+      const limit = req.body.limit ? parseInt(req.body.limit) : 50;
       const sort = { timestamp: -1 }; // Sort by latest first
 
       const totalLogs = await Log.countDocuments({ timestamp: { $gte: from, $lte: until } });

@@ -6,7 +6,9 @@ const morganLogger = () => {
   const dualStream = {
     write: (message) => {
       // Log to Winston
-      logger.info(message.trim());
+      // TODO:
+      // Http logs are disabled by Imtiaz
+      // logger.info(message.trim());
       // Log to console
       console.log(message.trim());
     },

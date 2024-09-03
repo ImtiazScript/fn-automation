@@ -1,5 +1,5 @@
 import { apiSlice } from "./apiSlice";
-import { USER_AUTHENTICATION_URL, USER_LOGOUT_URL, USER_REGISTRATION_URL, USER_PROFILE_URL } from '../utils/constants.js';
+import { USER_AUTHENTICATION_URL, USER_LOGOUT_URL, USER_REGISTRATION_URL, USER_PROFILE_URL, INTEGRATE_USER_URL } from '../utils/constants.js';
 
 const USER_AUTH_URL = USER_AUTHENTICATION_URL; 
 
@@ -41,11 +41,24 @@ export const usersApiSlice = apiSlice.injectEndpoints({
                 body: data
             })
 
-        })
+        }),
+        integrateUser: builder.mutation({
+            query: (data) => ({
+                url: INTEGRATE_USER_URL,
+                method: 'POST',
+                body: data
+            })
+        }),
+        integrationInfoByUserId: builder.mutation({
+            query: (userId) => ({
+                url: `/api/v1/integration/${userId}`,
+                method: 'GET'
+            })
+        }),
 
     })
 
 })
 
 
-export const { useLoginMutation, useLogoutMutation, useRegisterMutation, useUpdateUserMutation } = usersApiSlice;
+export const { useLoginMutation, useLogoutMutation, useRegisterMutation, useUpdateUserMutation, useIntegrateUserMutation, useIntegrationInfoByUserIdMutation } = usersApiSlice;

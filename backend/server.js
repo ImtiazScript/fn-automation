@@ -11,6 +11,11 @@ import connectDB from "./config/dbConfig.js";
 
 import logger from "./config/logger/winston-logger/loggerConfig.js";
 
+// Crons
+import './crons/updateAccessTokens.js';
+import './crons/findAndRequestWorkOrders.js';
+
+
 const startServer = () => {
   // Check if ENV Variables exist
   if (!process.env.APPLICATION_NAME) {

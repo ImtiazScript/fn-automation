@@ -37,6 +37,11 @@ const Hero = () => {
                     Manage Profile
                   </Button>
                 </LinkContainer>
+                <LinkContainer to="/connect-account">
+                  <Button variant="primary" className="me-3">
+                    Connect Account
+                  </Button>
+                </LinkContainer>
               </div>
             </>
           ) : (

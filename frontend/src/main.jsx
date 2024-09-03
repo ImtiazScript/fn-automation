@@ -18,6 +18,7 @@ import HomeScreen from "./screens/userScreens/HomeScreen.jsx";
 import LoginScreen from "./screens/userScreens/LoginScreen.jsx";
 import RegisterScreen from "./screens/userScreens/RegisterScreen.jsx";
 import ProfileScreen from "./screens/userScreens/ProfileScreen.jsx";
+import IntegrationScreen from "./screens/userScreens/IntegrationScreen.jsx";
 
 //? ==================================== Admin Screens Import ====================================
 import AdminPrivateRoutes from "./screens/adminScreens/PrivateRoutes.jsx";
@@ -44,6 +45,7 @@ const router = createBrowserRouter(
       {/* USER PRIVATE ROUTES */}
       <Route path="" element={<PrivateRoutes />}>
         <Route path="/profile" element={<ProfileScreen />} />
+        <Route path="/connect-account" element={<IntegrationScreen />} />
       </Route>
 
       {/* ===================================== Admin Routes ===================================== */}

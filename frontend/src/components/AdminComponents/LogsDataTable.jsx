@@ -99,7 +99,8 @@ const LogsDataTable = () => {
           <tbody>
             {filteredLogs.map((log, index) => (
               <tr key={log._id}>
-                <td>{index + 1 + (currentPage - 1) * limit}</td>
+                {/* <td>{index + 1 + (currentPage - 1) * limit}</td> */}
+                <td>{log._id}</td>
                 <td>{format(new Date(log.timestamp), "MM/dd/yyyy HH:mm:ss")}</td>
                 <td>{log.level}</td>
                 <td>{log.message}</td>

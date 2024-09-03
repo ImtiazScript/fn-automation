@@ -45,6 +45,7 @@ const authUser = asyncHandler(async (req, res) => {
     generateAuthToken(res, user._id, user.email); // Middleware to Generate token and send it back in response object
 
     let registeredUserData = {
+      userId: user.userId,
       name: user.name,
       email: user.email,
     };
