@@ -3,10 +3,11 @@
 import asyncHandler from "express-async-handler";
 import { makeRequest } from "../utils/integrationHelpers.js";
 import Integration from "../models/integrationModel.js";
-import { updateIntegrationStatus } from "../service/integrationService.js";
+import IntegrationService from '../services/integrationService.js';
 
 const connectAccount = asyncHandler(async (req, res) => {
     const { username, password, userId } = req.body;
+    const integrationService = new IntegrationService(userId);
     const url = process.env.FN_AUTHENTICATE_URL;
     const data = new URLSearchParams({
         username,
@@ -47,11 +48,11 @@ const connectAccount = asyncHandler(async (req, res) => {
             await integration.save();
             res.status(200).json(integration);
         } else {
-            await updateIntegrationStatus(userId, false);
+            await integrationService.updateIntegrationStatus(false);
             res.status(400).json({ message: 'Failed to retrieve access token' });
         }
     } catch (error) {
-        await updateIntegrationStatus(userId, false);
+        await integrationService.updateIntegrationStatus(false);
         res.status(500).json({ message: 'Failed to connect account', error: error.message });
     }
 });
@@ -80,6 +81,7 @@ const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
 
   const refreshConnection = asyncHandler(async (req, res) => {
     const integrationInfo = await Integration.findOne({userId: req.params.id});
+    const integrationService = new IntegrationService(userId);
     if (!integrationInfo.fnRefreshToken) {
         res.status(400).json({ message: 'Failed to retrieve existing refresh token' });
     }
@@ -106,11 +108,11 @@ const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
             await integration.save();
             res.status(200).json(integration);
         } else {
-            await updateIntegrationStatus(userId, false);
+            await integrationService.updateIntegrationStatus(false);
             res.status(400).json({ message: 'Failed to retrieve access token' });
         }
     } catch (error) {
-        await updateIntegrationStatus(userId, false);
+        await integrationService.updateIntegrationStatus(false);
         res.status(500).json({ message: 'Failed to re-connect account', error: error.message });
     }
 });

@@ -1,18 +1,21 @@
-import CronConfigure from "../../components/AdminComponents/CronConfigure";
-import { useEffect, useState } from "react"
-import { useParams } from "react-router-dom";
-import { toast } from "react-toastify";
-import { useGetCronDataMutation, useGetTypesOfWorkOrderMutation } from "../../slices/adminApiSlice";
-import Loader from "../../components/Loader";
-
+import CronConfigure from '../../components/CommonComponents/CronConfigure';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import {
+  useGetCronDataMutation,
+  useGetTypesOfWorkOrderMutation,
+} from '../../slices/commonApiSlice';
+import Loader from '../../components/Loader';
 
 const CronConfigureScreen = () => {
   const { cronId } = useParams();
   const [cronData, setCronData] = useState([]);
-  const [cronDataFromAPI, { isLoading } ] = useGetCronDataMutation();
+  const [cronDataFromAPI, { isLoading }] = useGetCronDataMutation();
 
   const [typesOfWorkOrder, setTypesOfWorkOrder] = useState([]);
-  const [typesOfWorkOrderFromAPI, { isLoadingTypesOfWorkOrder } ] = useGetTypesOfWorkOrderMutation();
+  const [typesOfWorkOrderFromAPI, { isLoadingTypesOfWorkOrder }] =
+    useGetTypesOfWorkOrderMutation();
 
   useEffect(() => {
     try {
@@ -27,19 +30,22 @@ const CronConfigureScreen = () => {
         const typesOfWorkOrderArray = typesOfWorkOrderFromApiCall.data;
         setTypesOfWorkOrder(typesOfWorkOrderArray);
       };
-  
+
       fetchData();
     } catch (err) {
-      toast.error( err?.data?.errors[0]?.message || err );
-      console.error("Error fetching crons:", err);
+      toast.error(err?.data?.errors[0]?.message || err);
+      console.error('Error fetching crons:', err);
     }
-
   }, []);
 
   return (
     <div>
       <h1>Configure Cron</h1>
-      { isLoading || isLoadingTypesOfWorkOrder ? <Loader/> : <CronConfigure cron={cronData} typesOfWorkOrder={typesOfWorkOrder} /> }
+      {isLoading || isLoadingTypesOfWorkOrder ? (
+        <Loader />
+      ) : (
+        <CronConfigure cron={cronData} typesOfWorkOrder={typesOfWorkOrder} />
+      )}
     </div>
   );
 };

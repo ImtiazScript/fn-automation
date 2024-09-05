@@ -1,9 +1,9 @@
-import { Container, Card, Button } from "react-bootstrap";
-import { LinkContainer } from "react-router-bootstrap";
+import { Container, Card, Button } from 'react-bootstrap';
+import { LinkContainer } from 'react-router-bootstrap';
 
-import { useSelector } from "react-redux";
+import { useSelector } from 'react-redux';
 
-import { PROFILE_IMAGE_DIR_PATH } from "../../utils/constants";
+import { PROFILE_IMAGE_DIR_PATH } from '../../utils/constants';
 
 const Hero = () => {
   const { userInfo } = useSelector((state) => state.auth);
@@ -19,37 +19,26 @@ const Hero = () => {
                   src={PROFILE_IMAGE_DIR_PATH + userInfo.profileImageName}
                   alt={userInfo.name}
                   style={{
-                    width: "150px",
-                    height: "150px",
-                    borderRadius: "50%",
-                    objectFit: "cover",
+                    width: '150px',
+                    height: '150px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
                   }}
                 />
               )}
               <h2 className="text-center mb-4">
-                {" "}
-                Welcome back {userInfo.name}{" "}
+                {' '}
+                Welcome back {userInfo.name}{' '}
               </h2>
               <p className="text-center mb-4"> Email: {userInfo.email} </p>
-              <div className="d-flex">
-                <LinkContainer to="/profile">
-                  <Button variant="primary" className="me-3">
-                    Manage Profile
-                  </Button>
-                </LinkContainer>
-                <LinkContainer to="/connect-account">
-                  <Button variant="primary" className="me-3">
-                    Connect Account
-                  </Button>
-                </LinkContainer>
-              </div>
+              <div className="d-flex"></div>
             </>
           ) : (
             <>
-              <h2 className="text-center mb-4"> FN Automation User </h2>
+              <h2 className="text-center mb-4"> FN Automation </h2>
               <p className="text-center mb-4">
-                {" "}
-                Please Login to access User Dashboard{" "}
+                {' '}
+                Please Login to access Dashboard{' '}
               </p>
               <div className="d-flex">
                 <LinkContainer to="/login">

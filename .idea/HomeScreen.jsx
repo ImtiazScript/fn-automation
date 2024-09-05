@@ -1,9 +1,9 @@
-import Hero from "../../components/UserComponents/Hero";
+import AdminHero from '../../components/AdminComponents/AdminHero';
 
 const HomeScreen = () => {
   return (
     <>
-      <Hero />
+      <AdminHero />
     </>
   );
 };

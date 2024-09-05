@@ -1,8 +1,8 @@
 import cron from 'node-cron';
 import logger from "../config/logger/winston-logger/loggerConfig.js";
-import { fetchAllUsers } from '../service/userService.js';
-import { fetchIntegrationByUserId } from '../service/integrationService.js';
-import { fetchCronsByUserId } from '../service/cronService.js';
+import UserService from '../services/userService.js';
+import IntegrationService from '../services/integrationService.js';
+import CronService from '../services/cronService.js';
 import { makeRequest } from "../utils/integrationHelpers.js";
 
 // Will run every 30 minutes
@@ -12,17 +12,19 @@ cron.schedule('*/30 * * * *', async () => {
     console.log(`Work order finding and requesting cron running at: ${currentDateTime}`);
     logger.info(`Work order finding and requesting cron running at: ${currentDateTime}`);
     // Add your cron job logic here
-    const users = await fetchAllUsers();
+    const userService = new UserService();
+    const users = await userService.fetchAllUsers();
     users.map(async (user) => {
+        const integrationService = new IntegrationService(user.userId);
         if (user.blocked) {
             return;
         }
-        const integration = await fetchIntegrationByUserId(user.userId);
+        const integration = await integrationService.fetchIntegration();
         if (!integration || !integration.fnAccessToken || integration.integrationStatus == 'Not Connected' || integration.disabled) {
             return;
         }
-
-        const crons = await fetchCronsByUserId(user.userId);
+        const cronService = new CronService(user.userId);
+        const crons = await cronService.fetchCrons();
         crons.map(async (cron) => {
             const locationRadius = cron.drivingRadius;
             const currentDateTime = new Date();

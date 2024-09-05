@@ -1,27 +1,29 @@
 import cron from 'node-cron';
 import logger from "../config/logger/winston-logger/loggerConfig.js";
-import { fetchAllUsers } from '../service/userService.js';
-import { fetchIntegrationByUserId, refreshAccessTokenByUserId } from '../service/integrationService.js';
+import UserService from '../services/userService.js';
+import IntegrationService from '../services/integrationService.js';
 
 // Will run every 23 hours 55 minutes
 cron.schedule('55 */23 * * *', async () => {
-// cron.schedule('* * * * *', async () => {
+    // cron.schedule('* * * * *', async () => {
     const currentDateTime = new Date().toLocaleString();
     console.log(`Access-token updating cron running at: ${currentDateTime}`);
     logger.info(`Access-token updating cron running at: ${currentDateTime}`);
     // Add your cron job logic here
-    const users = await fetchAllUsers();
+    const userService = new UserService();
+    const users = await userService.fetchAllUsers();
     users.map(async (user) => {
+        const integrationService = new IntegrationService(user.userId);
         if (user.blocked) {
             return;
         }
-        const integration = await fetchIntegrationByUserId(user.userId);
-        if (integration.disabled) {
+        const integration = integrationService.fetchIntegration();
+        if (!integration || integration.disabled) {
             return;
         }
         // renew access-token using refresh-token
         // Enable when want to test or go LIVE
-        const refreshedToken = await refreshAccessTokenByUserId(user.userId);
+        const refreshedToken = await integrationService.refreshAccessToken();
         if (refreshedToken) {
             logger.info(`Successfully re-generated access-token using refresh-token for userId: ${user.userId} at: ${currentDateTime}`);
         } else {

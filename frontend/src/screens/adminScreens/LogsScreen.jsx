@@ -1,13 +1,12 @@
-import LogsDataTable from "../../components/AdminComponents/LogsDataTable";
-import { useEffect,useState } from "react"
-import { toast } from "react-toastify";
-import { useGetLogsMutation } from "../../slices/adminApiSlice";
-import Loader from "../../components/Loader";
-
+import LogsDataTable from '../../components/AdminComponents/LogsDataTable';
+import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
+import { useGetLogsMutation } from '../../slices/adminApiSlice';
+import Loader from '../../components/Loader';
 
 const LogsScreen = () => {
   const [logsData, setLogsData] = useState([]);
-  const [logsDataFromAPI, { isLoading } ] = useGetLogsMutation();
+  const [logsDataFromAPI, { isLoading }] = useGetLogsMutation();
 
   useEffect(() => {
     try {
@@ -18,15 +17,15 @@ const LogsScreen = () => {
       };
       fetchData();
     } catch (err) {
-      toast.error( err?.data?.errors[0]?.message || err );
-      console.error("Error fetching logs:", err);
+      toast.error(err?.data?.errors[0]?.message || err);
+      console.error('Error fetching logs:', err);
     }
   }, []);
 
   return (
     <div>
       <h1>Logs List</h1>
-      { isLoading ? <Loader/> : <LogsDataTable logs={logsData} /> }
+      {isLoading ? <Loader /> : <LogsDataTable logs={logsData} />}
     </div>
   );
 };
