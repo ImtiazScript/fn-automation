@@ -1,6 +1,7 @@
 import axios, {isCancel, AxiosError} from 'axios';
+import logger from "../config/logger/winston-logger/loggerConfig.js";
 
-const makeRequest = async (method, url, headers = {}, data = {}, params = {}) => {
+const makeRequest = async (method, url, headers = {}, data = {}, params = {}, userId = 0) => {
     try {
         const options = {
             method,
@@ -12,8 +13,10 @@ const makeRequest = async (method, url, headers = {}, data = {}, params = {}) =>
         const response = await axios(options);
         return response.data;
     } catch (error) {
-        console.error('Error making request:', error.message);
-        throw error;
+        logger.error(`Error making request: ${error?.response?.data}, User Id: ${userId}`);
+        console.log(`Error making request: ${error?.response?.data}, User Id: ${userId}`);
+        // throw error;
+        return false;
     }
 };
 
