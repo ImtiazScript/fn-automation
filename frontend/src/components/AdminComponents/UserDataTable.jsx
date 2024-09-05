@@ -145,8 +145,8 @@ const UsersDataTable = ({ users }) => {
                   className="mt-3"
                   onClick={() => {
                     if (user.blocked) {
-                      setUserIdToActivate(user._id);
-                      setShowActivateConfirmation(true);
+                      setUserIdToUnblock(user._id);
+                      setShowUnblockingConfirmation(true);
                     } else {
                       setUserIdToBlock(user._id);
                       setShowBlockingConfirmation(true);
@@ -164,7 +164,8 @@ const UsersDataTable = ({ users }) => {
                   className="mt-3"
                   disabled={user.isActive}
                   onClick={() => {
-
+                    setUserIdToActivate(user._id);
+                    setShowActivateConfirmation(true);
                   }}
                 >
                   {user.isActive ? 'Active' : 'Activate'}

@@ -3,7 +3,10 @@ import { LinkContainer } from 'react-router-bootstrap';
 
 import { useSelector } from 'react-redux';
 
-import { PROFILE_IMAGE_DIR_PATH } from '../../utils/constants';
+import {
+  PROFILE_IMAGE_DIR_PATH,
+  PROFILE_PLACEHOLDER_IMAGE_NAME,
+} from '../../utils/constants';
 
 const Hero = () => {
   const { userInfo } = useSelector((state) => state.auth);
@@ -14,25 +17,36 @@ const Hero = () => {
         <Card className="p-5 d-flex flex-column align-items-center hero-card bg-light w-75">
           {userInfo ? (
             <>
-              {userInfo.profileImageName && (
-                <img
-                  src={PROFILE_IMAGE_DIR_PATH + userInfo.profileImageName}
-                  alt={userInfo.name}
-                  style={{
-                    width: '150px',
-                    height: '150px',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                  }}
-                />
-              )}
+              <img
+                src={
+                  userInfo.profileImageName
+                    ? PROFILE_IMAGE_DIR_PATH + userInfo.profileImageName
+                    : PROFILE_IMAGE_DIR_PATH + PROFILE_PLACEHOLDER_IMAGE_NAME
+                }
+                alt={userInfo.name}
+                style={{
+                  width: '150px',
+                  height: '150px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                }}
+              />
               <h2 className="text-center mb-4">
                 {' '}
                 Welcome back {userInfo.name}{' '}
               </h2>
               <p className="text-center mb-4"> Email: {userInfo.email} </p>
-              {!userInfo.isActive ? (<>
-                <p className="text-center mb-4"> Admin needs to activate your profile before you can use the system, please reach out to admin: biolaajibola21@gmail.com </p></>) : (<> </>)}
+              {!userInfo.isActive ? (
+                <>
+                  <p className="text-center mb-4">
+                    {' '}
+                    Admin needs to activate your profile before you can use the
+                    system, please reach out to admin: biolaajibola21@gmail.com{' '}
+                  </p>
+                </>
+              ) : (
+                <> </>
+              )}
               <div className="d-flex"></div>
             </>
           ) : (
