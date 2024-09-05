@@ -219,6 +219,7 @@ const UsersDataTable = ({ users }) => {
       <Modal
         show={showBlockingConfirmation}
         onHide={() => setShowBlockingConfirmation(false)}
+        className="custom-modal"
       >
         <Modal.Header closeButton>
           <Modal.Title>Confirm Block</Modal.Title>
@@ -245,6 +246,7 @@ const UsersDataTable = ({ users }) => {
       <Modal
         show={showActivateConfirmation}
         onHide={() => setShowActivateConfirmation(false)}
+        className="custom-modal"
       >
         <Modal.Header closeButton>
           <Modal.Title>Confirm Activate</Modal.Title>
@@ -271,6 +273,7 @@ const UsersDataTable = ({ users }) => {
       <Modal
         show={showUnblockingConfirmation}
         onHide={() => setShowUnblockingConfirmation(false)}
+        className="custom-modal"
       >
         <Modal.Header closeButton>
           <Modal.Title>Confirm Un-Block</Modal.Title>
@@ -294,7 +297,11 @@ const UsersDataTable = ({ users }) => {
       </Modal>
 
       {/* Update User Modal */}
-      <Modal show={showUpdateModal} onHide={() => setShowUpdateModal(false)}>
+      <Modal
+        show={showUpdateModal}
+        onHide={() => setShowUpdateModal(false)}
+        className="custom-modal"
+      >
         <Modal.Header closeButton>
           <Modal.Title>Update User</Modal.Title>
         </Modal.Header>

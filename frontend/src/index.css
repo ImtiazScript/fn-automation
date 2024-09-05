@@ -8,3 +8,16 @@
     width: 100%;
     box-sizing: border-box;
   }
+
+/* Custom modal width on smaller screens */
+@media (max-width: 768px) {
+  .custom-modal {
+    max-width: 84%; /* Make sure the modal looks center aligned in the user management page */
+    margin: '5px auto 10px auto'
+  }
+
+  /* Prevent page content from shifting when modal opens */
+  body.modal-open {
+    padding-right: 0 !important; /* Remove the padding that Bootstrap adds to compensate for the scrollbar, does not shift left when modal pops up */
+  }
+}
