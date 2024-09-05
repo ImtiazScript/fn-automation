@@ -17,6 +17,6 @@ export const ADMIN_BLOCK_USER_URL = '/api/v1/admin/block-user'
 export const ADMIN_UNBLOCK_USER_URL = '/api/v1/admin/unblock-user'
 export const ADMIN_UPDATE_USER_URL = '/api/v1/admin/update-user'
 export const CRONS_DATA_FETCH_URL = '/api/v1/crons/get-crons'
-export const ADMIN_LOGS_DATA_FETCH_URL = '/api/v1/admin/get-logs'
+export const ADMIN_LOGS_DATA_FETCH_URL = '/api/v1/logs/get-logs'
 
 export const PROFILE_IMAGE_DIR_PATH = 'http://localhost:5000/UserProfileImages/'

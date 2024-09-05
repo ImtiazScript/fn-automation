@@ -94,10 +94,20 @@ const IntegrationScreen = () => {
           marginRight: '20px',
         }}
       >
-        <span style={{ fontWeight: '500', marginRight: '5px' }}>
-          Last Connected:
-        </span>
-        {lastTimeRefreshTokenGeneratedAt}
+        {lastTimeRefreshTokenGeneratedAt ? (
+          <>
+            <span style={{ fontWeight: '500', marginRight: '5px' }}>
+              Last Connected:
+            </span>
+            {lastTimeRefreshTokenGeneratedAt}
+          </>
+        ) : (
+          <>
+            <span style={{ fontWeight: '500', marginRight: '5px' }}>
+              Not connected yet
+            </span>
+          </>
+        )}
       </div>
 
       <Form onSubmit={submitHandler}>

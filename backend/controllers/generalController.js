@@ -1,13 +1,12 @@
 //? ===================================================== General Routes Controller =====================================================
 
+/*
+   # Desc: Server Health Check Route
+   # Route: GET /health
+   # Access: PUBLIC
+*/
 
 const getServerHealth = (req, res) => {
-  /*
-     # Desc: Server Health Check Route
-     # Route: GET /health
-     # Access: PUBLIC
-  */
-
   const currentDate = new Date();
   const options = {
     weekday: "long",

@@ -9,7 +9,7 @@ const CronsDataTable = ({ crons }) => {
   };
   // const filteredCrons = crons;
   const filteredCrons = crons.filter((cron) =>
-    cron.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    cron.userDetails.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -44,7 +44,7 @@ const CronsDataTable = ({ crons }) => {
             {filteredCrons.map((cron, index) => (
               <tr key={index}>
                 <td>{cron.cronId}</td>
-                <td>{cron.name}</td>
+                <td>{cron?.userDetails?.name}</td>
                 <td>{cron.drivingRadius}</td>
                 <td>{cron.status}</td>
                 <td>{cron.totalRequested}</td>

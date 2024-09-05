@@ -83,7 +83,7 @@ export const adminApiSlice = apiSlice.injectEndpoints({
         }),
         getLogById: builder.mutation({
             query: (logId) => ({
-                url: `/api/v1/admin/get-log/${logId}`,
+                url: `/api/v1/logs/get-log/${logId}`,
                 method: 'GET'
             })
         }),
