@@ -2,7 +2,7 @@
 
 // ===================== Importing necessary modules/files =====================
 import asyncHandler from "express-async-handler";
-import AdminModel from "../models/adminModel.js";
+import User from "../models/userModel.js";
 import CronModel from "../models/cronModel.js";
 import mongoose from "mongoose";
 
@@ -36,7 +36,7 @@ const authAdmin = asyncHandler(async (req, res) => {
   }
 
   // Find the user in Db with the email and password
-  const admin = await AdminModel.findOne({ email: email });
+  const admin = await User.findOne({ email: email });
 
   let passwordValid = false;
 
@@ -52,6 +52,7 @@ const authAdmin = asyncHandler(async (req, res) => {
     const verifiedAdminData = {
       name: admin.name,
       email: admin.email,
+      isAdmin: admin.isAdmin,
     };
 
     res.status(200).json(verifiedAdminData);
@@ -95,7 +96,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
   }
 
   // Check if user already exist
-  const userExists = await AdminModel.findOne({ email });
+  const userExists = await User.findOne({ email });
 
   // If the user already exists, throw an error
   if (userExists) {
@@ -105,10 +106,11 @@ const registerAdmin = asyncHandler(async (req, res) => {
   }
 
   // Store the user data to DB if the user dosen't exist already.
-  const user = await AdminModel.create({
+  const user = await User.create({
     name: name,
     email: email,
     password: password,
+    isAdmin: true,
   });
 
   if (user) {
@@ -119,6 +121,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
     const registeredUserData = {
       name: user.name,
       email: user.email,
+      isAdmin: user.isAdmin,
     };
 
     res.status(201).json(registeredUserData);
@@ -166,7 +169,7 @@ const updateAdminProfile = asyncHandler(async (req, res) => {
     */
 
   // Find the user data with user id in the request object
-  const admin = await AdminModel.findById(req.user._id);
+  const admin = await UserModel.findById(req.user._id);
 
   if (admin) {
     // Update the admin-user with new data if found or keep the old data itself.

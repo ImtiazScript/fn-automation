@@ -48,6 +48,7 @@ const authUser = asyncHandler(async (req, res) => {
       userId: user.userId,
       name: user.name,
       email: user.email,
+      isAdmin: user.isAdmin,
     };
 
     if (user.profileImageName) {
@@ -87,6 +88,7 @@ const registerUser = asyncHandler(async (req, res) => {
     name: name,
     email: email,
     password: password,
+    isAdmin: false,
   });
 
   if (user) {
@@ -97,6 +99,7 @@ const registerUser = asyncHandler(async (req, res) => {
     const registeredUserData = {
       name: user.name,
       email: user.email,
+      isAdmin: user.isAdmin,
     };
 
     res.status(201).json(registeredUserData);
