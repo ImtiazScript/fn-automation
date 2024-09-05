@@ -34,7 +34,7 @@ const CronsDataTable = ({ crons }) => {
             <tr>
               <th>Cron Id</th>
               <th>Provider Name</th>
-              <th>Driving Radius</th>
+              <th className="text-center align-middle d-none d-md-table-cell">Driving Radius</th>
               <th>Status</th>
               <th>Total #WO</th>
               <th>Configure</th>
@@ -45,7 +45,7 @@ const CronsDataTable = ({ crons }) => {
               <tr key={index}>
                 <td>{cron.cronId}</td>
                 <td>{cron?.userDetails?.name}</td>
-                <td>{cron.drivingRadius}</td>
+                <td className="text-center align-middle d-none d-md-table-cell">{cron.drivingRadius}</td>
                 <td>{cron.status}</td>
                 <td>{cron.totalRequested}</td>
                 <td>

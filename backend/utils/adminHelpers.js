@@ -2,7 +2,7 @@ import User from "../models/userModel.js";
 
 const fetchAllUsers = async () => {
   try {
-    const users = await User.find({}, { name: 1, email: 1, blocked: 1, isActive: 1, isAdmin: 1 });
+    const users = await User.find({}, { name: 1, email: 1, blocked: 1, isActive: 1, isAdmin: 1, profileImageName: 1, });
 
     return users;
   } catch (error) {

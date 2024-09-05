@@ -7,6 +7,7 @@ import {
   useUpdateUserByAdminMutation,
   useActivateUserMutation,
 } from '../../slices/adminApiSlice';
+import { PROFILE_IMAGE_DIR_PATH, PROFILE_PLACEHOLDER_IMAGE_NAME } from '../../utils/constants';
 
 const UsersDataTable = ({ users }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,7 +115,7 @@ const UsersDataTable = ({ users }) => {
           <tr>
             <th className="text-center align-middle">#</th>
             <th className="text-center align-middle">Name</th>
-            <th className="text-center align-middle">Email</th>
+            <th className="text-center align-middle d-none d-md-table-cell">Email</th>
             <th className="text-center align-middle">Update</th>
             <th className="text-center align-middle">Block</th>
             <th className="text-center align-middle">Status</th>
@@ -124,8 +125,30 @@ const UsersDataTable = ({ users }) => {
           {filteredUsers.map((user, index) => (
             <tr key={index}>
               <td>{index + 1}</td>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
+              <td>
+                <div style={{ textAlign: 'center' }}>
+                  <img
+                    src={
+                      user.profileImageName
+                        ? PROFILE_IMAGE_DIR_PATH + user.profileImageName
+                        : PROFILE_IMAGE_DIR_PATH +
+                          PROFILE_PLACEHOLDER_IMAGE_NAME
+                    }
+                    alt={user.name}
+                    style={{
+                      width: '50px',
+                      height: '50px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      marginBottom: '2px', // Space between image and name
+                    }}
+                  />
+                  <div style={{ fontSize: '11px', fontWeight: 'bold' }}>
+                    {user.name}
+                  </div>
+                </div>
+              </td>
+              <td className="text-center align-middle d-none d-md-table-cell">{user.email}</td>
               <td className="text-center align-middle">
                 <Button
                   type="button"

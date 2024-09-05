@@ -104,7 +104,7 @@ const LogsDataTable = () => {
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              <th>Index</th>
+              <th className="text-center align-middle d-none d-md-table-cell">Index</th>
               <th>Time</th>
               <th>Level</th>
               <th>Message</th>
@@ -115,7 +115,7 @@ const LogsDataTable = () => {
             {filteredLogs.map((log, index) => (
               <tr key={log._id}>
                 {/* <td>{index + 1 + (currentPage - 1) * limit}</td> */}
-                <td>{log._id}</td>
+                <td className="text-center align-middle d-none d-md-table-cell">{log._id}</td>
                 <td>
                   {format(new Date(log.timestamp), 'MM/dd/yyyy HH:mm:ss')}
                 </td>
