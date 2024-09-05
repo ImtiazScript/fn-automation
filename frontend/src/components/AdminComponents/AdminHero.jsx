@@ -20,21 +20,6 @@ const AdminHero = () => {
               <h2 className='text-center mb-4'> Welcome back {adminInfo.name} </h2>
               <p className='text-center mb-4'> Email: {adminInfo.email} </p>
               <div className='d-flex'>
-                <LinkContainer to='/admin/manage-users'>
-                    <Button variant='primary' className='me-3'>
-                    Manage Users
-                    </Button>
-                </LinkContainer>
-                <LinkContainer to='/admin/manage-crons'>
-                    <Button variant='primary' className='me-3'>
-                    Manage Crons
-                    </Button>
-                </LinkContainer>
-                <LinkContainer to='/admin/logs'>
-                    <Button variant='primary' className='me-3'>
-                    Logs
-                    </Button>
-                </LinkContainer>
               </div>
             </>
             : 

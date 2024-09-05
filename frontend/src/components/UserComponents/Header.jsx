@@ -1,28 +1,22 @@
-import { Navbar, Nav, Container, NavDropdown, Badge } from "react-bootstrap";
-import { FaSignInAlt, FaSignOutAlt } from "react-icons/fa";
-import { LinkContainer } from "react-router-bootstrap";
-
-import { useSelector, useDispatch } from "react-redux";
-
-import { useNavigate } from "react-router-dom";
-import { useLogoutMutation } from "../../slices/userApiSlice.js";
-import { logout } from "../../slices/authSlice.js";
+import { Navbar, Nav, Container, NavDropdown, Badge } from 'react-bootstrap';
+import { FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
+import { LinkContainer } from 'react-router-bootstrap';
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { useLogoutMutation } from '../../slices/userApiSlice.js';
+import { logout } from '../../slices/authSlice.js';
 
 const Header = () => {
   const { userInfo } = useSelector((state) => state.auth);
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const [logoutApiCall] = useLogoutMutation();
 
   const logOutHandler = async () => {
     try {
       await logoutApiCall().unwrap();
-
       dispatch(logout());
-
-      navigate("/");
+      navigate('/');
     } catch (err) {
       console.log(err);
     }
@@ -44,10 +38,15 @@ const Header = () => {
                     <LinkContainer to="/profile">
                       <NavDropdown.Item> Profile </NavDropdown.Item>
                     </LinkContainer>
-
+                    <LinkContainer to="/connect-account">
+                      <NavDropdown.Item> Connect Account </NavDropdown.Item>
+                    </LinkContainer>
+                    <LinkContainer to="/crons/manage-crons">
+                      <NavDropdown.Item> Manage Crons </NavDropdown.Item>
+                    </LinkContainer>
                     <NavDropdown.Item onClick={logOutHandler}>
-                      {" "}
-                      Logout{" "}
+                      {' '}
+                      Logout{' '}
                     </NavDropdown.Item>
                   </NavDropdown>
                 </>

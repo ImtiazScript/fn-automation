@@ -1,39 +1,26 @@
 import { Navbar, Nav, Container, NavDropdown, Badge } from 'react-bootstrap';
 import { FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
 import { LinkContainer } from 'react-router-bootstrap';
-
 import { useSelector, useDispatch } from 'react-redux';
-
 import { useNavigate } from 'react-router-dom';
 import { useAdminLogoutMutation } from '../../slices/adminApiSlice.js';
 import { logout } from '../../slices/adminAuthSlice.js';
 
 const AdminHeader = () => {
-
-  const { adminInfo } = useSelector( (state) => state.adminAuth);
-
+  const { adminInfo } = useSelector((state) => state.adminAuth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  const [ logoutApiCall ] = useAdminLogoutMutation();
+  const [logoutApiCall] = useAdminLogoutMutation();
 
   const logOutHandler = async () => {
-
     try {
-    
       await logoutApiCall().unwrap();
-
-      dispatch( logout() );
-
-      navigate( '/admin' );
-
+      dispatch(logout());
+      navigate('/admin');
     } catch (err) {
-
-      console.log( err );
-
+      console.log(err);
     }
-
-  }
+  };
 
   return (
     <header>
@@ -44,25 +31,28 @@ const AdminHeader = () => {
           </LinkContainer>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-
             <Nav className="ms-auto">
-
-              { adminInfo ? (
-
+              {adminInfo ? (
                 <>
-
                   <NavDropdown title={adminInfo.name} id="userName">
-
-                    <LinkContainer to='/admin/profile'>
+                    <LinkContainer to="/admin/profile">
                       <NavDropdown.Item> Profile </NavDropdown.Item>
                     </LinkContainer>
-
-                    <NavDropdown.Item onClick={ logOutHandler } > Logout </NavDropdown.Item>
-
+                    <LinkContainer to="/admin/manage-users">
+                      <NavDropdown.Item> Manage Users </NavDropdown.Item>
+                    </LinkContainer>
+                    <LinkContainer to="/crons/manage-crons">
+                      <NavDropdown.Item> Manage Crons </NavDropdown.Item>
+                    </LinkContainer>
+                    <LinkContainer to="/admin/logs">
+                      <NavDropdown.Item> Logs </NavDropdown.Item>
+                    </LinkContainer>
+                    <NavDropdown.Item onClick={logOutHandler}>
+                      {' '}
+                      Logout{' '}
+                    </NavDropdown.Item>
                   </NavDropdown>
-
                 </>
-                
               ) : (
                 <>
                   <LinkContainer to="/admin/login">
@@ -77,10 +67,8 @@ const AdminHeader = () => {
                     </Nav.Link>
                   </LinkContainer>
                 </>
-              ) }
-
+              )}
             </Nav>
-
           </Navbar.Collapse>
         </Container>
       </Navbar>

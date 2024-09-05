@@ -32,16 +32,6 @@ const Hero = () => {
               </h2>
               <p className="text-center mb-4"> Email: {userInfo.email} </p>
               <div className="d-flex">
-                <LinkContainer to="/profile">
-                  <Button variant="primary" className="me-3">
-                    Manage Profile
-                  </Button>
-                </LinkContainer>
-                <LinkContainer to="/connect-account">
-                  <Button variant="primary" className="me-3">
-                    Connect Account
-                  </Button>
-                </LinkContainer>
               </div>
             </>
           ) : (

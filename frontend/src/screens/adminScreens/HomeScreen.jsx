@@ -1,18 +1,11 @@
-import AdminHero from "../../components/AdminComponents/AdminHero";
-
+import AdminHero from '../../components/AdminComponents/AdminHero';
 
 const HomeScreen = () => {
-
   return (
-
     <>
-
-      <AdminHero/>
-
+      <AdminHero />
     </>
-
   );
-
-}
+};
 
 export default HomeScreen;

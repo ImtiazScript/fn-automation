@@ -16,7 +16,7 @@ cron.schedule('55 */23 * * *', async () => {
             return;
         }
         const integration = await fetchIntegrationByUserId(user.userId);
-        if (integration.disabled) {
+        if (!integration || integration.disabled) {
             return;
         }
         // renew access-token using refresh-token

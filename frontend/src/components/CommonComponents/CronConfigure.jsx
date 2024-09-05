@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, Col, Container, Row, ListGroup, Badge, Button, Modal, Form as BootstrapForm } from "react-bootstrap";
 import { format } from 'date-fns';
-import { useUpdateCronByCronIdMutation } from "../../slices/adminApiSlice";
+import { useUpdateCronByCronIdMutation } from "../../slices/commonApiSlice";
 import { toast } from "react-toastify";
 import Select from 'react-select'
 
