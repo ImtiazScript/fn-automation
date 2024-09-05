@@ -62,53 +62,16 @@ const IntegrationScreen = () => {
 
   return (
     <FormContainer>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <h3
-          style={{ marginTop: '5px', marginLeft: '100px', marginBottom: '5px' }}
+      <h3 style={{ margin: '5px auto 10px auto' }}>Connect to Field Nation</h3>
+        <Badge
+          pill
+          bg={integrationStatus === 'Connected' ? 'success' : 'danger'}
+          style={{ margin: '5px auto 10px auto' }}
         >
-          Connect to Field Nation
-        </h3>
-        {integrationStatus && (
-          <Badge
-            pill
-            bg={integrationStatus === 'Connected' ? 'success' : 'danger'}
-            style={{ marginRight: '20px' }}
-          >
-            {integrationStatus}
-          </Badge>
-        )}
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginTop: '10px',
-          marginBottom: '10px',
-          marginRight: '20px',
-        }}
-      >
-        {lastTimeRefreshTokenGeneratedAt ? (
-          <>
-            <span style={{ fontWeight: '500', marginRight: '5px' }}>
-              Last Connected:
-            </span>
-            {lastTimeRefreshTokenGeneratedAt}
-          </>
-        ) : (
-          <>
-            <span style={{ fontWeight: '500', marginRight: '5px' }}>
-              Not connected yet
-            </span>
-          </>
-        )}
-      </div>
+          {lastTimeRefreshTokenGeneratedAt && integrationStatus === 'Connected'
+            ? integrationStatus + ': ' + lastTimeRefreshTokenGeneratedAt
+            : integrationStatus ? integrationStatus : 'Not connected yet'}
+        </Badge>
 
       <Form onSubmit={submitHandler}>
         <Form.Group className="my-2" controlId="userName">
