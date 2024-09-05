@@ -6,7 +6,7 @@ import FormContainer from "../../components/FormContainer";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
 import { useAdminLoginMutation } from "../../slices/adminApiSlice";
-import { setCredentials } from "../../slices/adminAuthSlice";
+import { setCredentials } from "../../slices/authSlice";
 
 
 const LoginScreen = () => {
@@ -15,13 +15,14 @@ const LoginScreen = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [login, { isLoading }] = useAdminLoginMutation();
-  const { adminInfo } = useSelector( (state) => state.auth );
+  const { userInfo } = useSelector( (state) => state.auth );
+  const isAdmin = userInfo && userInfo.isAdmin;
 
   useEffect( () => {
-    if(adminInfo) {
+    if(isAdmin) {
       navigate('/admin');
     }
-  }, [ navigate, adminInfo ] );
+  }, [ navigate, isAdmin ] );
 
   const submitHandler = async (e) => {
     e.preventDefault();

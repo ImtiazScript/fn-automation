@@ -2,14 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Form, Button, Row, Col } from 'react-bootstrap';
 import FormContainer from '../../components/FormContainer';
-
 import { useDispatch, useSelector } from 'react-redux';
-
 import { useAdminRegisterMutation } from '../../slices/adminApiSlice';
-import { setCredentials } from '../../slices/adminAuthSlice';
-
+import { setCredentials } from '../../slices/authSlice';
 import { toast } from 'react-toastify';
-
 import Loader from '../../components/Loader';
 
 const AdminRegisterScreen = () => {
@@ -22,19 +18,18 @@ const AdminRegisterScreen = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { adminInfo } = useSelector((state) => state.adminAuth);
-
+  const { userInfo } = useSelector((state) => state.auth);
+  const isAdmin = userInfo && userInfo.isAdmin;
   const [register, { isLoading }] = useAdminRegisterMutation();
 
   useEffect(() => {
-    if (adminInfo) {
-      navigate('/admin');
+    if (isAdmin) {
+      navigate('/');
     }
-  }, [navigate, adminInfo]);
+  }, [navigate, isAdmin]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
-
     if (password !== confirmPassword) {
       toast.error('Passwords do not match.');
     } else {
@@ -45,10 +40,8 @@ const AdminRegisterScreen = () => {
           password,
           adminRegistrationKey,
         }).unwrap();
-
         dispatch(setCredentials({ ...responseFromApiCall }));
-
-        navigate('/admin');
+        navigate('/');
       } catch (err) {
         toast.error(err?.data?.errors[0]?.message || err?.error);
       }
@@ -58,7 +51,6 @@ const AdminRegisterScreen = () => {
   return (
     <FormContainer>
       <h1>Admin Registration</h1>
-
       <Form onSubmit={submitHandler}>
         <Form.Group className="my-2" controlId="name">
           <Form.Label>Name</Form.Label>
@@ -69,7 +61,6 @@ const AdminRegisterScreen = () => {
             onChange={(e) => setName(e.target.value)}
           ></Form.Control>
         </Form.Group>
-
         <Form.Group className="my-2" controlId="email">
           <Form.Label>Email Address</Form.Label>
           <Form.Control
@@ -79,7 +70,6 @@ const AdminRegisterScreen = () => {
             onChange={(e) => setEmail(e.target.value)}
           ></Form.Control>
         </Form.Group>
-
         <Form.Group className="my-2" controlId="password">
           <Form.Label>Password</Form.Label>
           <Form.Control
@@ -89,7 +79,6 @@ const AdminRegisterScreen = () => {
             onChange={(e) => setPassword(e.target.value)}
           ></Form.Control>
         </Form.Group>
-
         <Form.Group className="my-2" controlId="confirmPassword">
           <Form.Label>Confirm Password</Form.Label>
           <Form.Control
@@ -99,7 +88,6 @@ const AdminRegisterScreen = () => {
             onChange={(e) => setConfirmPassword(e.target.value)}
           ></Form.Control>
         </Form.Group>
-
         <Form.Group className="my-2" controlId="confirmPassword">
           <Form.Label>Admin Registration Code</Form.Label>
           <Form.Control
@@ -109,11 +97,12 @@ const AdminRegisterScreen = () => {
             onChange={(e) => setAdminRegistrationKey(e.target.value)}
           ></Form.Control>
         </Form.Group>
-
-        <Button type="submit" variant="primary" className="mt-3">
-          {' '}
-          Sign Up{' '}
-        </Button>
+        <div className="d-flex justify-content-end">
+          <Button type="submit" variant="primary" className="mt-3">
+            {' '}
+            Sign Up{' '}
+          </Button>
+        </div>
       </Form>
 
       {isLoading && (
@@ -126,7 +115,7 @@ const AdminRegisterScreen = () => {
       <Row className="py-3">
         <Col>
           {' '}
-          Already have an account? <Link to={`/admin/login`}>Login</Link>
+          Already have an account? <Link to={`/login`}>Login</Link>
         </Col>
       </Row>
     </FormContainer>

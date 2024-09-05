@@ -1,5 +1,4 @@
 //? ===================================================== Admin Authentication Middleware =====================================================
-
 import { BadRequestError } from "base-error-handler";
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';

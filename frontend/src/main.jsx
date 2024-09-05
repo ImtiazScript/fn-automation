@@ -14,16 +14,11 @@ import "./index.css";
 
 //? ==================================== User Screens Import ====================================
 import PrivateRoutes from "./screens/userScreens/PrivateRoutes.jsx";
-import HomeScreen from "./screens/userScreens/HomeScreen.jsx";
-import LoginScreen from "./screens/userScreens/LoginScreen.jsx";
 import RegisterScreen from "./screens/userScreens/RegisterScreen.jsx";
 import ProfileScreen from "./screens/userScreens/ProfileScreen.jsx";
-import IntegrationScreen from "./screens/userScreens/IntegrationScreen.jsx";
 
 //? ==================================== Admin Screens Import ====================================
 import AdminPrivateRoutes from "./screens/adminScreens/PrivateRoutes.jsx";
-import AdminHomeScreen from "./screens/adminScreens/HomeScreen.jsx";
-import AdminLoginScreen from "./screens/adminScreens/LoginScreen.jsx";
 import AdminRegisterScreen from "./screens/adminScreens/RegisterScreen.jsx";
 import AdminProfileScreen from "./screens/adminScreens/ProfileScreen.jsx";
 import CommonPrivateRoutes from "./screens/commonScreens/PrivateRoutes.jsx";
@@ -32,28 +27,32 @@ import CronsManagementScreen from "./screens/commonScreens/CronsManagementScreen
 import CronConfigureScreen from "./screens/commonScreens/CronConfigureScreen.jsx";
 import LogsScreen from "./screens/adminScreens/LogsScreen.jsx";
 
+//? ==================================== Common Screens Import ====================================
+import HomeScreen from "./screens/commonScreens/HomeScreen.jsx";
+import LoginScreen from "./screens/commonScreens/LoginScreen.jsx";
+import IntegrationScreen from "./screens/commonScreens/IntegrationScreen.jsx";
+
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
       {/* ===================================== Common Routes ===================================== */}
-      <Route path="" element={<CommonPrivateRoutes />}>
-        <Route path="/crons/manage-crons" element={<CronsManagementScreen />} />
-        <Route path="/crons/configure-cron/:cronId" element={<CronConfigureScreen />} />
-      </Route>
-
-      {/* ===================================== User Routes ===================================== */}
       <Route index={true} path="/" element={<HomeScreen />} />
       <Route path="/login" element={<LoginScreen />} />
       <Route path="/register" element={<RegisterScreen />} />
-      {/* USER PRIVATE ROUTES */}
-      <Route path="" element={<PrivateRoutes />}>
-        <Route path="/profile" element={<ProfileScreen />} />
+      {/* COMMON PRIVATE ROUTES */}
+      <Route path="" element={<CommonPrivateRoutes />}>
+        <Route path="/crons/manage-crons" element={<CronsManagementScreen />} />
+        <Route path="/crons/configure-cron/:cronId" element={<CronConfigureScreen />} />
         <Route path="/connect-account" element={<IntegrationScreen />} />
       </Route>
 
+      {/* ===================================== User Routes ===================================== */}
+      {/* USER PRIVATE ROUTES */}
+      <Route path="" element={<PrivateRoutes />}>
+        <Route path="/profile" element={<ProfileScreen />} />
+      </Route>
+
       {/* ===================================== Admin Routes ===================================== */}
-      <Route path="/admin" element={<AdminHomeScreen />} />
-      <Route path="/admin/login" element={<AdminLoginScreen />} />
       <Route path="/admin/register" element={<AdminRegisterScreen />} />
       {/* ADMIN PRIVATE ROUTES */}
       <Route path="" element={<AdminPrivateRoutes />}>

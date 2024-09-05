@@ -1,22 +1,28 @@
-import { useState } from "react";
-import { Button, Modal, Table, Form as BootstrapForm } from "react-bootstrap";
-import { toast } from "react-toastify";
-import { useBlockUserMutation, useUnblockUserMutation, useUpdateUserByAdminMutation } from "../../slices/adminApiSlice";
+import { useState } from 'react';
+import { Button, Modal, Table, Form as BootstrapForm } from 'react-bootstrap';
+import { toast } from 'react-toastify';
+import {
+  useBlockUserMutation,
+  useUnblockUserMutation,
+  useUpdateUserByAdminMutation,
+} from '../../slices/adminApiSlice';
 
 const UsersDataTable = ({ users }) => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const [showBlockingConfirmation, setShowBlockingConfirmation] = useState(false); // State for the blocking confirmation dialog
-  const [showUnblockingConfirmation, setShowUnblockingConfirmation] = useState(false); // State for the unblocking confirmation dialog
+  const [showBlockingConfirmation, setShowBlockingConfirmation] =
+    useState(false); // State for the blocking confirmation dialog
+  const [showUnblockingConfirmation, setShowUnblockingConfirmation] =
+    useState(false); // State for the unblocking confirmation dialog
 
   const [userIdToDelete, setUserIdToDelete] = useState(null); // Track the user ID to delete
   const [userIdToBlock, setUserIdToBlock] = useState(null); // Track the user ID to block
   const [userIdToUnblock, setUserIdToUnblock] = useState(null); // Track the user ID to unblock
 
   const [showUpdateModal, setShowUpdateModal] = useState(false); // State for the update modal
-  const [userIdToUpdate, setUserIdToUpdate] = useState("");
-  const [userNameToUpdate, setUserNameToUpdate] = useState("");
-  const [userEmailToUpdate, setUserEmailToUpdate] = useState("");
+  const [userIdToUpdate, setUserIdToUpdate] = useState('');
+  const [userNameToUpdate, setUserNameToUpdate] = useState('');
+  const [userEmailToUpdate, setUserEmailToUpdate] = useState('');
 
   const handleSearch = (event) => {
     setSearchQuery(event.target.value);
@@ -25,22 +31,21 @@ const UsersDataTable = ({ users }) => {
   const filteredUsers = users.filter(
     (user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const [blockUser, { isBlockingLoading }] = useBlockUserMutation();
   const [unblockUser, { isUnblockingLoading }] = useUnblockUserMutation();
-  const [updateUserByAdmin, { isLoading: isUpdating }] = useUpdateUserByAdminMutation();
-
+  const [updateUserByAdmin, { isLoading: isUpdating }] =
+    useUpdateUserByAdminMutation();
 
   const handleBlock = async () => {
     try {
       const responseFromApiCall = await blockUser({ userId: userIdToBlock });
-      toast.success("User Blocked Successfully.");
+      toast.success('User Blocked Successfully.');
       setUserIdToBlock(null); // Clear the user ID to block
       setShowBlockingConfirmation(false); // Close the blocking confirmation dialog
       window.location.reload();
-
     } catch (err) {
       toast.error(err?.data?.errors[0]?.message || err?.error);
     }
@@ -48,19 +53,20 @@ const UsersDataTable = ({ users }) => {
 
   const handleUnblock = async () => {
     try {
-      const responseFromApiCall = await unblockUser({ userId: userIdToUnblock });
-      toast.success("User Unblocked Successfully.");
+      const responseFromApiCall = await unblockUser({
+        userId: userIdToUnblock,
+      });
+      toast.success('User Unblocked Successfully.');
       setUserIdToUnblock(null); // Clear the user ID to unblock
       setShowUnblockingConfirmation(false); // Close the unblocking confirmation dialog
       window.location.reload();
-
     } catch (err) {
       toast.error(err?.data?.errors[0]?.message || err?.error);
     }
   };
 
   const handleOpenUpdateModal = (user) => {
-    setUserIdToUpdate(user._id)
+    setUserIdToUpdate(user._id);
     setUserNameToUpdate(user.name);
     setUserEmailToUpdate(user.email);
     setShowUpdateModal(true);
@@ -71,15 +77,14 @@ const UsersDataTable = ({ users }) => {
       const responseFromApiCall = await updateUserByAdmin({
         userId: userIdToUpdate,
         name: userNameToUpdate,
-        email: userEmailToUpdate
+        email: userEmailToUpdate,
       });
-      toast.success("User Updated Successfully.");
+      toast.success('User Updated Successfully.');
       setUserIdToUpdate(null); // Clear the user ID to update
       setShowUpdateModal(false); // Close the update modal
 
       // Reload the page to reflect the updated data
       window.location.reload();
-      
     } catch (err) {
       toast.error(err?.data?.errors[0]?.message || err?.error);
     }
@@ -154,7 +159,7 @@ const UsersDataTable = ({ users }) => {
         >
           <BootstrapForm.Label>Search users:</BootstrapForm.Label>
           <BootstrapForm.Control
-            style={{ width: "500px" }}
+            style={{ width: '500px' }}
             value={searchQuery}
             type="text"
             placeholder="Enter Name or email........"
@@ -184,7 +189,7 @@ const UsersDataTable = ({ users }) => {
             onClick={handleBlock}
             disabled={isBlockingLoading}
           >
-            {isBlockingLoading ? "Blocking..." : "Block"}
+            {isBlockingLoading ? 'Blocking...' : 'Block'}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -210,7 +215,7 @@ const UsersDataTable = ({ users }) => {
             onClick={handleUnblock}
             disabled={isUnblockingLoading}
           >
-            {isBlockingLoading ? "Un-Blocking..." : "Un-Block"}
+            {isBlockingLoading ? 'Un-Blocking...' : 'Un-Block'}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -249,7 +254,7 @@ const UsersDataTable = ({ users }) => {
             onClick={handleUpdate}
             disabled={isUpdating}
           >
-            {isUpdating ? "Updating..." : "Update"}
+            {isUpdating ? 'Updating...' : 'Update'}
           </Button>
         </Modal.Footer>
       </Modal>

@@ -6,8 +6,7 @@ import { useSelector } from 'react-redux';
 
 
 const AdminHero = () => {
-
-  const { adminInfo } = useSelector( (state) => state.adminAuth);
+  const { adminInfo } = useSelector( (state) => state.auth);
 
 
   return (

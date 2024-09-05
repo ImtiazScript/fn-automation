@@ -1,17 +1,27 @@
-import { useState, useEffect } from "react";
-import { Button, Modal, Table, Form as BootstrapForm, Row, Col } from "react-bootstrap";
-import { useGetLogsMutation, useGetLogByIdMutation } from "../../slices/adminApiSlice";
+import { useState, useEffect } from 'react';
+import {
+  Button,
+  Modal,
+  Table,
+  Form as BootstrapForm,
+  Row,
+  Col,
+} from 'react-bootstrap';
+import {
+  useGetLogsMutation,
+  useGetLogByIdMutation,
+} from '../../slices/adminApiSlice';
 import { format } from 'date-fns';
-import { toast } from "react-toastify";
+import { toast } from 'react-toastify';
 
 const LogsDataTable = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [logs, setLogs] = useState([]);
   const [totalLogs, setTotalLogs] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10); // Number of logs per page
-  const [fromDate, setFromDate] = useState("");
-  const [untilDate, setUntilDate] = useState("");
+  const [fromDate, setFromDate] = useState('');
+  const [untilDate, setUntilDate] = useState('');
   const [selectedLog, setSelectedLog] = useState(null);
   const [showLogDetailModal, setShowLogDetailModal] = useState(false);
 
@@ -26,12 +36,17 @@ const LogsDataTable = () => {
     try {
       const from = fromDate ? new Date(fromDate).toISOString() : undefined;
       const until = untilDate ? new Date(untilDate).toISOString() : undefined;
-      
-      const response = await getLogs({ from, until, limit, start: (currentPage - 1) * limit }).unwrap();
+
+      const response = await getLogs({
+        from,
+        until,
+        limit,
+        start: (currentPage - 1) * limit,
+      }).unwrap();
       setLogs(response.logs);
       setTotalLogs(response.totalLogs); // Assuming `totalLogs` is sent in the API response
     } catch (error) {
-      toast.error("Failed to fetch logs.");
+      toast.error('Failed to fetch logs.');
       console.error(error);
     }
   };
@@ -46,13 +61,13 @@ const LogsDataTable = () => {
       setSelectedLog(response.log);
       setShowLogDetailModal(true);
     } catch (error) {
-      toast.error("Failed to fetch log details.");
+      toast.error('Failed to fetch log details.');
       console.error(error);
     }
   };
 
-  const filteredLogs = logs.filter(
-    (log) => log.message.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredLogs = logs.filter((log) =>
+    log.message.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const totalPages = Math.ceil(totalLogs / limit);
@@ -85,7 +100,7 @@ const LogsDataTable = () => {
           />
         </Col>
       </Row>
-      <div style={{ marginTop: "20px" }}>
+      <div style={{ marginTop: '20px' }}>
         <Table striped bordered hover responsive>
           <thead>
             <tr>
@@ -101,7 +116,9 @@ const LogsDataTable = () => {
               <tr key={log._id}>
                 {/* <td>{index + 1 + (currentPage - 1) * limit}</td> */}
                 <td>{log._id}</td>
-                <td>{format(new Date(log.timestamp), "MM/dd/yyyy HH:mm:ss")}</td>
+                <td>
+                  {format(new Date(log.timestamp), 'MM/dd/yyyy HH:mm:ss')}
+                </td>
                 <td>{log.level}</td>
                 <td>{log.message}</td>
                 <td>
@@ -132,7 +149,9 @@ const LogsDataTable = () => {
           </span>
           <Button
             variant="secondary"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
             disabled={currentPage === totalPages}
           >
             Next
@@ -141,23 +160,41 @@ const LogsDataTable = () => {
       </Row>
 
       {/* Log Detail Modal */}
-      <Modal show={showLogDetailModal} onHide={() => setShowLogDetailModal(false)}>
+      <Modal
+        show={showLogDetailModal}
+        onHide={() => setShowLogDetailModal(false)}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Log Detail</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {selectedLog && (
             <div>
-              <p><strong>Timestamp:</strong> {format(new Date(selectedLog.timestamp), "MM/dd/yyyy HH:mm:ss")}</p>
-              <p><strong>Level:</strong> {selectedLog.level}</p>
-              <p><strong>Message:</strong> {selectedLog.message}</p>
-              <p><strong>Meta:</strong> {selectedLog.meta ? selectedLog.meta : 'N/A'}</p>
-              <p><strong>Host Name:</strong> {selectedLog.hostname}</p>
+              <p>
+                <strong>Timestamp:</strong>{' '}
+                {format(new Date(selectedLog.timestamp), 'MM/dd/yyyy HH:mm:ss')}
+              </p>
+              <p>
+                <strong>Level:</strong> {selectedLog.level}
+              </p>
+              <p>
+                <strong>Message:</strong> {selectedLog.message}
+              </p>
+              <p>
+                <strong>Meta:</strong>{' '}
+                {selectedLog.meta ? selectedLog.meta : 'N/A'}
+              </p>
+              <p>
+                <strong>Host Name:</strong> {selectedLog.hostname}
+              </p>
             </div>
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowLogDetailModal(false)}>
+          <Button
+            variant="secondary"
+            onClick={() => setShowLogDetailModal(false)}
+          >
             Close
           </Button>
         </Modal.Footer>

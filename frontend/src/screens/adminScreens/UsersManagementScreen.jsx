@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { useGetUsersDataMutation } from '../../slices/adminApiSlice';
 import Loader from '../../components/Loader';
 
-const AdminHomeScreen = () => {
+const UserManagementScreen = () => {
   const [usersData, setUsersData] = useState([]);
   const [usersDataFromAPI, { isLoading }] = useGetUsersDataMutation();
 
@@ -30,4 +30,4 @@ const AdminHomeScreen = () => {
   );
 };
 
-export default AdminHomeScreen;
+export default UserManagementScreen;

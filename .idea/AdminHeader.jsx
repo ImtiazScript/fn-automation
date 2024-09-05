@@ -4,10 +4,10 @@ import { LinkContainer } from 'react-router-bootstrap';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useAdminLogoutMutation } from '../../slices/adminApiSlice.js';
-import { logout } from '../../slices/adminAuthSlice.js';
+import { logout } from '../../slices/authSlice.js';
 
 const AdminHeader = () => {
-  const { adminInfo } = useSelector((state) => state.adminAuth);
+  const { adminInfo } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [logoutApiCall] = useAdminLogoutMutation();
