@@ -72,7 +72,11 @@ const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
         lastTimeRefreshTokenGeneratedAt = `${differenceInDays} ${differenceInDays > 1 ? 'days' : 'day'} ago`;
     }
     try {
-        res.json({ ...integrationInfo.toObject(), lastTimeRefreshTokenGeneratedAt });
+        if (integrationInfo) {
+            res.json({ ...integrationInfo.toObject(), lastTimeRefreshTokenGeneratedAt });
+          } else {
+            res.status(404).json({ message: 'Integration information not found' });
+          }
     } catch (error) {
         console.error('Decryption error:', error);
         res.status(500).json({ message: 'Error decrypting password' });
