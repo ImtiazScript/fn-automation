@@ -11,7 +11,8 @@ import {
   fetchAllUsers,
   updateUser,
   blockUserHelper,
-  unBlockUserHelper
+  unBlockUserHelper,
+  activateUserHelper
 } from "../utils/adminHelpers.js";
 
 /*
@@ -38,6 +39,7 @@ const authAdmin = asyncHandler(async (req, res) => {
       name: admin.name,
       email: admin.email,
       isAdmin: admin.isAdmin,
+      isActive: admin.isActive,
     };
     res.status(200).json(verifiedAdminData);
   }
@@ -87,6 +89,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      isActive: user.isActive,
     };
     res.status(201).json(registeredUserData);
   } else {
@@ -155,6 +158,20 @@ const getAllUsers = asyncHandler(async (req, res) => {
   }
 });
 
+const activateUser = asyncHandler(async (req, res) => {
+  const userId = req.body.userId;
+  if (!userId) {
+    throw new BadRequestError("UserId not received in request - User activation failed.");
+  }
+  const userActivationProcess = await activateUserHelper(userId);
+  const responseMessage = userActivationProcess.message;
+  if (userActivationProcess.success) {
+    res.status(201).json({ message: responseMessage });
+  } else {
+    throw new BadRequestError(responseMessage);
+  }
+});
+
 const blockUser = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   if (!userId) {
@@ -210,4 +227,5 @@ export {
   blockUser,
   unBlockUser,
   updateUserData,
+  activateUser,
 };

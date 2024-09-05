@@ -31,6 +31,8 @@ const Hero = () => {
                 Welcome back {userInfo.name}{' '}
               </h2>
               <p className="text-center mb-4"> Email: {userInfo.email} </p>
+              {!userInfo.isActive ? (<>
+                <p className="text-center mb-4"> Admin needs to activate your profile before you can use the system, please reach out to admin: biolaajibola21@gmail.com </p></>) : (<> </>)}
               <div className="d-flex"></div>
             </>
           ) : (

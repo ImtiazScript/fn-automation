@@ -2,7 +2,7 @@ import User from "../models/userModel.js";
 
 const fetchAllUsers = async () => {
   try {
-    const users = await User.find({}, { name: 1, email: 1, blocked: 1 });
+    const users = await User.find({}, { name: 1, email: 1, blocked: 1, isActive: 1, isAdmin: 1 });
 
     return users;
   } catch (error) {
@@ -32,6 +32,21 @@ const blockUserHelper = async (userId) => {
   } catch (error) {
     console.error("Error blocking user:", error);
 
+    throw error;
+  }
+};
+
+const activateUserHelper = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return { success: false, message: "User not found." };
+    }
+    user.isActive = true;
+    await user.save();
+    return { success: true, message: "User activated successfully." };
+  } catch (error) {
+    console.error("Error activating user:", error);
     throw error;
   }
 };
@@ -83,4 +98,4 @@ const updateUser = async (userData) => {
   }
 };
 
-export { fetchAllUsers, blockUserHelper, unBlockUserHelper, updateUser };
+export { fetchAllUsers, blockUserHelper, unBlockUserHelper, updateUser, activateUserHelper };

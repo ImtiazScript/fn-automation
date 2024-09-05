@@ -5,6 +5,7 @@ import {
   useBlockUserMutation,
   useUnblockUserMutation,
   useUpdateUserByAdminMutation,
+  useActivateUserMutation,
 } from '../../slices/adminApiSlice';
 
 const UsersDataTable = ({ users }) => {
@@ -23,6 +24,10 @@ const UsersDataTable = ({ users }) => {
   const [userIdToUpdate, setUserIdToUpdate] = useState('');
   const [userNameToUpdate, setUserNameToUpdate] = useState('');
   const [userEmailToUpdate, setUserEmailToUpdate] = useState('');
+
+  const [userIdToActivate, setUserIdToActivate] = useState(null);
+  const [showActivateConfirmation, setShowActivateConfirmation] = useState(false);
+  const [activateUser, { isActivateLoading }] = useActivateUserMutation();
 
   const handleSearch = (event) => {
     setSearchQuery(event.target.value);
@@ -45,6 +50,18 @@ const UsersDataTable = ({ users }) => {
       toast.success('User Blocked Successfully.');
       setUserIdToBlock(null); // Clear the user ID to block
       setShowBlockingConfirmation(false); // Close the blocking confirmation dialog
+      window.location.reload();
+    } catch (err) {
+      toast.error(err?.data?.errors[0]?.message || err?.error);
+    }
+  };
+
+  const handleActivateUser = async () => {
+    try {
+      const responseFromApiCall = await activateUser({ userId: userIdToActivate });
+      toast.success('User Activated Successfully.');
+      setUserIdToActivate(null);
+      setShowActivateConfirmation(false);
       window.location.reload();
     } catch (err) {
       toast.error(err?.data?.errors[0]?.message || err?.error);
@@ -95,12 +112,12 @@ const UsersDataTable = ({ users }) => {
       <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Update</th>
-            <th>Block</th>
-            <th>Unblock</th>
+            <th className="text-center align-middle">#</th>
+            <th className="text-center align-middle">Name</th>
+            <th className="text-center align-middle">Email</th>
+            <th className="text-center align-middle">Update</th>
+            <th className="text-center align-middle">Block</th>
+            <th className="text-center align-middle">Status</th>
           </tr>
         </thead>
         <tbody>
@@ -109,42 +126,48 @@ const UsersDataTable = ({ users }) => {
               <td>{index + 1}</td>
               <td>{user.name}</td>
               <td>{user.email}</td>
-              <td>
+              <td className="text-center align-middle">
                 <Button
                   type="button"
                   variant="primary"
+                  size="sm"
                   className="mt-3"
                   onClick={() => handleOpenUpdateModal(user)}
                 >
                   Update
                 </Button>
               </td>
-              <td>
+              <td className="text-center align-middle">
                 <Button
                   type="button"
-                  variant="danger"
+                  variant={user.blocked ? 'success' : 'danger'}
+                  size="sm"
                   className="mt-3"
-                  disabled={user.blocked}
                   onClick={() => {
-                    setUserIdToBlock(user._id);
-                    setShowBlockingConfirmation(true);
+                    if (user.blocked) {
+                      setUserIdToActivate(user._id);
+                      setShowActivateConfirmation(true);
+                    } else {
+                      setUserIdToBlock(user._id);
+                      setShowBlockingConfirmation(true);
+                    }
                   }}
                 >
-                  Block
+                  {user.blocked ? 'Unblock' : 'Block'}
                 </Button>
               </td>
-              <td>
+              <td className="text-center align-middle">
                 <Button
                   type="button"
-                  variant="success"
+                  variant={user.isActive ? 'success' : 'danger'}
+                  size="sm"
                   className="mt-3"
-                  disabled={!user.blocked}
+                  disabled={user.isActive}
                   onClick={() => {
-                    setUserIdToUnblock(user._id);
-                    setShowUnblockingConfirmation(true);
+
                   }}
                 >
-                  Unblock
+                  {user.isActive ? 'Active' : 'Activate'}
                 </Button>
               </td>
             </tr>
@@ -190,6 +213,32 @@ const UsersDataTable = ({ users }) => {
             disabled={isBlockingLoading}
           >
             {isBlockingLoading ? 'Blocking...' : 'Block'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Activating Confirmation Dialog */}
+      <Modal
+        show={showActivateConfirmation}
+        onHide={() => setShowActivateConfirmation(false)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Activate</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to activate this user?</Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowActivateConfirmation(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleActivateUser}
+            disabled={isActivateLoading}
+          >
+            {isActivateLoading ? 'Activating...' : 'Activate'}
           </Button>
         </Modal.Footer>
       </Modal>

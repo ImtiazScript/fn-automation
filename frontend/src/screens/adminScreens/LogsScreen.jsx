@@ -12,7 +12,7 @@ const LogsScreen = () => {
     try {
       const fetchData = async () => {
         const responseFromApiCall = await logsDataFromAPI();
-        const logsArray = responseFromApiCall.data.logs;
+        const logsArray = responseFromApiCall?.data?.logs;
         setLogsData(logsArray);
       };
       fetchData();
