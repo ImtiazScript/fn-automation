@@ -4,7 +4,7 @@
 import asyncHandler from "express-async-handler";
 import CronModel from "../models/cronModel.js";
 import UserModel from "../models/userModel.js";
-import { BadRequestError } from "base-error-handler";
+import { BadRequestError, NotAuthorizedError } from "base-error-handler";
 import winston, { Logger, format } from "winston";
 
 /*
@@ -14,9 +14,9 @@ import winston, { Logger, format } from "winston";
 */
 const addCron = asyncHandler(async (req, res) => {
   try {
-    const { userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, status, deleted } = req.body;
+    const { centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, status, deleted } = req.body;
     const cron = await CronModel.create({
-      userId: userId,
+      userId: req.user.userId,
       centerZip: centerZip,
       cronStartAt: cronStartAt,
       cronEndAt: cronEndAt,
@@ -44,18 +44,21 @@ const addCron = asyncHandler(async (req, res) => {
    # Access: PRIVATE
   */
 const updateCron = asyncHandler(async (req, res) => {
-  const { cronId, userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, typesOfWorkOrder, status, deleted } = req.body;
+  const { cronId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, typesOfWorkOrder, status, deleted } = req.body;
   if (!cronId) {
     throw new BadRequestError("Cron id is missing in the request - cron updating failed.");
   }
 
+  // Find the existing cron by Id
+  const cronExist = await CronModel.findOne({ cronId });
+  if (req.user && !req.user.isAdmin && req.user.userId !== cronExist.userId) {
+    throw new NotAuthorizedError("Authorization Error - you do not have permission to update this cron");
+  }
+
   try {
-    // Find the existing cron by Id
-    const cronExist = await CronModel.findOne({ cronId });
     if (cronExist) {
       // Update only the fields that are provided in the request
       const updatedFields = {};
-      if (userId !== undefined) updatedFields.userId = userId;
       if (centerZip !== undefined) updatedFields.centerZip = centerZip;
       if (cronStartAt !== undefined) updatedFields.cronStartAt = cronStartAt;
       if (cronEndAt !== undefined) updatedFields.cronEndAt = cronEndAt;
@@ -88,12 +91,8 @@ const updateCron = asyncHandler(async (req, res) => {
   */
 const getAllCrons = asyncHandler(async (req, res) => {
   try {
-    const requestingUser = await UserModel.findById(req.user._id);
-    const isAdmin = requestingUser.isAdmin;
-    const userId = requestingUser.userId;
-
     // Build match conditionally based on user role
-    const matchCondition = isAdmin ? {} : { userId };
+    const matchCondition = req.user.isAdmin ? {} : { userId: req.user.userId };
     const cronsData = await CronModel.aggregate([
         {
             $match: matchCondition // Match based on user role
