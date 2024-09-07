@@ -217,6 +217,32 @@ const updateUserData = asyncHandler(async (req, res) => {
   }
 });
 
+// PUT endpoint to update isFnServiceCompanyAdmin for a specific userId
+const updateFnServiceCompanyAdmin =  asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  // Step 1: Set isFnServiceCompanyAdmin = false for all existing admins
+  await User.updateMany({ isFnServiceCompanyAdmin: true }, { $set: { isFnServiceCompanyAdmin: false } });
+
+  // Step 2: Find and update the specific user by userId to set isFnServiceCompanyAdmin = true
+  const user = await User.findOneAndUpdate(
+    { userId: userId }, // Find the user by userId
+    { $set: { isFnServiceCompanyAdmin: true } }, // Update isFnServiceCompanyAdmin to true
+    { new: true } // Return the updated user
+  );
+
+  // Step 3: Check if the user exists
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  res.status(200).json({
+    message: `User: ${user.name} is now the service company admin`,
+    user,
+  });
+});
+
 export {
   authAdmin,
   registerAdmin,
@@ -228,4 +254,5 @@ export {
   unBlockUser,
   updateUserData,
   activateUser,
+  updateFnServiceCompanyAdmin,
 };

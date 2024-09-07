@@ -37,6 +37,10 @@ const userSchema = mongoose.Schema({
         type: Number,
         unique: true
     },
+    isFnServiceCompanyAdmin: {
+        type: Boolean,
+        default: false
+    },
     deleted: {
         type: Boolean,
         required: false
