@@ -11,7 +11,7 @@ import {
 } from "../../controllers/logsController.js";
 
 //* ==================== Logs Routes ====================
-router.get("/get-logs", requireAuth, verifyActiveUser, verifyAdmin, getLogs);
+router.get("/get-logs/from/:fromDate/until/:untilDate/page/:page", requireAuth, verifyActiveUser, verifyAdmin, getLogs);
 router.get("/get-log/:id", requireAuth, verifyActiveUser, verifyAdmin, getLogById);
 
 export default router;

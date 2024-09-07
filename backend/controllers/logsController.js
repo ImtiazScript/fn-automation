@@ -11,14 +11,16 @@ import winston, { Logger, format } from "winston";
  */
 const getLogs = asyncHandler(async (req, res) => {
   try {
+    const { fromDate, untilDate, page } = req.params;
     // Define the log model based on the MongoDB collection schema
     const Log = mongoose.models.Log || mongoose.model('Log', new mongoose.Schema({}, { strict: false, collection: 'server_logs' }));
     // Define the query options
-    const from = req.body.from ? new Date(req.body.from) : new Date(new Date() - 24 * 60 * 60 * 1000);
-    const until = req.body.until ? new Date(req.body.until) : new Date();
-    const start = req.body.start ? parseInt(req.body.start) : 0;
+    const from = (fromDate && fromDate !== '0') ? new Date(fromDate) : new Date(new Date() - 168 * 60 * 60 * 1000);
+    const until = (untilDate && untilDate !== '0') ? new Date(untilDate) : new Date();
     const limit = req.body.limit ? parseInt(req.body.limit) : 50;
+    const start = page > 1 ? (page - 1) * limit : 0;
     const sort = { timestamp: -1 }; // Sort by latest first
+
     const totalLogs = await Log.countDocuments({ timestamp: { $gte: from, $lte: until } });
     // Query the logs from MongoDB
     const logs = await Log.find({ timestamp: { $gte: from, $lte: until } })

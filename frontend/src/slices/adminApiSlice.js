@@ -77,8 +77,8 @@ export const adminApiSlice = apiSlice.injectEndpoints({
             })
         }),
         getLogs: builder.mutation({
-            query: () => ({
-                url: ADMIN_LOGS_DATA_FETCH_URL,
+            query: (params) => ({
+                url: `/api/v1/logs/get-logs/from/${params.from}/until/${params.until}/page/${params.currentPage}`,
                 method: 'GET'
             })
         }),
