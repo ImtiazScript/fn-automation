@@ -5,7 +5,7 @@ import logger from '../config/logger/winston-logger/loggerConfig.js';
 // Cron job to delete logs older than 7 days, runs every day at 23:55
 cron.schedule('55 */23 * * *', async () => {
     const currentDateTime = new Date().toLocaleString();
-    logger.info(`Older than 7 days log deletion cron running at: ${currentDateTime}`);
+    logger.info(`CLEAN LOG:: Older than 7 days log deletion cron running at: ${currentDateTime}`);
 
     try {
         // Calculate the date 7 days ago
@@ -18,12 +18,12 @@ cron.schedule('55 */23 * * *', async () => {
         const result = await Log.deleteMany({ timestamp: { $lt: sevenDaysAgo } });
 
         if (result.deletedCount > 0) {
-            logger.info(`Successfully deleted ${result.deletedCount} logs older than 7 days at: ${currentDateTime}`);
+            logger.info(`CLEAN LOG:: Successfully deleted ${result.deletedCount} logs older than 7 days at: ${currentDateTime}`);
         } else {
-            logger.info(`No logs found older than 7 days at: ${currentDateTime}`);
+            logger.info(`CLEAN LOG:: No logs found older than 7 days at: ${currentDateTime}`);
         }
     } catch (error) {
-        logger.error(`Failed to delete logs: ${error.message}`);
+        logger.error(`CLEAN LOG:: Failed to delete logs: ${error.message}`);
     }
 });
 

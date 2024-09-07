@@ -9,7 +9,7 @@ class IntegrationService {
   // Fetch integration details by userId
   async fetchIntegration() {
     try {
-      const integration = await Integration.findOne({ userId: this.userId }).select('-fnPassword');;
+      const integration = await Integration.findOne({ userId: this.userId });
       return integration;
     } catch (error) {
       throw new Error('Error fetching integrations');
@@ -33,7 +33,7 @@ class IntegrationService {
     const headers = {};
 
     try {
-      const result = await makeRequest('POST', url, headers, data);
+      const result = await makeRequest('POST', url, headers, data, {}, this.userId);
 
       if (result && result.access_token) {
         const { id: fnUserId } = result.user;

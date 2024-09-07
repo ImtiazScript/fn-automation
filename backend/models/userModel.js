@@ -60,15 +60,6 @@ userSchema.pre('save', async function (next) {
 
 });
 
-// ============= Field Nation Password Hashing Middleware =============
-userSchema.pre('save', async function (next) {
-    if( !this.isModified('fnPassword') ) {
-        next();
-    }
-    const salt = await bcrypt.genSalt(10);
-    this.fnPassword = await bcrypt.hash(this.fnPassword, salt);
-});
-
 // ============= Password Verifying Function =============
 userSchema.methods.matchPassword = async function (userProvidedPassword) {
     const validPassword = await bcrypt.compare(userProvidedPassword, this.password);

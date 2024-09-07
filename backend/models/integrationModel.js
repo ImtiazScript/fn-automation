@@ -23,10 +23,6 @@ const integrationSchema = mongoose.Schema({
         type: String,
         required: false
     },
-    fnPassword: {
-        type: String,
-        required: false
-    },
     fnAccessToken: {
         type: String,
         required: false
@@ -35,7 +31,7 @@ const integrationSchema = mongoose.Schema({
         type: String,
         required: false,
     },
-    fnRefreshTokenGeneratedAt: {
+    lastConnectedAt: {
         type: Date,
         required: false,
     },
@@ -53,23 +49,6 @@ const integrationSchema = mongoose.Schema({
 });
 
 integrationSchema.plugin(AutoIncrement, { inc_field: 'integrationId' });
-
-
-// ============= Field Nation Password Hashing Middleware =============
-integrationSchema.pre('save', async function (next) {
-    if( !this.isModified('fnPassword') ) {
-        next();
-    }
-    const salt = await bcrypt.genSalt(10);
-    this.fnPassword = await bcrypt.hash(this.fnPassword, salt);
-});
-
-
-// ============= Password Verifying Function =============
-integrationSchema.methods.matchPassword = async function (userProvidedPassword) {
-    const validPassword = await bcrypt.compare(userProvidedPassword, this.fnPassword);
-    return validPassword;
-};
 
 const Integration = mongoose.model('Integration', integrationSchema);
 export default Integration;

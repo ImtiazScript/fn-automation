@@ -110,12 +110,30 @@ const UsersDataTable = ({ users }) => {
 
   return (
     <>
+      <BootstrapForm className="mb-4"> {/* Add margin-bottom */}
+        <div className="row mt-3 align-items-center">
+          <div className="col-auto">
+            <BootstrapForm.Label>Search users:</BootstrapForm.Label>
+          </div>
+          <div className="col">
+            <BootstrapForm.Control
+              style={{ width: '100%' }}
+              value={searchQuery}
+              type="text"
+              placeholder="Enter Name or email..."
+              onChange={handleSearch}
+            />
+          </div>
+        </div>
+      </BootstrapForm>
       <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th className="text-center align-middle">#</th>
+            <th className="text-center align-middle">#ID</th>
             <th className="text-center align-middle">Name</th>
-            <th className="text-center align-middle d-none d-md-table-cell">Email</th>
+            <th className="text-center align-middle d-none d-md-table-cell">
+              Email
+            </th>
             <th className="text-center align-middle">Update</th>
             <th className="text-center align-middle">Block</th>
             <th className="text-center align-middle">Status</th>
@@ -124,7 +142,9 @@ const UsersDataTable = ({ users }) => {
         <tbody>
           {filteredUsers.map((user, index) => (
             <tr key={index}>
-              <td>{index + 1}</td>
+              <td className="text-center align-middle">
+                {user.userId}
+              </td>
               <td>
                 <div style={{ textAlign: 'center' }}>
                   <img
@@ -141,14 +161,26 @@ const UsersDataTable = ({ users }) => {
                       borderRadius: '50%',
                       objectFit: 'cover',
                       marginBottom: '2px', // Space between image and name
+                      border: user.isAdmin ? '3px solid #FFD700' : 'none',
                     }}
                   />
-                  <div style={{ fontSize: '11px', fontWeight: 'bold' }}>
+                  <div
+                    style={{
+                      fontSize: '9px',
+                      color: user.isAdmin ? '#FFD700' : '#555', // Gold color for admin, gray for provider
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {user.isAdmin ? 'Admin' : 'Provider'}
+                  </div>
+                  <div style={{ fontSize: '12px', fontWeight: 'bold' }}>
                     {user.name}
                   </div>
                 </div>
               </td>
-              <td className="text-center align-middle d-none d-md-table-cell">{user.email}</td>
+              <td className="text-center align-middle d-none d-md-table-cell">
+                {user.email}
+              </td>
               <td className="text-center align-middle">
                 <Button
                   type="button"
@@ -198,22 +230,6 @@ const UsersDataTable = ({ users }) => {
           ))}
         </tbody>
       </Table>
-
-      <BootstrapForm>
-        <BootstrapForm.Group
-          className="mt-3"
-          controlId="exampleForm.ControlInput1"
-        >
-          <BootstrapForm.Label>Search users:</BootstrapForm.Label>
-          <BootstrapForm.Control
-            style={{ width: '500px' }}
-            value={searchQuery}
-            type="text"
-            placeholder="Enter Name or email........"
-            onChange={handleSearch}
-          />
-        </BootstrapForm.Group>
-      </BootstrapForm>
 
       {/* Blocking Confirmation Dialog */}
       <Modal

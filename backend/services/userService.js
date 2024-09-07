@@ -10,6 +10,16 @@ class UserService {
       throw new Error('Error fetching users');
     }
   }
+
+    // Fetch all users and exclude the password field
+    async fetchAllAdminUsers() {
+      try {
+        const admins = await User.find({isAdmin: true}).select('-password'); // Exclude the password field
+        return admins;
+      } catch (error) {
+        throw new Error('Error fetching users');
+      }
+    }
 }
 
 export default UserService;
