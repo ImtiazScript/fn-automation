@@ -7,7 +7,7 @@ import { makeRequest } from "../utils/integrationHelpers.js";
 
 // Will run every 30 minutes
 cron.schedule('*/30 * * * *', async () => {
-// cron.schedule('* * * * *', async () => {
+    // cron.schedule('* * * * *', async () => {
     const currentDateTime = new Date().toLocaleString();
     logger.info(`WORKORDER REQUEST:: Work order finding and requesting cron running at: ${currentDateTime}`);
     const userService = new UserService();
@@ -46,7 +46,7 @@ cron.schedule('*/30 * * * *', async () => {
             const currentDateTime = new Date();
             const cronStartAt = new Date(cron.cronStartAt);
             const cronEndAt = new Date(cron.cronEndAt);
-            const withinCronContractTime =  (currentDateTime >= cronStartAt && currentDateTime <= cronEndAt);
+            const withinCronContractTime = (currentDateTime >= cronStartAt && currentDateTime <= cronEndAt);
 
             // silently avoid, if a cron is not active or deleted or cron contract ended
             if (cron.status == 'inactive' || cron.deleted || !withinCronContractTime) {
@@ -63,37 +63,68 @@ cron.schedule('*/30 * * * *', async () => {
                 .map(typeId => `&f_type_of_work[]=${encodeURIComponent(typeId)}`)
                 .join('');
 
-            // Config available work orders url
-            const workordersAvailableUrl = `${process.env.FN_BASE_URL}/api/rest/v2/workorders?default_view=list&f_=false&list=workorders_available&sticky=1&view=list&f_location_radius=${locationRadius}&per_page=${process.env.WORKORDERS_PER_PAGE}&f_sc_providers[]=${integration.fnUserId}${typeOfWorkQueryParams}&access_token=${adminAccessToken}`;
+            // Get available work orders
+            const workOrdersResponse = await getAvailableWorkOrders(user.userId, integration.fnUserId, locationRadius, typeOfWorkQueryParams, adminAccessToken);
 
-            // Get available work orders response
-            const workOrdersResponse = await makeRequest('GET', workordersAvailableUrl, {}, {}, {}, user.userId);
-
-            if (workOrdersResponse) {
-                if (workOrdersResponse.metadata && workOrdersResponse.metadata.total > 0) {
-                    logger.info(`WORKORDER REQUEST:: ${workOrdersResponse.metadata.total} available work orders found for user id: ${user.userId}`);
-                } else {
-                    logger.info(`WORKORDER REQUEST:: No available work orders found for user id: ${user.userId}`);
-                }
+            if (workOrdersResponse && workOrdersResponse.results) {
                 workOrdersResponse.results.map((workOrder) => {
-                    console.log(`------ workOrderId: ${workOrder.id}`);
-                    if (workOrder.pay.type == 'hourly' && workOrder.pay.units >= 2) {
-                        if (typeof workOrder.schedule.exact !== 'undefined') {
-                            console.log('--- Work order schedule is exact: ', workOrder.schedule);
-                        }
-                        if (typeof workOrder.schedule.range !== 'undefined') {
-                            if (workOrder.schedule.range.type === 'range') {
-                                console.log('--- Work order schedule is range: ', workOrder.schedule);
-                            }
-                            if (workOrder.schedule.range.type === 'business') {
-                                console.log('--- Work order schedule is business: ', workOrder.schedule);
-                            }
-                        }
-                    }
+                    // DO LOGIC & CONDITIONS TO REQUEST A WORK ORDER
+                    // if (workOrder.pay.type == 'hourly' && workOrder.pay.units >= 2) {
+                    //     if (typeof workOrder.schedule.exact !== 'undefined') {
+                    //         console.log('--- Work order schedule is exact: ', workOrder.schedule);
+                    //     }
+                    //     if (typeof workOrder.schedule.range !== 'undefined') {
+                    //         if (workOrder.schedule.range.type === 'range') {
+                    //             console.log('--- Work order schedule is range: ', workOrder.schedule);
+                    //         }
+                    //         if (workOrder.schedule.range.type === 'business') {
+                    //             console.log('--- Work order schedule is business: ', workOrder.schedule);
+                    //         }
+                    //     }
+                    // }
+
+                    // Request work order
+                    requestWorkOrders(workOrder.id, cron.cronId, user.userId, integration.fnUserId, adminAccessToken);
                 })
             }
         });
     });
 });
+
+// Function to get available work orders
+async function getAvailableWorkOrders(userId, fnUserId, locationRadius, typeOfWorkQueryParams, adminAccessToken) {
+    const availableWorkOrdersUrl = `${process.env.FN_BASE_URL}/api/rest/v2/workorders?default_view=list&f_=false&list=workorders_available&sticky=1&view=list&f_location_radius=${locationRadius}&per_page=${process.env.WORKORDERS_PER_PAGE}&f_sc_providers[]=${fnUserId}${typeOfWorkQueryParams}&access_token=${adminAccessToken}`;
+
+    try {
+        const response = await makeRequest('GET', availableWorkOrdersUrl, {}, {}, {}, userId);
+        if (response && response.metadata && response.metadata.total > 0) {
+            logger.info(`WORKORDER REQUEST:: ${response.metadata.total} available work orders found for user id: ${userId}, field nation user id: ${fnUserId}`);
+        } else {
+            logger.info(`WORKORDER REQUEST:: No available work orders found for user id: ${userId}, field nation user id: ${fnUserId}`);
+        }
+        return response;
+    } catch (error) {
+        logger.error(`WORKORDER REQUEST:: Failed to get available work orders for user ${userId}, field nation user id: ${fnUserId} : ${error.message}`);
+        return null;
+    }
+}
+
+// Function to request a work order
+async function requestWorkOrders(workOrderId, cronId, userId, actingUserId, accessToken) {
+    const requestUrl = `${process.env.FN_BASE_URL}/api/rest/v2/workorders/${workOrderId}/requests?acting_user_id=${actingUserId}&access_token=${accessToken}`;
+    const cronService = new CronService(userId);
+
+    try {
+        const response = await makeRequest('POST', requestUrl, {}, {}, {}, userId);
+        if (response) {
+            logger.info(`WORKORDER REQUEST:: Work order ${workOrderId} successfully requested by user id: ${userId}, field nation user id: ${actingUserId}`);
+
+            // Update the cron's total requested and requested work order IDs
+            await cronService.updateRequestedWorkOrders(cronId, workOrderId);
+        }
+    } catch (error) {
+        logger.error(`WORKORDER REQUEST:: Failed to request work order ${workOrderId} for user id: ${userId}, field nation user id: ${actingUserId} : ${error.message}`);
+    }
+}
 
 export default cron;
