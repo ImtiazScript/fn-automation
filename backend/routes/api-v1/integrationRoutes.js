@@ -6,12 +6,12 @@ import {
   refreshConnection
 } from '../../controllers/integrationController.js';
 import { requireAuth } from "base-auth-handler";
-import verifyUser from "../../middlewares/verifyUserMiddleware.js";
+import verifyActiveUser from "../../middlewares/verifyActiveUserMiddleware.js";
 const router = express.Router();
 
 //* ==================== Integration Management Routes ====================
-router.post('/connect-account', requireAuth, verifyUser, connectAccount);
-router.post('/refresh-connection/:id', requireAuth, verifyUser, refreshConnection);
-router.get('/:id', requireAuth, verifyUser, getIntegrationInfoByUserId);
+router.post('/connect-account', requireAuth, verifyActiveUser, connectAccount);
+router.post('/refresh-connection/:id', requireAuth, verifyActiveUser, refreshConnection);
+router.get('/:id', requireAuth, verifyActiveUser, getIntegrationInfoByUserId);
 
 export default router;

@@ -15,45 +15,45 @@ import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 
 const LogsDataTable = () => {
+  const [getLogs] = useGetLogsMutation();
+  const [getLogById] = useGetLogByIdMutation();
+
+  const limit = 50;
   const [searchQuery, setSearchQuery] = useState('');
   const [logs, setLogs] = useState([]);
   const [totalLogs, setTotalLogs] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(10); // Number of logs per page
+  const totalPages = Math.ceil(totalLogs / limit);
+
   const [fromDate, setFromDate] = useState('');
   const [untilDate, setUntilDate] = useState('');
+
   const [selectedLog, setSelectedLog] = useState(null);
   const [showLogDetailModal, setShowLogDetailModal] = useState(false);
 
-  const [getLogs] = useGetLogsMutation();
-  const [getLogById] = useGetLogByIdMutation();
+  const fetchLogs = async () => {
+    try {
+      const from = fromDate ? new Date(fromDate).toISOString() : 0;
+      const until = untilDate ? new Date(untilDate).toISOString() : 0;
+
+      const response = await getLogs({from, until, currentPage}).unwrap();
+      setLogs(response.logs);
+      setTotalLogs(response.totalLogs);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
     fetchLogs();
   }, [currentPage, fromDate, untilDate]);
 
-  const fetchLogs = async () => {
-    try {
-      const from = fromDate ? new Date(fromDate).toISOString() : undefined;
-      const until = untilDate ? new Date(untilDate).toISOString() : undefined;
-
-      const response = await getLogs({
-        from,
-        until,
-        limit,
-        start: (currentPage - 1) * limit,
-      }).unwrap();
-      setLogs(response.logs);
-      setTotalLogs(response.totalLogs); // Assuming `totalLogs` is sent in the API response
-    } catch (error) {
-      toast.error('Failed to fetch logs.');
-      console.error(error);
-    }
-  };
-
   const handleSearch = (event) => {
     setSearchQuery(event.target.value);
   };
+  const filteredLogs = logs.filter((log) =>
+    log.message.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   const handleLogDetailClick = async (logId) => {
     try {
@@ -66,11 +66,18 @@ const LogsDataTable = () => {
     }
   };
 
-  const filteredLogs = logs.filter((log) =>
-    log.message.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  const totalPages = Math.ceil(totalLogs / limit);
+  const getLogLevelColor = (level) => {
+    switch (level) {
+      case 'info':
+        return 'green';
+      case 'error':
+        return 'red';
+      case 'debug':
+        return 'blue';
+      default:
+        return 'black';
+    }
+  };
 
   return (
     <>
@@ -95,7 +102,7 @@ const LogsDataTable = () => {
           <BootstrapForm.Control
             value={searchQuery}
             type="text"
-            placeholder="Search: Enter Log Message"
+            placeholder="Filter logs: Enter Log Message"
             onChange={handleSearch}
           />
         </Col>
@@ -104,7 +111,7 @@ const LogsDataTable = () => {
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              <th>Index</th>
+              <th className="text-center align-middle d-none d-md-table-cell">Index</th>
               <th>Time</th>
               <th>Level</th>
               <th>Message</th>
@@ -114,12 +121,16 @@ const LogsDataTable = () => {
           <tbody>
             {filteredLogs.map((log, index) => (
               <tr key={log._id}>
+                {/* Descending order index */}
+                <td>{(totalLogs - index) - (currentPage - 1) * limit}</td>
+                {/* Ascending order index */}
                 {/* <td>{index + 1 + (currentPage - 1) * limit}</td> */}
-                <td>{log._id}</td>
+                {/* log id index */}
+                {/* //<td className="text-center align-middle d-none d-md-table-cell">{log._id}</td> */}
                 <td>
                   {format(new Date(log.timestamp), 'MM/dd/yyyy HH:mm:ss')}
                 </td>
-                <td>{log.level}</td>
+                <td style={{ color: getLogLevelColor(log.level) }}>{log.level}</td>
                 <td>{log.message}</td>
                 <td>
                   <Button
@@ -175,14 +186,14 @@ const LogsDataTable = () => {
                 {format(new Date(selectedLog.timestamp), 'MM/dd/yyyy HH:mm:ss')}
               </p>
               <p>
-                <strong>Level:</strong> {selectedLog.level}
+                <strong>Level:</strong> <span style={{ color: getLogLevelColor(selectedLog.level) }}>{selectedLog.level}</span>
               </p>
               <p>
                 <strong>Message:</strong> {selectedLog.message}
               </p>
               <p>
                 <strong>Meta:</strong>{' '}
-                {selectedLog.meta ? selectedLog.meta : 'N/A'}
+                {selectedLog.meta && selectedLog.meta.metadata ? JSON.stringify(selectedLog.meta.metadata) : 'N/A'}
               </p>
               <p>
                 <strong>Host Name:</strong> {selectedLog.hostname}

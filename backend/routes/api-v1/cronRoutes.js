@@ -9,6 +9,7 @@ import {
 } from "../../controllers/cronController.js";
 import verifyAdmin from "../../middlewares/verifyAdminMiddleware.js";
 import verifyUser from "../../middlewares/verifyUserMiddleware.js";
+import verifyActiveUser from "../../middlewares/verifyActiveUserMiddleware.js";
 import {
   addCronDataValidation,
   updateCronDataValidation,
@@ -16,9 +17,9 @@ import {
 const router = express.Router();
 
 //* ==================== Crons Management Routes ====================
-router.post("/add-cron", requireAuth, verifyUser, addCronDataValidation, validateRequest, addCron);
-router.get("/get-cron/:cronId", requireAuth, verifyUser, getCron);
-router.put("/update-cron", requireAuth, verifyUser, updateCronDataValidation, validateRequest, updateCron);
-router.get("/get-crons", requireAuth, verifyUser, getAllCrons);
+router.post("/add-cron", requireAuth, verifyActiveUser, addCronDataValidation, validateRequest, addCron);
+router.get("/get-cron/:cronId", requireAuth, verifyActiveUser, getCron);
+router.put("/update-cron", requireAuth, verifyActiveUser, updateCronDataValidation, validateRequest, updateCron);
+router.get("/get-crons", requireAuth, verifyActiveUser, getAllCrons);
 
 export default router;

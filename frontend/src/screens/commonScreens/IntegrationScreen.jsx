@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Form, Button, Badge } from 'react-bootstrap';
+import { Form, Button, Badge, Alert } from 'react-bootstrap';
 import FormContainer from '../../components/FormContainer';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -11,6 +11,7 @@ import Loader from '../../components/Loader';
 
 const IntegrationScreen = () => {
   const [userId, setUserId] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [integrationStatus, setIntegrationStatus] = useState('');
@@ -28,6 +29,7 @@ const IntegrationScreen = () => {
   useEffect(() => {
     if (userInfo.userId) {
       setUserId(userInfo.userId);
+      setIsAdmin(userInfo.isAdmin);
       getIntegrationInfoByUserId(userInfo.userId);
     }
   }, [userInfo, getIntegrationInfoByUserId]);
@@ -44,6 +46,12 @@ const IntegrationScreen = () => {
 
   const submitHandler = async (e) => {
     e.preventDefault();
+
+    if (!userName || !password) {
+      toast.error('Please fill in both username and password!');
+      return;
+    }
+  
     try {
       const data = {
         userId: userId,
@@ -56,59 +64,24 @@ const IntegrationScreen = () => {
       toast.success('Account connected successfully');
     } catch (err) {
       setIntegrationStatus('Not Connected');
-      toast.error(err?.data?.message || err?.error);
+      toast.error('Unable to connect. Please ensure your Field Nation username and password are both entered correctly.');
     }
   };
 
   return (
     <FormContainer>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
+      <h3 style={{ margin: '5px auto 10px auto' }}>Connect to Field Nation</h3>
+      <Badge
+        pill
+        bg={integrationStatus === 'Connected' ? 'success' : 'danger'}
+        style={{ margin: '5px auto 10px auto' }}
       >
-        <h3
-          style={{ marginTop: '5px', marginLeft: '100px', marginBottom: '5px' }}
-        >
-          Connect to Field Nation
-        </h3>
-        {integrationStatus && (
-          <Badge
-            pill
-            bg={integrationStatus === 'Connected' ? 'success' : 'danger'}
-            style={{ marginRight: '20px' }}
-          >
-            {integrationStatus}
-          </Badge>
-        )}
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginTop: '10px',
-          marginBottom: '10px',
-          marginRight: '20px',
-        }}
-      >
-        {lastTimeRefreshTokenGeneratedAt ? (
-          <>
-            <span style={{ fontWeight: '500', marginRight: '5px' }}>
-              Last Connected:
-            </span>
-            {lastTimeRefreshTokenGeneratedAt}
-          </>
-        ) : (
-          <>
-            <span style={{ fontWeight: '500', marginRight: '5px' }}>
-              Not connected yet
-            </span>
-          </>
-        )}
-      </div>
+        {lastTimeRefreshTokenGeneratedAt && integrationStatus === 'Connected'
+          ? integrationStatus + ': ' + lastTimeRefreshTokenGeneratedAt
+          : integrationStatus
+          ? integrationStatus
+          : 'Not connected yet'}
+      </Badge>
 
       <Form onSubmit={submitHandler}>
         <Form.Group className="my-2" controlId="userName">
@@ -131,12 +104,22 @@ const IntegrationScreen = () => {
           />
         </Form.Group>
 
-        <Button type="submit" variant="primary" className="mt-3">
-          Connect
-        </Button>
+        <div className="d-flex justify-content-end">
+          <Button type="submit" variant="primary" className="mt-3">
+            Connect
+          </Button>
+        </div>
       </Form>
 
       {(isLoading || isLoadingIntegrationInfo) && <Loader />}
+      {/* Info Box */}
+      <div style={{ marginTop: '20px' }}>
+        <Alert variant="info">
+          {isAdmin
+            ? 'As a service company admin, you must connect once every 14 days to maintain your connection.'
+            : 'As a service company managed provider, you should connect your account with Field Nation at least once.'}
+        </Alert>
+      </div>
     </FormContainer>
   );
 };

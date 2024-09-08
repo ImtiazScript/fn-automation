@@ -22,6 +22,10 @@ const userSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
+    isActive: {
+        type: Boolean,
+        default: false
+    },
     isAdmin: {
         type: Boolean,
         default: false
@@ -32,6 +36,10 @@ const userSchema = mongoose.Schema({
     userId: {
         type: Number,
         unique: true
+    },
+    isFnServiceCompanyAdmin: {
+        type: Boolean,
+        default: false
     },
     deleted: {
         type: Boolean,
@@ -54,15 +62,6 @@ userSchema.pre('save', async function (next) {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 
-});
-
-// ============= Field Nation Password Hashing Middleware =============
-userSchema.pre('save', async function (next) {
-    if( !this.isModified('fnPassword') ) {
-        next();
-    }
-    const salt = await bcrypt.genSalt(10);
-    this.fnPassword = await bcrypt.hash(this.fnPassword, salt);
 });
 
 // ============= Password Verifying Function =============

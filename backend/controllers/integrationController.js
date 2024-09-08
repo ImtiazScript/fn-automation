@@ -6,8 +6,8 @@ import Integration from "../models/integrationModel.js";
 import IntegrationService from '../services/integrationService.js';
 
 const connectAccount = asyncHandler(async (req, res) => {
-    const { username, password, userId } = req.body;
-    const integrationService = new IntegrationService(userId);
+    const { username, password } = req.body;
+    const integrationService = new IntegrationService(req.user.userId);
     const url = process.env.FN_AUTHENTICATE_URL;
     const data = new URLSearchParams({
         username,
@@ -19,31 +19,30 @@ const connectAccount = asyncHandler(async (req, res) => {
     const headers = {};
 
     try {
-        const result = await makeRequest('POST', url, headers, data);
+        const result = await makeRequest('POST', url, headers, data, {}, req.user.userId);
 
         if (result && result.access_token) {
             const { id: fnUserId } = result.user;
-            let integration = await Integration.findOne({ fnUserId });
+            let integration = await Integration.findOne({ userId: req.user.userId });
             if (integration) {
                 // Update existing integration
+                integration.fnUserId = fnUserId;
                 integration.fnUserName = username;
-                integration.fnPassword = password;
-                integration.fnAccessToken = result.access_token;
-                integration.fnRefreshToken = result.refresh_token;
-                integration.fnRefreshTokenGeneratedAt = new Date();
+                integration.lastConnectedAt = new Date();
                 integration.integrationStatus = 'Connected';
             } else {
                 // Create new integration
                 integration = new Integration({
-                    userId: userId,  // assuming you're attaching the logged-in user
+                    userId: req.user.userId,  // assuming you're attaching the logged-in user
                     fnUserId,
                     fnUserName: username,
-                    fnPassword: password,
-                    fnAccessToken: result.access_token,
-                    fnRefreshToken: result.refresh_token,
-                    fnRefreshTokenGeneratedAt: new Date(),
+                    lastConnectedAt: new Date(),
                     integrationStatus: 'Connected',
                 });
+            }
+            if (req.user && req.user.isAdmin) {
+                integration.fnAccessToken = result.access_token;
+                integration.fnRefreshToken = result.refresh_token;
             }
             await integration.save();
             res.status(200).json(integration);
@@ -63,16 +62,20 @@ const connectAccount = asyncHandler(async (req, res) => {
 const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
     const integrationInfo = await Integration.findOne({userId: req.params.id});
     let lastTimeRefreshTokenGeneratedAt = '';
-    if (integrationInfo && integrationInfo.fnRefreshTokenGeneratedAt) {
-        const fnRefreshTokenGeneratedAt = new Date(integrationInfo.fnRefreshTokenGeneratedAt);
+    if (integrationInfo && integrationInfo.lastConnectedAt) {
+        const lastConnectedAt = new Date(integrationInfo.lastConnectedAt);
         const currentDate = new Date();
 
-        const differenceInTime = currentDate - fnRefreshTokenGeneratedAt;
+        const differenceInTime = currentDate - lastConnectedAt;
         let differenceInDays = Math.floor(differenceInTime / (1000 * 3600 * 24));
         lastTimeRefreshTokenGeneratedAt = `${differenceInDays} ${differenceInDays > 1 ? 'days' : 'day'} ago`;
     }
     try {
-        res.json({ ...integrationInfo.toObject(), lastTimeRefreshTokenGeneratedAt });
+        if (integrationInfo) {
+            res.json({ ...integrationInfo.toObject(), lastTimeRefreshTokenGeneratedAt });
+          } else {
+            res.status(404).json({ message: 'Integration information not found' });
+          }
     } catch (error) {
         console.error('Decryption error:', error);
         res.status(500).json({ message: 'Error decrypting password' });
@@ -95,7 +98,7 @@ const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
     const headers = {};
 
     try {
-        const result = await makeRequest('POST', url, headers, data);
+        const result = await makeRequest('POST', url, headers, data, {}, req.user.userId);
 
         if (result && result.access_token) {
             const { id: fnUserId } = result.user;

@@ -12,8 +12,9 @@ import connectDB from "./config/dbConfig.js";
 import logger from "./config/logger/winston-logger/loggerConfig.js";
 
 // Crons
-import './crons/updateAccessTokens.js';
+import './crons/cleanOlderLogs.js';
 import './crons/findAndRequestWorkOrders.js';
+import './crons/updateAccessTokens.js';
 
 
 const startServer = () => {

@@ -59,10 +59,6 @@ const adminUserUpdateDataValidation = [
 ];
 
 const addCronDataValidation = [
-  body("userId")
-    .trim()
-    .notEmpty()
-    .withMessage("A valid User Id must be provided."),
   body("centerZip").trim().notEmpty().withMessage("A valid centerZip must be provided."),
   body("cronStartAt")
     .isISO8601()
@@ -70,16 +66,15 @@ const addCronDataValidation = [
   body("cronEndAt")
     .isISO8601()
     .withMessage("Provide a valid cronEndAt in ISO 8601 format."),
-  body("workingWindowStartAt")
-    .isISO8601()
-    .withMessage("Provide a valid workingWindowStartAt in ISO 8601 format."),
+    body("workingWindowStartAt")
+    .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)  // Regex for time in HH:mm format
+    .withMessage("Provide a valid workingWindowStartAt in HH:mm format."),
   body("workingWindowEndAt")
-    .isISO8601()
-    .withMessage("Provide a valid workingWindowEndAt in ISO 8601 format."),
+    .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)  // Regex for time in HH:mm format
+    .withMessage("Provide a valid workingWindowEndAt in HH:mm format."),
   body("drivingRadius").trim().notEmpty().withMessage("A valid drivingRadius must be provided."),
-  body("totalRequested").trim().notEmpty().withMessage("A valid totalRequested must be provided."),
+  body("typesOfWorkOrder").notEmpty().withMessage("Types of work orders must be provided."),
   body("status").trim().notEmpty().withMessage("A valid status must be provided."),
-  body("deleted").trim().notEmpty().withMessage("A valid deleted must be provided."),
 ];
 
 const updateCronDataValidation = [
@@ -104,15 +99,14 @@ const updateCronDataValidation = [
     .isISO8601()
     .withMessage("Provide a valid cronEndAt in ISO 8601 format."),
 
-  body("workingWindowStartAt")
+    body("workingWindowStartAt")
     .optional()
-    .isISO8601()
-    .withMessage("Provide a valid workingWindowStartAt in ISO 8601 format."),
-
+    .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)  // Regex for time in HH:mm format
+    .withMessage("Provide a valid workingWindowStartAt in HH:mm format."),
   body("workingWindowEndAt")
     .optional()
-    .isISO8601()
-    .withMessage("Provide a valid workingWindowEndAt in ISO 8601 format."),
+    .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)  // Regex for time in HH:mm format
+    .withMessage("Provide a valid workingWindowEndAt in HH:mm format."),
 
   body("drivingRadius")
     .optional()

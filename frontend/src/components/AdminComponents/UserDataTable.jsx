@@ -5,7 +5,9 @@ import {
   useBlockUserMutation,
   useUnblockUserMutation,
   useUpdateUserByAdminMutation,
+  useActivateUserMutation,
 } from '../../slices/adminApiSlice';
+import { PROFILE_IMAGE_DIR_PATH, PROFILE_PLACEHOLDER_IMAGE_NAME } from '../../utils/constants';
 
 const UsersDataTable = ({ users }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,6 +25,10 @@ const UsersDataTable = ({ users }) => {
   const [userIdToUpdate, setUserIdToUpdate] = useState('');
   const [userNameToUpdate, setUserNameToUpdate] = useState('');
   const [userEmailToUpdate, setUserEmailToUpdate] = useState('');
+
+  const [userIdToActivate, setUserIdToActivate] = useState(null);
+  const [showActivateConfirmation, setShowActivateConfirmation] = useState(false);
+  const [activateUser, { isActivateLoading }] = useActivateUserMutation();
 
   const handleSearch = (event) => {
     setSearchQuery(event.target.value);
@@ -45,6 +51,18 @@ const UsersDataTable = ({ users }) => {
       toast.success('User Blocked Successfully.');
       setUserIdToBlock(null); // Clear the user ID to block
       setShowBlockingConfirmation(false); // Close the blocking confirmation dialog
+      window.location.reload();
+    } catch (err) {
+      toast.error(err?.data?.errors[0]?.message || err?.error);
+    }
+  };
+
+  const handleActivateUser = async () => {
+    try {
+      const responseFromApiCall = await activateUser({ userId: userIdToActivate });
+      toast.success('User Activated Successfully.');
+      setUserIdToActivate(null);
+      setShowActivateConfirmation(false);
       window.location.reload();
     } catch (err) {
       toast.error(err?.data?.errors[0]?.message || err?.error);
@@ -92,59 +110,120 @@ const UsersDataTable = ({ users }) => {
 
   return (
     <>
+      <BootstrapForm className="mb-4"> {/* Add margin-bottom */}
+        <div className="row mt-3 align-items-center">
+          <div className="col-auto">
+            <BootstrapForm.Label>Search users:</BootstrapForm.Label>
+          </div>
+          <div className="col">
+            <BootstrapForm.Control
+              style={{ width: '100%' }}
+              value={searchQuery}
+              type="text"
+              placeholder="Enter Name or email..."
+              onChange={handleSearch}
+            />
+          </div>
+        </div>
+      </BootstrapForm>
       <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Update</th>
-            <th>Block</th>
-            <th>Unblock</th>
+            <th className="text-center align-middle">#ID</th>
+            <th className="text-center align-middle">Name</th>
+            <th className="text-center align-middle d-none d-md-table-cell">
+              Email
+            </th>
+            <th className="text-center align-middle">Update</th>
+            <th className="text-center align-middle">Block</th>
+            <th className="text-center align-middle">Status</th>
           </tr>
         </thead>
         <tbody>
           {filteredUsers.map((user, index) => (
             <tr key={index}>
-              <td>{index + 1}</td>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
+              <td className="text-center align-middle">
+                {user.userId}
+              </td>
               <td>
+                <div style={{ textAlign: 'center' }}>
+                  <img
+                    src={
+                      user.profileImageName
+                        ? PROFILE_IMAGE_DIR_PATH + user.profileImageName
+                        : PROFILE_IMAGE_DIR_PATH +
+                          PROFILE_PLACEHOLDER_IMAGE_NAME
+                    }
+                    alt={user.name}
+                    style={{
+                      width: '50px',
+                      height: '50px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      marginBottom: '2px', // Space between image and name
+                      border: user.isAdmin ? '3px solid #FFD700' : 'none',
+                    }}
+                  />
+                  <div
+                    style={{
+                      fontSize: '9px',
+                      color: user.isAdmin ? '#FFD700' : '#555', // Gold color for admin, gray for provider
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {user.isAdmin ? 'Admin' : 'Provider'}
+                  </div>
+                  <div style={{ fontSize: '12px', fontWeight: 'bold' }}>
+                    {user.name}
+                  </div>
+                </div>
+              </td>
+              <td className="text-center align-middle d-none d-md-table-cell">
+                {user.email}
+              </td>
+              <td className="text-center align-middle">
                 <Button
                   type="button"
                   variant="primary"
+                  size="sm"
                   className="mt-3"
                   onClick={() => handleOpenUpdateModal(user)}
                 >
                   Update
                 </Button>
               </td>
-              <td>
+              <td className="text-center align-middle">
                 <Button
                   type="button"
-                  variant="danger"
+                  variant={user.blocked ? 'success' : 'danger'}
+                  size="sm"
                   className="mt-3"
-                  disabled={user.blocked}
                   onClick={() => {
-                    setUserIdToBlock(user._id);
-                    setShowBlockingConfirmation(true);
+                    if (user.blocked) {
+                      setUserIdToUnblock(user._id);
+                      setShowUnblockingConfirmation(true);
+                    } else {
+                      setUserIdToBlock(user._id);
+                      setShowBlockingConfirmation(true);
+                    }
                   }}
                 >
-                  Block
+                  {user.blocked ? 'Unblock' : 'Block'}
                 </Button>
               </td>
-              <td>
+              <td className="text-center align-middle">
                 <Button
                   type="button"
-                  variant="success"
+                  variant={user.isActive ? 'success' : 'danger'}
+                  size="sm"
                   className="mt-3"
-                  disabled={!user.blocked}
+                  disabled={user.isActive}
                   onClick={() => {
-                    setUserIdToUnblock(user._id);
-                    setShowUnblockingConfirmation(true);
+                    setUserIdToActivate(user._id);
+                    setShowActivateConfirmation(true);
                   }}
                 >
-                  Unblock
+                  {user.isActive ? 'Active' : 'Activate'}
                 </Button>
               </td>
             </tr>
@@ -152,26 +231,11 @@ const UsersDataTable = ({ users }) => {
         </tbody>
       </Table>
 
-      <BootstrapForm>
-        <BootstrapForm.Group
-          className="mt-3"
-          controlId="exampleForm.ControlInput1"
-        >
-          <BootstrapForm.Label>Search users:</BootstrapForm.Label>
-          <BootstrapForm.Control
-            style={{ width: '500px' }}
-            value={searchQuery}
-            type="text"
-            placeholder="Enter Name or email........"
-            onChange={handleSearch}
-          />
-        </BootstrapForm.Group>
-      </BootstrapForm>
-
       {/* Blocking Confirmation Dialog */}
       <Modal
         show={showBlockingConfirmation}
         onHide={() => setShowBlockingConfirmation(false)}
+        className="custom-modal"
       >
         <Modal.Header closeButton>
           <Modal.Title>Confirm Block</Modal.Title>
@@ -194,10 +258,38 @@ const UsersDataTable = ({ users }) => {
         </Modal.Footer>
       </Modal>
 
+      {/* Activating Confirmation Dialog */}
+      <Modal
+        show={showActivateConfirmation}
+        onHide={() => setShowActivateConfirmation(false)}
+        className="custom-modal"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Activate</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to activate this user?</Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowActivateConfirmation(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleActivateUser}
+            disabled={isActivateLoading}
+          >
+            {isActivateLoading ? 'Activating...' : 'Activate'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {/* Un Blocking Confirmation Dialog */}
       <Modal
         show={showUnblockingConfirmation}
         onHide={() => setShowUnblockingConfirmation(false)}
+        className="custom-modal"
       >
         <Modal.Header closeButton>
           <Modal.Title>Confirm Un-Block</Modal.Title>
@@ -221,7 +313,11 @@ const UsersDataTable = ({ users }) => {
       </Modal>
 
       {/* Update User Modal */}
-      <Modal show={showUpdateModal} onHide={() => setShowUpdateModal(false)}>
+      <Modal
+        show={showUpdateModal}
+        onHide={() => setShowUpdateModal(false)}
+        className="custom-modal"
+      >
         <Modal.Header closeButton>
           <Modal.Title>Update User</Modal.Title>
         </Modal.Header>

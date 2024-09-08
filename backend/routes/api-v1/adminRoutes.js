@@ -3,6 +3,7 @@ import express from "express";
 // Reference: https://www.npmjs.com/package/base-auth-handler
 import { requireAuth, validateRequest } from "base-auth-handler";
 import verifyAdmin from "../../middlewares/verifyAdminMiddleware.js";
+import verifyActiveUser from "../../middlewares/verifyActiveUserMiddleware.js";
 import {
   authAdmin,
   registerAdmin,
@@ -13,6 +14,8 @@ import {
   updateUserData,
   blockUser,
   unBlockUser,
+  activateUser,
+  updateFnServiceCompanyAdmin,
 } from "../../controllers/adminController.js";
 import {
   adminSignInDataValidation,
@@ -34,9 +37,11 @@ router
   .put(requireAuth, verifyAdmin, updateAdminProfile);
 
 //* ==================== Admin User Management Routes ====================
-router.post("/get-users", requireAuth, verifyAdmin, getAllUsers);
-router.patch("/block-user", requireAuth, verifyAdmin, adminUserBlockingDataValidation, validateRequest, blockUser);
-router.patch("/unblock-user", requireAuth, verifyAdmin, adminUserBlockingDataValidation, validateRequest, unBlockUser);
-router.put("/update-user", requireAuth, verifyAdmin, adminUserUpdateDataValidation, validateRequest, updateUserData);
+router.post("/get-users", requireAuth, verifyActiveUser,verifyAdmin, getAllUsers);
+router.patch("/activate-user", requireAuth, verifyActiveUser, verifyAdmin, adminUserBlockingDataValidation, validateRequest, activateUser);
+router.patch("/block-user", requireAuth, verifyActiveUser, verifyAdmin, adminUserBlockingDataValidation, validateRequest, blockUser);
+router.patch("/unblock-user", requireAuth, verifyActiveUser, verifyAdmin, adminUserBlockingDataValidation, validateRequest, unBlockUser);
+router.put("/update-user", requireAuth, verifyActiveUser, verifyAdmin, adminUserUpdateDataValidation, validateRequest, updateUserData);
+router.put("/update-admin/:userId", requireAuth, verifyActiveUser, verifyAdmin, validateRequest, updateFnServiceCompanyAdmin);
 
 export default router;

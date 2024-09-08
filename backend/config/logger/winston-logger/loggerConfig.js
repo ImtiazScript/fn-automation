@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import path from "path";
 import winston, { Logger, format } from "winston";
-const { combine, timestamp } = format;
+const { combine, timestamp, metadata, colorize, simple } = format;
 
 // Module to save logs to MongoDB
 import winstonMongoDB from "winston-mongodb";
@@ -14,11 +14,20 @@ import winstonMongoDB from "winston-mongodb";
 // Logger configuration
 const loggerConfiguration = {
   level: "debug",
-  format: combine(timestamp(), winston.format.json()),
+  format: combine(
+    timestamp(),
+    metadata({ fillExcept: ['message', 'level', 'timestamp', 'label', 'service'] }),
+    winston.format.json()
+  ),
   defaultMeta: { service: process.env.APPLICATION_NAME },
   transports: [
-    // // Logger instance to log to console (terminal)
-    // new winston.transports.Console(),
+    // Logger instance to log to console (terminal)
+    new winston.transports.Console({
+      format: combine(
+        colorize(), // Adds color to the console output for better readability
+        simple() // Use simple format for console logging (timestamp and message)
+      ),
+    }),
 
     // // Logger instance to log errors to log file in logs directory.
     // new winston.transports.File({
@@ -38,7 +47,10 @@ const loggerConfiguration = {
       options: { useUnifiedTopology: true },
       collection: "server_logs",
       storeHost: true,
-      format: combine(timestamp(), winston.format.json()),
+      format: combine(
+        timestamp(),
+        metadata({ fillExcept: ['message', 'level', 'timestamp', 'label', 'service'] }),
+        winston.format.json()),
     }),
   ],
 };

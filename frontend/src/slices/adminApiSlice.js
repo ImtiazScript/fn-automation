@@ -9,6 +9,7 @@ import {
     ADMIN_UNBLOCK_USER_URL,
     ADMIN_UPDATE_USER_URL,
     ADMIN_LOGS_DATA_FETCH_URL,
+    ADMIN_ACTIVATE_USER_URL,
 } from '../utils/constants.js';
 
 export const adminApiSlice = apiSlice.injectEndpoints({
@@ -76,8 +77,8 @@ export const adminApiSlice = apiSlice.injectEndpoints({
             })
         }),
         getLogs: builder.mutation({
-            query: () => ({
-                url: ADMIN_LOGS_DATA_FETCH_URL,
+            query: (params) => ({
+                url: `/api/v1/logs/get-logs/from/${params.from}/until/${params.until}/page/${params.currentPage}`,
                 method: 'GET'
             })
         }),
@@ -85,6 +86,13 @@ export const adminApiSlice = apiSlice.injectEndpoints({
             query: (logId) => ({
                 url: `/api/v1/logs/get-log/${logId}`,
                 method: 'GET'
+            })
+        }),
+        activateUser: builder.mutation({
+            query: (data) => ({
+                url: ADMIN_ACTIVATE_USER_URL,
+                method: 'PATCH',
+                body: data
             })
         }),
 
@@ -104,4 +112,5 @@ export const {
     useGetLogsMutation,
     useGetLogByIdMutation,
     useGetTypesOfWorkOrderMutation,
+    useActivateUserMutation,
 } = adminApiSlice;

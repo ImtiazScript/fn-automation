@@ -11,7 +11,8 @@ import {
   fetchAllUsers,
   updateUser,
   blockUserHelper,
-  unBlockUserHelper
+  unBlockUserHelper,
+  activateUserHelper
 } from "../utils/adminHelpers.js";
 
 /*
@@ -38,6 +39,7 @@ const authAdmin = asyncHandler(async (req, res) => {
       name: admin.name,
       email: admin.email,
       isAdmin: admin.isAdmin,
+      isActive: admin.isActive,
     };
     res.status(200).json(verifiedAdminData);
   }
@@ -87,6 +89,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      isActive: user.isActive,
     };
     res.status(201).json(registeredUserData);
   } else {
@@ -155,6 +158,20 @@ const getAllUsers = asyncHandler(async (req, res) => {
   }
 });
 
+const activateUser = asyncHandler(async (req, res) => {
+  const userId = req.body.userId;
+  if (!userId) {
+    throw new BadRequestError("UserId not received in request - User activation failed.");
+  }
+  const userActivationProcess = await activateUserHelper(userId);
+  const responseMessage = userActivationProcess.message;
+  if (userActivationProcess.success) {
+    res.status(201).json({ message: responseMessage });
+  } else {
+    throw new BadRequestError(responseMessage);
+  }
+});
+
 const blockUser = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   if (!userId) {
@@ -200,6 +217,32 @@ const updateUserData = asyncHandler(async (req, res) => {
   }
 });
 
+// PUT endpoint to update isFnServiceCompanyAdmin for a specific userId
+const updateFnServiceCompanyAdmin =  asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  // Step 1: Set isFnServiceCompanyAdmin = false for all existing admins
+  await User.updateMany({ isFnServiceCompanyAdmin: true }, { $set: { isFnServiceCompanyAdmin: false } });
+
+  // Step 2: Find and update the specific user by userId to set isFnServiceCompanyAdmin = true
+  const user = await User.findOneAndUpdate(
+    { userId: userId }, // Find the user by userId
+    { $set: { isFnServiceCompanyAdmin: true } }, // Update isFnServiceCompanyAdmin to true
+    { new: true } // Return the updated user
+  );
+
+  // Step 3: Check if the user exists
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  res.status(200).json({
+    message: `User: ${user.name} is now the service company admin`,
+    user,
+  });
+});
+
 export {
   authAdmin,
   registerAdmin,
@@ -210,4 +253,6 @@ export {
   blockUser,
   unBlockUser,
   updateUserData,
+  activateUser,
+  updateFnServiceCompanyAdmin,
 };
