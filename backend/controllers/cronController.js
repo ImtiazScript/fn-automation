@@ -14,7 +14,7 @@ import winston, { Logger, format } from "winston";
 */
 const addCron = asyncHandler(async (req, res) => {
   try {
-    const { centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, status, deleted } = req.body;
+    const { centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, typesOfWorkOrder } = req.body;
     const cron = await CronModel.create({
       userId: req.user.userId,
       centerZip: centerZip,
@@ -23,10 +23,10 @@ const addCron = asyncHandler(async (req, res) => {
       workingWindowStartAt: workingWindowStartAt,
       workingWindowEndAt: workingWindowEndAt,
       drivingRadius: drivingRadius,
-      requestedWoIds: requestedWoIds,
-      totalRequested: totalRequested,
-      status: status,
-      deleted: deleted
+      requestedWoIds: [],
+      totalRequested: 0,
+      typesOfWorkOrder: typesOfWorkOrder,
+      status: 'active',
     });
     if (cron) {
       res.status(201).json({ message: "Successfully added the cron", cron: cron });

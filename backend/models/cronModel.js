@@ -25,11 +25,11 @@ const cronSchema = mongoose.Schema({
         required: true,
     },
     workingWindowStartAt: {
-        type: Date,
+        type: String,
         required: true
     },
     workingWindowEndAt: {
-        type: Date,
+        type: String,
         required: true,
     },
     drivingRadius: {

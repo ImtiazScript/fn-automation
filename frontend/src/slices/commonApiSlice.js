@@ -17,6 +17,13 @@ export const commonApiSlice = apiSlice.injectEndpoints({
                 method: 'GET'
             })
         }),
+        addCron: builder.mutation({
+            query: (data) => ({
+                url: '/api/v1/crons/add-cron',
+                method: 'POST',
+                body: data
+            })
+        }),
         updateCronByCronId: builder.mutation({
             query: (data) => ({
                 url: '/api/v1/crons/update-cron',
@@ -36,6 +43,7 @@ export const commonApiSlice = apiSlice.injectEndpoints({
 export const {
     useGetCronsDataMutation,
     useGetCronDataMutation,
+    useAddCronMutation,
     useUpdateCronByCronIdMutation,
     useGetTypesOfWorkOrderMutation,
 } = commonApiSlice;

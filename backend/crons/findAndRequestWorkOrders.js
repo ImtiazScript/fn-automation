@@ -64,13 +64,17 @@ cron.schedule('*/30 * * * *', async () => {
                 .join('');
 
             // Config available work orders url
-            const workordersAvailableUrl = `${process.env.FN_BASE_URL}/v2/workorders?default_view=list&f_=false&list=workorders_available&sticky=1&view=list&f_location_radius[]=${locationRadius}&per_page=${process.env.WORKORDERS_PER_PAGE}${typeOfWorkQueryParams}&access_token=${adminAccessToken}`;
+            const workordersAvailableUrl = `${process.env.FN_BASE_URL}/api/rest/v2/workorders?default_view=list&f_=false&list=workorders_available&sticky=1&view=list&f_location_radius=${locationRadius}&per_page=${process.env.WORKORDERS_PER_PAGE}&f_sc_providers[]=${integration.fnUserId}${typeOfWorkQueryParams}&access_token=${adminAccessToken}`;
 
             // Get available work orders response
             const workOrdersResponse = await makeRequest('GET', workordersAvailableUrl, {}, {}, {}, user.userId);
 
             if (workOrdersResponse) {
-                console.log('------ Total number of work orders:', workOrdersResponse.total);
+                if (workOrdersResponse.metadata && workOrdersResponse.metadata.total > 0) {
+                    logger.info(`WORKORDER REQUEST:: ${workOrdersResponse.metadata.total} available work orders found for user id: ${user.userId}`);
+                } else {
+                    logger.info(`WORKORDER REQUEST:: No available work orders found for user id: ${user.userId}`);
+                }
                 workOrdersResponse.results.map((workOrder) => {
                     console.log(`------ workOrderId: ${workOrder.id}`);
                     if (workOrder.pay.type == 'hourly' && workOrder.pay.units >= 2) {

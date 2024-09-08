@@ -79,6 +79,17 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
     return dateTime ? format(new Date(dateTime), 'MM/dd/yyyy hh:mm a') : 'N/A';
   };
 
+  const formatTime = (timeString) => {
+    if (!timeString) {
+      return;
+    }
+    const [hours, minutes] = timeString.split(':');
+    const date = new Date();
+    date.setHours(hours, minutes);
+  
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  };
+
   const formatDateForInput = (dateTime) => {
     return dateTime ? format(new Date(dateTime), "yyyy-MM-dd'T'HH:mm") : '';
   };
@@ -156,11 +167,11 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
                 </ListGroup.Item>
                 <ListGroup.Item>
                   <strong>Work Start:</strong>{' '}
-                  {formatDateTime(cron.workingWindowStartAt)}
+                  {formatTime(cron.workingWindowStartAt)}
                 </ListGroup.Item>
                 <ListGroup.Item>
                   <strong>Work End:</strong>{' '}
-                  {formatDateTime(cron.workingWindowEndAt)}
+                  {formatTime(cron.workingWindowEndAt)}
                 </ListGroup.Item>
               </ListGroup>
             </Col>
@@ -269,18 +280,18 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
             <BootstrapForm.Group controlId="workingWindowStartAt">
               <BootstrapForm.Label>Working Window Start At</BootstrapForm.Label>
               <BootstrapForm.Control
-                type="datetime-local"
+                type="time"
                 name="workingWindowStartAt"
-                value={formatDateForInput(formData.workingWindowStartAt)}
+                value={formData.workingWindowStartAt}
                 onChange={handleChange}
               />
             </BootstrapForm.Group>
             <BootstrapForm.Group controlId="workingWindowEndAt">
               <BootstrapForm.Label>Working Window End At</BootstrapForm.Label>
               <BootstrapForm.Control
-                type="datetime-local"
+                type="time"
                 name="workingWindowEndAt"
-                value={formatDateForInput(formData.cronStartAt)}
+                value={formData.workingWindowEndAt}
                 onChange={handleChange}
               />
             </BootstrapForm.Group>
