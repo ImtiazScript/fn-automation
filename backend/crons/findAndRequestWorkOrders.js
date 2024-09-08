@@ -46,6 +46,7 @@ cron.schedule('*/30 * * * *', async () => {
             const currentDateTime = new Date();
             const cronStartAt = new Date(cron.cronStartAt);
             const cronEndAt = new Date(cron.cronEndAt);
+            const cronCenterZip = cron.centerZip ? cron.centerZip : '';
             const withinCronContractTime = (currentDateTime >= cronStartAt && currentDateTime <= cronEndAt);
 
             // silently avoid, if a cron is not active or deleted or cron contract ended
@@ -64,7 +65,7 @@ cron.schedule('*/30 * * * *', async () => {
                 .join('');
 
             // Get available work orders
-            const workOrdersResponse = await getAvailableWorkOrders(user.userId, integration.fnUserId, locationRadius, typeOfWorkQueryParams, adminAccessToken);
+            const workOrdersResponse = await getAvailableWorkOrders(user.userId, integration.fnUserId, cronCenterZip, locationRadius, typeOfWorkQueryParams, adminAccessToken);
 
             if (workOrdersResponse && workOrdersResponse.results) {
                 workOrdersResponse.results.map((workOrder) => {
@@ -92,8 +93,8 @@ cron.schedule('*/30 * * * *', async () => {
 });
 
 // Function to get available work orders
-async function getAvailableWorkOrders(userId, fnUserId, locationRadius, typeOfWorkQueryParams, adminAccessToken) {
-    const availableWorkOrdersUrl = `${process.env.FN_BASE_URL}/api/rest/v2/workorders?default_view=list&f_=false&list=workorders_available&sticky=1&view=list&f_location_radius=${locationRadius}&per_page=${process.env.WORKORDERS_PER_PAGE}&f_sc_providers[]=${fnUserId}${typeOfWorkQueryParams}&access_token=${adminAccessToken}`;
+async function getAvailableWorkOrders(userId, fnUserId, centerZip, locationRadius, typeOfWorkQueryParams, adminAccessToken) {
+    const availableWorkOrdersUrl = `${process.env.FN_BASE_URL}/api/rest/v2/workorders?default_view=list&f_=false&f_location_radius[]=${centerZip}&f_location_radius[]=${locationRadius}&list=workorders_available&sticky=1&view=list&per_page=${process.env.WORKORDERS_PER_PAGE}&f_sc_providers[]=${fnUserId}${typeOfWorkQueryParams}&access_token=${adminAccessToken}`;
 
     try {
         const response = await makeRequest('GET', availableWorkOrdersUrl, {}, {}, {}, userId);
