@@ -22,6 +22,6 @@ router.post("/add-cron", requireAuth, verifyActiveUser, addCronDataValidation, v
 router.get("/get-cron/:cronId", requireAuth, verifyActiveUser, getCron);
 router.put("/update-cron", requireAuth, verifyActiveUser, updateCronDataValidation, validateRequest, updateCron);
 router.get("/get-crons", requireAuth, verifyActiveUser, getAllCrons);
-router.delete("/delete-cron/:cronId", requireAuth, verifyActiveUser, verifyAdmin, validateRequest, deleteCron);
+router.delete("/delete-cron/:cronId", requireAuth, verifyActiveUser, validateRequest, deleteCron);
 
 export default router;

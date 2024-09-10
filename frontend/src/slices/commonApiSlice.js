@@ -37,7 +37,7 @@ export const commonApiSlice = apiSlice.injectEndpoints({
                 method: 'GET'
             })
         }),
-        deleteUser: builder.mutation({
+        deleteCron: builder.mutation({
             query: (params) => ({
                 url: `/api/v1/crons/delete-cron/${params.cronId}`,
                 method: 'DELETE',
@@ -52,5 +52,5 @@ export const {
     useAddCronMutation,
     useUpdateCronByCronIdMutation,
     useGetTypesOfWorkOrderMutation,
-    useDeleteUserMutation,
+    useDeleteCronMutation,
 } = commonApiSlice;

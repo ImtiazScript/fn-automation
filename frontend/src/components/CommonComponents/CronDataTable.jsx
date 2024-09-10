@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Button, Table, Modal, Badge, Form as BootstrapForm } from 'react-bootstrap';
-import { useAddCronMutation } from '../../slices/commonApiSlice';
+import { useAddCronMutation, useDeleteCronMutation } from '../../slices/commonApiSlice';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Select from 'react-select';
@@ -84,6 +84,21 @@ const CronsDataTable = ({ crons, typesOfWorkOrder }) => {
       toast.error('Failed to add cron.');
     }
   };
+
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [cronIdToDelete, setCronIdToDelete] = useState(null); // Track the user ID to delete
+  const [deleteCron, { isDeleteLoading }] = useDeleteCronMutation();
+  const handleDelete = async () => {
+    try {
+      const responseFromApiCall = await deleteCron({ cronId: cronIdToDelete });
+      toast.success('Cron Deleted Successfully.');
+      setCronIdToDelete(null);
+      setShowDeleteConfirmation(false);
+      window.location.reload();
+    } catch (err) {
+      toast.error(err?.data?.errors[0]?.message || err?.error);
+    }
+  };
   // const filteredCrons = crons;
   const filteredCrons = crons.filter((cron) =>
     cron.userDetails.name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -151,11 +166,18 @@ const CronsDataTable = ({ crons, typesOfWorkOrder }) => {
                   </Link>
                 </td>
                 <td>
-                  <Link to={`/crons/delete-cron/${cron.cronId}`}>
-                    <Button type="button" variant="danger" className="mt-3">
-                      Delete
-                    </Button>
-                  </Link>
+                  <Button
+                    type="button"
+                    variant={'danger'}
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => {
+                      setCronIdToDelete(cron._id);
+                      setShowDeleteConfirmation(true);
+                    }}
+                  >
+                    Delete
+                  </Button>
                 </td>
               </tr>
             ))}
@@ -272,6 +294,33 @@ const CronsDataTable = ({ crons, typesOfWorkOrder }) => {
             disabled={!isFormValid}
           >
             Save
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <Modal
+        show={showDeleteConfirmation}
+        onHide={() => setShowDeleteConfirmation(false)}
+        className="custom-modal"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to delete this cron?</Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowDeleteConfirmation(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleDelete}
+            disabled={isDeleteLoading}
+          >
+            {isDeleteLoading ? 'Deleting...' : 'Delete'}
           </Button>
         </Modal.Footer>
       </Modal>

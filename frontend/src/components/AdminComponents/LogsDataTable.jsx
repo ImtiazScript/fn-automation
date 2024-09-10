@@ -131,7 +131,9 @@ const LogsDataTable = () => {
                   {format(new Date(log.timestamp), 'MM/dd/yyyy HH:mm:ss')}
                 </td>
                 <td style={{ color: getLogLevelColor(log.level) }}>{log.level}</td>
-                <td>{log.message}</td>
+                <td>{log.message.length > 500 
+                ? log.message.substring(0, 500) + '...' 
+                : log.message}</td>
                 <td>
                   <Button
                     type="button"

@@ -96,7 +96,13 @@ const getAllCrons = asyncHandler(async (req, res) => {
     const matchCondition = req.user.isAdmin ? {} : { userId: req.user.userId };
     const cronsData = await CronModel.aggregate([
         {
-            $match: matchCondition // Match based on user role
+            $match: {
+              ...matchCondition,
+              $or: [
+                { deleted: { $exists: false } },
+                { deleted: false }
+              ]
+            } // Match based on user role
           },
       {
         $lookup: {
@@ -189,12 +195,13 @@ const deleteCron = asyncHandler(async (req, res) => {
   }
 
   try {
-    const cron = await CronModel.findOne({ cronId });
+    const cron = await CronModel.findById(cronId);
     if (req.user && !req.user.isAdmin && req.user.userId !== cron.userId) {
       throw new NotAuthorizedError("Authorization Error - you do not have permission to delete this cron");
     }
     cron.deleted = true;
     cron.save();
+    res.status(204).json({ message: 'Successfully deleted the cron' });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete cron", error: error.message });
   }
