@@ -130,7 +130,7 @@ const getAdminProfile = asyncHandler(async (req, res) => {
     */
 const updateAdminProfile = asyncHandler(async (req, res) => {
   // Find the user data with user id in the request object
-  const admin = await UserModel.findById(req.user._id);
+  const admin = await User.findById(req.user._id);
   if (admin) {
     // Update the admin-user with new data if found or keep the old data itself.
     admin.name = req.body.name || admin.name;
@@ -139,11 +139,15 @@ const updateAdminProfile = asyncHandler(async (req, res) => {
     if (req.body.password) {
       admin.password = req.body.password;
     }
+    if (req.file) {
+      admin.profileImageName = req.file.filename || admin.profileImageName;
+    }
     const updatedAdminData = await admin.save();
     // Send the response with updated user data
     res.status(200).json({
       name: updatedAdminData.name,
       email: updatedAdminData.email,
+      profileImageName: updatedAdminData.profileImageName,
     });
   } else {
     // If requested admin was not found in db, return error

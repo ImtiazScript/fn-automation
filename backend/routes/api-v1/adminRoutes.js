@@ -4,6 +4,7 @@ import express from "express";
 import { requireAuth, validateRequest } from "base-auth-handler";
 import verifyAdmin from "../../middlewares/verifyAdminMiddleware.js";
 import verifyActiveUser from "../../middlewares/verifyActiveUserMiddleware.js";
+import { multerUploadUserProfile } from "../../config/multerConfig.js";
 import {
   authAdmin,
   registerAdmin,
@@ -35,7 +36,12 @@ router.post("/logout", logoutAdmin);
 router
   .route("/profile")
   .get(requireAuth, verifyAdmin, getAdminProfile)
-  .put(requireAuth, verifyAdmin, updateAdminProfile);
+  .put(
+    requireAuth, 
+    verifyAdmin, 
+    multerUploadUserProfile.single("profileImage"),
+    updateAdminProfile
+  );
 
 //* ==================== Admin User Management Routes ====================
 router.post("/get-users/page/:page", requireAuth, verifyActiveUser,verifyAdmin, getAllUsers);
