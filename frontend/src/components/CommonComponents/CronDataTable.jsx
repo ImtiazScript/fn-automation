@@ -124,6 +124,7 @@ const CronsDataTable = ({ crons, typesOfWorkOrder }) => {
               <th>Total #WO</th>
               <th>Status</th>
               <th>Configure</th>
+              <th>Delete</th>
             </tr>
           </thead>
           <tbody>
@@ -146,6 +147,13 @@ const CronsDataTable = ({ crons, typesOfWorkOrder }) => {
                   <Link to={`/crons/configure-cron/${cron.cronId}`}>
                     <Button type="button" variant="primary" className="mt-3">
                       Configure
+                    </Button>
+                  </Link>
+                </td>
+                <td>
+                  <Link to={`/crons/delete-cron/${cron.cronId}`}>
+                    <Button type="button" variant="danger" className="mt-3">
+                      Delete
                     </Button>
                   </Link>
                 </td>

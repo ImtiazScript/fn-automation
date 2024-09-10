@@ -2,7 +2,19 @@ import User from "../models/userModel.js";
 
 const fetchAllUsers = async () => {
   try {
-    const users = await User.find({}, { name: 1, email: 1, blocked: 1, isActive: 1, isAdmin: 1, profileImageName: 1, userId: 1 });
+    const users = await User.find(
+      { 
+        $or: [
+          { deleted: { $exists: false } },  // Documents where 'deleted' field doesn't exist
+          { deleted: false }                // Documents where 'deleted' is explicitly set to false
+        ]
+      },
+      { name: 1, email: 1, blocked: 1, isActive: 1, isAdmin: 1, profileImageName: 1, userId: 1 });
+
+    // const users = await User.find(
+    //   { deleted: false },  // Condition to filter users where deleted is false
+    //   { password: 0, deleted: 0 }  // Exclude the 'password' and 'deleted' fields
+    // );
 
     return users;
   } catch (error) {
@@ -98,4 +110,19 @@ const updateUser = async (userData) => {
   }
 };
 
-export { fetchAllUsers, blockUserHelper, unBlockUserHelper, updateUser, activateUserHelper };
+const deleteUserHelper = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return { success: false, message: "User not found." };
+    }
+
+    user.deleted = true;
+    await user.save();
+    return { success: true, message: "User deleted successfully." };
+  } catch (error) {
+    return { success: false, message: "Failed to delete user." };
+  }
+};
+
+export { fetchAllUsers, blockUserHelper, unBlockUserHelper, updateUser, activateUserHelper, deleteUserHelper };

@@ -95,7 +95,12 @@ export const adminApiSlice = apiSlice.injectEndpoints({
                 body: data
             })
         }),
-
+        deleteUser: builder.mutation({
+            query: (params) => ({
+                url: `/api/v1/admin/delete-user/${params.userId}`,
+                method: 'DELETE',
+            })
+        }),
     })
 
 })
@@ -113,4 +118,5 @@ export const {
     useGetLogByIdMutation,
     useGetTypesOfWorkOrderMutation,
     useActivateUserMutation,
+    useDeleteUserMutation,
 } = adminApiSlice;

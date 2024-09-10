@@ -5,7 +5,7 @@ class CronService {
     this.userId = userId;
   }
 
-  async fetchCrons() {
+  async fetchAllCrons() {
     try {
       const crons = await Cron.find({ userId: this.userId });
       return crons;
@@ -30,6 +30,22 @@ class CronService {
       throw new Error(`Error updating requested work orders: ${error.message}`);
     }
   }
+
+  async deleteCron(cronId) {
+    try {
+      const cron = await Cron.findOne({cronId});
+      if (!cron) {
+        return { success: false, message: "Cron not found." };
+      }
+      cron.deleted = true;
+      await cron.save();
+      return { success: true, message: "Cron deleted successfully." };
+    } catch (error) {
+      console.error("Error deleting cron", error);
+  
+      throw error;
+    }
+  };
 }
 
 export default CronService

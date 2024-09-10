@@ -6,6 +6,7 @@ import CronModel from "../models/cronModel.js";
 import UserModel from "../models/userModel.js";
 import { BadRequestError, NotAuthorizedError } from "base-error-handler";
 import winston, { Logger, format } from "winston";
+import CronService from '../services/cronService.js';
 
 /*
   # Desc: Add a new cron
@@ -181,9 +182,28 @@ const getCron = asyncHandler(async (req, res) => {
   }
 });
 
+const deleteCron = asyncHandler(async (req, res) => {
+  const { cronId } = req.params;
+  if (!cronId) {
+    throw new BadRequestError("cronId not received in request");
+  }
+
+  try {
+    const cron = await CronModel.findOne({ cronId });
+    if (req.user && !req.user.isAdmin && req.user.userId !== cron.userId) {
+      throw new NotAuthorizedError("Authorization Error - you do not have permission to delete this cron");
+    }
+    cron.deleted = true;
+    cron.save();
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete cron", error: error.message });
+  }
+});
+
 export {
   addCron,
   updateCron,
   getAllCrons,
   getCron,
+  deleteCron,
 };

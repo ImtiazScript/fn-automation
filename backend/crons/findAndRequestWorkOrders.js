@@ -35,7 +35,7 @@ cron.schedule('*/30 * * * *', async () => {
 
         // checking configured crons
         const cronService = new CronService(user.userId);
-        const crons = await cronService.fetchCrons();
+        const crons = await cronService.fetchAllCrons();
         if (crons && !crons.length) {
             logger.info(`WORKORDER REQUEST:: User id: ${user.userId} has no cron configured`);
             return;

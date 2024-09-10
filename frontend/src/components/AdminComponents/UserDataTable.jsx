@@ -6,45 +6,34 @@ import {
   useUnblockUserMutation,
   useUpdateUserByAdminMutation,
   useActivateUserMutation,
+  useDeleteUserMutation,
 } from '../../slices/adminApiSlice';
 import { PROFILE_IMAGE_DIR_PATH, PROFILE_PLACEHOLDER_IMAGE_NAME } from '../../utils/constants';
 
 const UsersDataTable = ({ users }) => {
   const [searchQuery, setSearchQuery] = useState('');
-
-  const [showBlockingConfirmation, setShowBlockingConfirmation] =
-    useState(false); // State for the blocking confirmation dialog
-  const [showUnblockingConfirmation, setShowUnblockingConfirmation] =
-    useState(false); // State for the unblocking confirmation dialog
-
-  const [userIdToDelete, setUserIdToDelete] = useState(null); // Track the user ID to delete
-  const [userIdToBlock, setUserIdToBlock] = useState(null); // Track the user ID to block
-  const [userIdToUnblock, setUserIdToUnblock] = useState(null); // Track the user ID to unblock
-
-  const [showUpdateModal, setShowUpdateModal] = useState(false); // State for the update modal
-  const [userIdToUpdate, setUserIdToUpdate] = useState('');
-  const [userNameToUpdate, setUserNameToUpdate] = useState('');
-  const [userEmailToUpdate, setUserEmailToUpdate] = useState('');
-
-  const [userIdToActivate, setUserIdToActivate] = useState(null);
-  const [showActivateConfirmation, setShowActivateConfirmation] = useState(false);
-  const [activateUser, { isActivateLoading }] = useActivateUserMutation();
-
   const handleSearch = (event) => {
     setSearchQuery(event.target.value);
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [userIdToDelete, setUserIdToDelete] = useState(null); // Track the user ID to delete
+  const [deleteUser, { isDeleteLoading }] = useDeleteUserMutation();
+  const handleDelete = async () => {
+    try {
+      const responseFromApiCall = await deleteUser({ userId: userIdToDelete });
+      toast.success('User Deleted Successfully.');
+      setUserIdToDelete(null);
+      setShowDeleteConfirmation(false);
+      window.location.reload();
+    } catch (err) {
+      toast.error(err?.data?.errors[0]?.message || err?.error);
+    }
+  };
 
+  const [showBlockingConfirmation, setShowBlockingConfirmation] = useState(false);
+  const [userIdToBlock, setUserIdToBlock] = useState(null); // Track the user ID to block
   const [blockUser, { isBlockingLoading }] = useBlockUserMutation();
-  const [unblockUser, { isUnblockingLoading }] = useUnblockUserMutation();
-  const [updateUserByAdmin, { isLoading: isUpdating }] =
-    useUpdateUserByAdminMutation();
-
   const handleBlock = async () => {
     try {
       const responseFromApiCall = await blockUser({ userId: userIdToBlock });
@@ -57,18 +46,9 @@ const UsersDataTable = ({ users }) => {
     }
   };
 
-  const handleActivateUser = async () => {
-    try {
-      const responseFromApiCall = await activateUser({ userId: userIdToActivate });
-      toast.success('User Activated Successfully.');
-      setUserIdToActivate(null);
-      setShowActivateConfirmation(false);
-      window.location.reload();
-    } catch (err) {
-      toast.error(err?.data?.errors[0]?.message || err?.error);
-    }
-  };
-
+  const [showUnblockingConfirmation, setShowUnblockingConfirmation] = useState(false);
+  const [userIdToUnblock, setUserIdToUnblock] = useState(null); // Track the user ID to unblock
+  const [unblockUser, { isUnblockingLoading }] = useUnblockUserMutation();
   const handleUnblock = async () => {
     try {
       const responseFromApiCall = await unblockUser({
@@ -83,13 +63,39 @@ const UsersDataTable = ({ users }) => {
     }
   };
 
+  const [showUpdateModal, setShowUpdateModal] = useState(false); // State for the update modal
+  const [userIdToUpdate, setUserIdToUpdate] = useState('');
+  const [userNameToUpdate, setUserNameToUpdate] = useState('');
+  const [userEmailToUpdate, setUserEmailToUpdate] = useState('');
+
+  const [userIdToActivate, setUserIdToActivate] = useState(null);
+  const [showActivateConfirmation, setShowActivateConfirmation] = useState(false);
+  const [activateUser, { isActivateLoading }] = useActivateUserMutation();
+  const handleActivateUser = async () => {
+    try {
+      const responseFromApiCall = await activateUser({ userId: userIdToActivate });
+      toast.success('User Activated Successfully.');
+      setUserIdToActivate(null);
+      setShowActivateConfirmation(false);
+      window.location.reload();
+    } catch (err) {
+      toast.error(err?.data?.errors[0]?.message || err?.error);
+    }
+  };
+
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const [updateUserByAdmin, { isLoading: isUpdating }] = useUpdateUserByAdminMutation();
   const handleOpenUpdateModal = (user) => {
     setUserIdToUpdate(user._id);
     setUserNameToUpdate(user.name);
     setUserEmailToUpdate(user.email);
     setShowUpdateModal(true);
   };
-
   const handleUpdate = async () => {
     try {
       const responseFromApiCall = await updateUserByAdmin({
@@ -136,6 +142,7 @@ const UsersDataTable = ({ users }) => {
             </th>
             <th className="text-center align-middle">Update</th>
             <th className="text-center align-middle">Block</th>
+            <th className="text-center align-middle">Delete</th>
             <th className="text-center align-middle">Status</th>
           </tr>
         </thead>
@@ -209,6 +216,20 @@ const UsersDataTable = ({ users }) => {
                   }}
                 >
                   {user.blocked ? 'Unblock' : 'Block'}
+                </Button>
+              </td>
+              <td className="text-center align-middle">
+                <Button
+                  type="button"
+                  variant={'danger'}
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => {
+                      setUserIdToDelete(user._id);
+                      setShowDeleteConfirmation(true);
+                  }}
+                >
+                  Delete
                 </Button>
               </td>
               <td className="text-center align-middle">
@@ -308,6 +329,33 @@ const UsersDataTable = ({ users }) => {
             disabled={isUnblockingLoading}
           >
             {isBlockingLoading ? 'Un-Blocking...' : 'Un-Block'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <Modal
+        show={showDeleteConfirmation}
+        onHide={() => setShowDeleteConfirmation(false)}
+        className="custom-modal"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to delete this user?</Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowDeleteConfirmation(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleDelete}
+            disabled={isDeleteLoading}
+          >
+            {isDeleteLoading ? 'Deleting...' : 'Delete'}
           </Button>
         </Modal.Footer>
       </Modal>

@@ -16,6 +16,7 @@ import {
   unBlockUser,
   activateUser,
   updateFnServiceCompanyAdmin,
+  deleteUser,
 } from "../../controllers/adminController.js";
 import {
   adminSignInDataValidation,
@@ -43,5 +44,6 @@ router.patch("/block-user", requireAuth, verifyActiveUser, verifyAdmin, adminUse
 router.patch("/unblock-user", requireAuth, verifyActiveUser, verifyAdmin, adminUserBlockingDataValidation, validateRequest, unBlockUser);
 router.put("/update-user", requireAuth, verifyActiveUser, verifyAdmin, adminUserUpdateDataValidation, validateRequest, updateUserData);
 router.put("/update-admin/:userId", requireAuth, verifyActiveUser, verifyAdmin, validateRequest, updateFnServiceCompanyAdmin);
+router.delete("/delete-user/:userId", requireAuth, verifyActiveUser, verifyAdmin, validateRequest, deleteUser);
 
 export default router;

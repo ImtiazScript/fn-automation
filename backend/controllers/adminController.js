@@ -7,12 +7,14 @@ import { BadRequestError, NotAuthorizedError, NotFoundError } from "base-error-h
 import generateAuthToken from "../utils/jwtHelpers/generateAuthToken.js";
 import destroyAuthToken from "../utils/jwtHelpers/destroyAuthToken.js";
 import winston, { Logger, format } from "winston";
+import CronService from '../services/cronService.js';
 import {
   fetchAllUsers,
   updateUser,
   blockUserHelper,
   unBlockUserHelper,
-  activateUserHelper
+  activateUserHelper,
+  deleteUserHelper,
 } from "../utils/adminHelpers.js";
 
 /*
@@ -243,6 +245,33 @@ const updateFnServiceCompanyAdmin =  asyncHandler(async (req, res) => {
   });
 });
 
+const deleteUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  if (!userId) {
+    throw new BadRequestError("UserId not received in request");
+  }
+
+  const user = await User.findById(userId);
+
+  // If cron exist for the user, delete tem as well
+  const cronService = new CronService(user.userId);
+  const crons = await cronService.fetchAllCrons();
+  if (crons && crons.length) {
+    crons.map(async (cron) => {
+      await cronService.deleteCron(cron.cronId);
+    });
+  }
+
+  // delete the user
+  const userDeletingProcess = await deleteUserHelper(user._id);
+  const responseMessage = userDeletingProcess.message;
+  if (userDeletingProcess.success) {
+    res.status(204).json({ message: responseMessage });
+  } else {
+    throw new BadRequestError(responseMessage);
+  }
+});
+
 export {
   authAdmin,
   registerAdmin,
@@ -255,4 +284,5 @@ export {
   updateUserData,
   activateUser,
   updateFnServiceCompanyAdmin,
+  deleteUser,
 };
