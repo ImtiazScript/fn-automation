@@ -44,8 +44,8 @@ export const adminApiSlice = apiSlice.injectEndpoints({
             })
         }),
         getUsersData: builder.mutation({
-            query: () => ({
-                url: ADMIN_USERS_DATA_FETCH_URL,
+            query: (params) => ({
+                url: `/api/v1/admin/get-users/page/${params.currentPage}`,
                 method: 'POST'
             })
         }),

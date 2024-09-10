@@ -2,8 +2,8 @@
 
 // ===================== Importing necessary modules/files =====================
 import asyncHandler from "express-async-handler";
-import CronModel from "../models/cronModel.js";
-import UserModel from "../models/userModel.js";
+import Cron from "../models/cronModel.js";
+import User from "../models/userModel.js";
 import { BadRequestError, NotAuthorizedError } from "base-error-handler";
 import winston, { Logger, format } from "winston";
 import CronService from '../services/cronService.js';
@@ -16,7 +16,7 @@ import CronService from '../services/cronService.js';
 const addCron = asyncHandler(async (req, res) => {
   try {
     const { centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, typesOfWorkOrder } = req.body;
-    const cron = await CronModel.create({
+    const cron = await Cron.create({
       userId: req.user.userId,
       centerZip: centerZip,
       cronStartAt: cronStartAt,
@@ -51,7 +51,7 @@ const updateCron = asyncHandler(async (req, res) => {
   }
 
   // Find the existing cron by Id
-  const cronExist = await CronModel.findOne({ cronId });
+  const cronExist = await Cron.findOne({ cronId });
   if (req.user && !req.user.isAdmin && req.user.userId !== cronExist.userId) {
     throw new NotAuthorizedError("Authorization Error - you do not have permission to update this cron");
   }
@@ -73,7 +73,7 @@ const updateCron = asyncHandler(async (req, res) => {
       if (deleted !== undefined) updatedFields.deleted = deleted;
 
       // Perform the update
-      const updatedCron = await CronModel.findByIdAndUpdate(cronExist._id, updatedFields, { new: true });
+      const updatedCron = await Cron.findByIdAndUpdate(cronExist._id, updatedFields, { new: true });
       res.status(200).json({ message: "Successfully updated the cron", cron: updatedCron });
     } else {
       throw new BadRequestError("Cron not found - updating failed.");
@@ -91,10 +91,20 @@ const updateCron = asyncHandler(async (req, res) => {
    # Access: PRIVATE
   */
 const getAllCrons = asyncHandler(async (req, res) => {
+  const { page } = req.params;
+  const limit = 10;
+  const start = page > 1 ? (page - 1) * limit : 0;
+  const sort = { timestamp: -1 };
+
+  const totalCrons = await Cron.countDocuments({
+    $or: [
+      { deleted: { $exists: false } },
+      { deleted: false }
+    ]});
   try {
     // Build match conditionally based on user role
     const matchCondition = req.user.isAdmin ? {} : { userId: req.user.userId };
-    const cronsData = await CronModel.aggregate([
+    const cronsData = await Cron.aggregate([
         {
             $match: {
               ...matchCondition,
@@ -124,9 +134,18 @@ const getAllCrons = asyncHandler(async (req, res) => {
             'userDetails.password': 0,
             'userDetails.email': 0 // Exclude unnecessary fields
           }
+      },
+      {
+        $sort: sort  // Sort by timestamp in descending order
+      },
+      {
+        $skip: start  // Skip documents for pagination
+      },
+      {
+        $limit: limit  // Limit the number of documents per page
       }
     ]);
-    res.status(200).json({ cronsData });
+    res.status(200).json({ cronsData, totalCrons });
   } catch (error) {
     res.status(500).json({ message: "Failed to get crons", error: error.message });
   }
@@ -140,7 +159,7 @@ const getAllCrons = asyncHandler(async (req, res) => {
 const getCron = asyncHandler(async (req, res) => {
   const { cronId } = req.params;
   try {
-    let cronData = await CronModel.aggregate([
+    let cronData = await Cron.aggregate([
       {
         $match: {
           cronId: parseInt(cronId)
@@ -195,7 +214,7 @@ const deleteCron = asyncHandler(async (req, res) => {
   }
 
   try {
-    const cron = await CronModel.findById(cronId);
+    const cron = await Cron.findById(cronId);
     if (req.user && !req.user.isAdmin && req.user.userId !== cron.userId) {
       throw new NotAuthorizedError("Authorization Error - you do not have permission to delete this cron");
     }

@@ -38,7 +38,7 @@ router
   .put(requireAuth, verifyAdmin, updateAdminProfile);
 
 //* ==================== Admin User Management Routes ====================
-router.post("/get-users", requireAuth, verifyActiveUser,verifyAdmin, getAllUsers);
+router.post("/get-users/page/:page", requireAuth, verifyActiveUser,verifyAdmin, getAllUsers);
 router.patch("/activate-user", requireAuth, verifyActiveUser, verifyAdmin, adminUserBlockingDataValidation, validateRequest, activateUser);
 router.patch("/block-user", requireAuth, verifyActiveUser, verifyAdmin, adminUserBlockingDataValidation, validateRequest, blockUser);
 router.patch("/unblock-user", requireAuth, verifyActiveUser, verifyAdmin, adminUserBlockingDataValidation, validateRequest, unBlockUser);

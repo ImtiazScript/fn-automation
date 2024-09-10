@@ -1,12 +1,46 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Button, Table, Modal, Badge, Form as BootstrapForm } from 'react-bootstrap';
-import { useAddCronMutation, useDeleteCronMutation } from '../../slices/commonApiSlice';
+import { Button, Table, Modal, Badge, Row, Col, Form as BootstrapForm } from 'react-bootstrap';
+import { useGetCronsDataMutation, useGetTypesOfWorkOrderMutation, useAddCronMutation, useDeleteCronMutation } from '../../slices/commonApiSlice';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Select from 'react-select';
 
-const CronsDataTable = ({ crons, typesOfWorkOrder }) => {
+const CronsDataTable = () => {
+  const [crons, setCrons] = useState([]);
+  const [cronsDataFromAPI, { isLoading }] = useGetCronsDataMutation();
+  const [typesOfWorkOrder, setTypesOfWorkOrder] = useState([]);
+  const [typesOfWorkOrderFromAPI, { isLoadingTypesOfWorkOrder }] =
+    useGetTypesOfWorkOrderMutation();
+
+  const [totalCrons, setTotalCrons] = useState(0);
+  const limit = 10;
+  const totalPages = Math.ceil(totalCrons / limit);
+  const [currentPage, setCurrentPage] = useState(1);
+    
+  useEffect(() => {
+    try {
+      const fetchData = async () => {
+        const responseFromApiCall = await cronsDataFromAPI({currentPage});
+        const cronsArray = responseFromApiCall.data.cronsData;
+        setCrons(cronsArray);
+        const totalCrons = responseFromApiCall.data.totalCrons;
+        setTotalCrons(totalCrons);
+
+        if (!typesOfWorkOrder.length) {
+          // Getting types of work order
+          const typesOfWorkOrderFromApiCall = await typesOfWorkOrderFromAPI();
+          const typesOfWorkOrderArray = typesOfWorkOrderFromApiCall.data;
+          setTypesOfWorkOrder(typesOfWorkOrderArray);
+        }
+      };
+      fetchData();
+    } catch (err) {
+      toast.error(err?.data?.errors[0]?.message || err);
+      console.error('Error fetching crons:', err);
+    }
+  }, [currentPage]);
+
   const [addCron] = useAddCronMutation();
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -184,6 +218,33 @@ const CronsDataTable = ({ crons, typesOfWorkOrder }) => {
           </tbody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      <Row className="mt-4">
+        <Col className="text-center">
+          <Button
+            variant="secondary"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="mx-2">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </Col>
+      </Row>
+
+      {/* Add cron modal */}
       <Modal show={showAddModal} onHide={handleClose}>
         <Modal.Header closeButton>
           <Modal.Title>Edit Cron Details</Modal.Title>

@@ -152,9 +152,22 @@ const updateAdminProfile = asyncHandler(async (req, res) => {
 });
 
 const getAllUsers = asyncHandler(async (req, res) => {
-  const usersData = await fetchAllUsers();
+  const { page } = req.params;
+
+  // Define the query options
+  const limit = 10;
+  const start = page > 1 ? (page - 1) * limit : 0;
+  const sort = { timestamp: -1 }; // Sort by latest first
+
+  const totalUsers = await User.countDocuments({
+    $or: [
+      { deleted: { $exists: false } },
+      { deleted: false }
+    ]});
+
+  const usersData = await fetchAllUsers(start, limit, sort);
   if (usersData) {
-    res.status(200).json({ usersData });
+    res.status(200).json({ usersData, totalUsers });
   } else {
     throw new NotFoundError();
   }

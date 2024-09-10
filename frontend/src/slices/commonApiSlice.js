@@ -6,8 +6,8 @@ import {
 export const commonApiSlice = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getCronsData: builder.mutation({
-            query: () => ({
-                url: CRONS_DATA_FETCH_URL,
+            query: (params) => ({
+                url: `/api/v1/crons/get-crons/page/${params.currentPage}`,
                 method: 'GET'
             })
         }),

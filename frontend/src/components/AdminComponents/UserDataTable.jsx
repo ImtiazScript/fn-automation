@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Button, Modal, Table, Form as BootstrapForm } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
+import { Button, Modal, Table, Row, Col, Form as BootstrapForm } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import {
   useBlockUserMutation,
@@ -7,10 +7,34 @@ import {
   useUpdateUserByAdminMutation,
   useActivateUserMutation,
   useDeleteUserMutation,
+  useGetUsersDataMutation,
 } from '../../slices/adminApiSlice';
 import { PROFILE_IMAGE_DIR_PATH, PROFILE_PLACEHOLDER_IMAGE_NAME } from '../../utils/constants';
 
-const UsersDataTable = ({ users }) => {
+const UsersDataTable = () => {
+  const [users, setUsers] = useState([]);
+  const [usersDataFromAPI, { isUsersDataLoading }] = useGetUsersDataMutation();
+  const [totalUsers, setTotalUsers] = useState(0);
+  const limit = 10;
+  const totalPages = Math.ceil(totalUsers / limit);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    try {
+      const fetchData = async () => {
+        const responseFromApiCall = await usersDataFromAPI({ currentPage });
+        const usersArray = responseFromApiCall.data.usersData;
+        const totalUsers = responseFromApiCall.data.totalUsers;
+        setUsers(usersArray);
+        setTotalUsers(totalUsers);
+      };
+      fetchData();
+    } catch (err) {
+      toast.error(err?.data?.errors[0]?.message || err);
+      console.error('Error fetching users:', err);
+    }
+  }, [currentPage]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const handleSearch = (event) => {
     setSearchQuery(event.target.value);
@@ -251,6 +275,29 @@ const UsersDataTable = ({ users }) => {
           ))}
         </tbody>
       </Table>
+      <Row className="mt-4">
+        <Col className="text-center">
+          <Button
+            variant="secondary"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="mx-2">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </Col>
+      </Row>
 
       {/* Blocking Confirmation Dialog */}
       <Modal

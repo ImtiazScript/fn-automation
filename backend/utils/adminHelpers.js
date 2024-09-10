@@ -1,6 +1,6 @@
 import User from "../models/userModel.js";
 
-const fetchAllUsers = async () => {
+const fetchAllUsers = async (start, limit, sort) => {
   try {
     const users = await User.find(
       { 
@@ -9,7 +9,11 @@ const fetchAllUsers = async () => {
           { deleted: false }                // Documents where 'deleted' is explicitly set to false
         ]
       },
-      { name: 1, email: 1, blocked: 1, isActive: 1, isAdmin: 1, profileImageName: 1, userId: 1 });
+      { name: 1, email: 1, blocked: 1, isActive: 1, isAdmin: 1, profileImageName: 1, userId: 1 })
+      .skip(start)
+      .limit(limit)
+      .sort(sort)
+      .lean();
 
     // const users = await User.find(
     //   { deleted: false },  // Condition to filter users where deleted is false
