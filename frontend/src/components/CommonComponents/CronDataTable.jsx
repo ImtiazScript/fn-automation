@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Button, Table, Modal, Badge, Row, Col, Form as BootstrapForm } from 'react-bootstrap';
+import { Button, Table, Modal, Badge, Row, Col, Dropdown, Form as BootstrapForm } from 'react-bootstrap';
 import { useGetCronsDataMutation, useGetTypesOfWorkOrderMutation, useAddCronMutation, useDeleteCronMutation } from '../../slices/commonApiSlice';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -165,41 +165,43 @@ const CronsDataTable = () => {
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              <th>Cron Id</th>
-              <th>Provider Name</th>
+              <th>#ID</th>
+              <th>Provider</th>
               <th className="text-center align-middle d-none d-md-table-cell">
                 Driving Radius
               </th>
-              <th>Total #WO</th>
-              <th>Status</th>
-              <th>Configure</th>
-              <th>Delete</th>
+              <th>#WO</th>
+              <th className="text-center align-middle d-none d-md-table-cell">Status</th>
+              <th className="text-center align-middle d-none d-md-table-cell">Configure</th>
+              <th className="text-center align-middle d-none d-md-table-cell">Delete</th>
+              <th className="text-center align-middle d-md-none">Status</th>
+              <th className="text-center align-middle d-md-none">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredCrons.map((cron, index) => (
               <tr key={index}>
-                <td>{cron.cronId}</td>
+                <td className="text-center align-middle">{cron.cronId}</td>
                 <td>{cron?.userDetails?.name}</td>
                 <td className="text-center align-middle d-none d-md-table-cell">
                   {cron.drivingRadius}
                 </td>
-                <td>{cron.totalRequested}</td>
-                <td>
+                <td className="text-center align-middle">{cron.totalRequested}</td>
+                <td className="text-center align-middle d-none d-md-table-cell">
                   <Badge
                     bg={cron.status === 'active' ? 'success' : 'secondary'}
                   >
                     {cron.status}
                   </Badge>
                 </td>
-                <td>
+                <td className="text-center align-middle d-none d-md-table-cell">
                   <Link to={`/crons/configure-cron/${cron.cronId}`}>
-                    <Button type="button" variant="primary" className="mt-3">
+                    <Button type="button" variant="primary" size="sm" className="mt-3">
                       Configure
                     </Button>
                   </Link>
                 </td>
-                <td>
+                <td className="text-center align-middle d-none d-md-table-cell">
                   <Button
                     type="button"
                     variant={'danger'}
@@ -213,6 +215,48 @@ const CronsDataTable = () => {
                     Delete
                   </Button>
                 </td>
+
+                <td className="text-center align-middle d-md-none">
+                  <span
+                    className={
+                      cron.status === 'active' ? 'active-dot' : 'inactive-dot'
+                    }
+                    title={cron.status}
+                  ></span>
+                </td>
+                <td className="text-center align-middle d-md-none">
+                  <Dropdown>
+                    <Dropdown.Toggle
+                      variant="primary"
+                      id="dropdown-basic"
+                      size="sm"
+                    >
+                      Actions
+                    </Dropdown.Toggle>
+
+                    <Dropdown.Menu>
+                      <Dropdown.Item
+                        className='custom-dropdown-item mb-1'
+                        style={{ backgroundColor: 'gray', color: '#fff' }}
+                        as={Link}
+                        to={`/crons/configure-cron/${cron.cronId}`}
+                      >
+                        Configure
+                      </Dropdown.Item>
+                      <Dropdown.Item
+                        className='custom-dropdown-item mb-1'
+                        style={{ backgroundColor: '#f44336', color: '#fff' }}
+                        onClick={() => {
+                          setCronIdToDelete(cron._id);
+                          setShowDeleteConfirmation(true);
+                        }}
+                      >
+                        Delete
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+                </td>
+
               </tr>
             ))}
           </tbody>

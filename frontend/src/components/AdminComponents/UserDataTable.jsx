@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Button, Modal, Table, Row, Col, Form as BootstrapForm } from 'react-bootstrap';
+import { Button, Modal, Table, Row, Col, Dropdown, Form as BootstrapForm } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import {
   useBlockUserMutation,
@@ -140,7 +140,9 @@ const UsersDataTable = () => {
 
   return (
     <>
-      <BootstrapForm className="mb-4"> {/* Add margin-bottom */}
+      <BootstrapForm className="mb-4">
+        {' '}
+        {/* Add margin-bottom */}
         <div className="row mt-3 align-items-center">
           <div className="col-auto">
             <BootstrapForm.Label>Search users:</BootstrapForm.Label>
@@ -164,18 +166,25 @@ const UsersDataTable = () => {
             <th className="text-center align-middle d-none d-md-table-cell">
               Email
             </th>
-            <th className="text-center align-middle">Update</th>
-            <th className="text-center align-middle">Block</th>
-            <th className="text-center align-middle">Delete</th>
-            <th className="text-center align-middle">Status</th>
+            <th className="text-center align-middle d-none d-md-table-cell">
+              Update
+            </th>
+            <th className="text-center align-middle d-none d-md-table-cell">
+              Block
+            </th>
+            <th className="text-center align-middle d-none d-md-table-cell">
+              Delete
+            </th>
+            <th className="text-center align-middle d-none d-md-table-cell">
+              Status
+            </th>
+            <th className="text-center align-middle d-md-none">Actions</th>
           </tr>
         </thead>
         <tbody>
           {filteredUsers.map((user, index) => (
             <tr key={index}>
-              <td className="text-center align-middle">
-                {user.userId}
-              </td>
+              <td className="text-center align-middle">{user.userId}</td>
               <td>
                 <div style={{ textAlign: 'center' }}>
                   <img
@@ -212,7 +221,7 @@ const UsersDataTable = () => {
               <td className="text-center align-middle d-none d-md-table-cell">
                 {user.email}
               </td>
-              <td className="text-center align-middle">
+              <td className="text-center align-middle d-none d-md-table-cell">
                 <Button
                   type="button"
                   variant="primary"
@@ -223,7 +232,7 @@ const UsersDataTable = () => {
                   Update
                 </Button>
               </td>
-              <td className="text-center align-middle">
+              <td className="text-center align-middle d-none d-md-table-cell">
                 <Button
                   type="button"
                   variant={user.blocked ? 'success' : 'danger'}
@@ -242,21 +251,21 @@ const UsersDataTable = () => {
                   {user.blocked ? 'Unblock' : 'Block'}
                 </Button>
               </td>
-              <td className="text-center align-middle">
+              <td className="text-center align-middle d-none d-md-table-cell">
                 <Button
                   type="button"
                   variant={'danger'}
                   size="sm"
                   className="mt-3"
                   onClick={() => {
-                      setUserIdToDelete(user._id);
-                      setShowDeleteConfirmation(true);
+                    setUserIdToDelete(user._id);
+                    setShowDeleteConfirmation(true);
                   }}
                 >
                   Delete
                 </Button>
               </td>
-              <td className="text-center align-middle">
+              <td className="text-center align-middle d-none d-md-table-cell">
                 <Button
                   type="button"
                   variant={user.isActive ? 'success' : 'danger'}
@@ -270,6 +279,70 @@ const UsersDataTable = () => {
                 >
                   {user.isActive ? 'Active' : 'Activate'}
                 </Button>
+              </td>
+              <td className="text-center align-middle d-md-none">
+                <Dropdown>
+                  <Dropdown.Toggle
+                    variant="primary"
+                    id="dropdown-basic"
+                    size="sm"
+                  >
+                    Actions
+                  </Dropdown.Toggle>
+
+                  <Dropdown.Menu>
+                    <Dropdown.Item
+                      className="custom-dropdown-item mb-1"
+                      style={{ backgroundColor: 'gray', color: '#fff' }}
+                      onClick={() => {
+                        handleOpenUpdateModal(user);
+                      }}
+                    >
+                      Update
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      className="custom-dropdown-item mb-1"
+                      style={{
+                        backgroundColor: user.blocked ? '#198754' : '#DC3545',
+                        color: '#fff',
+                      }}
+                      onClick={() => {
+                        if (user.blocked) {
+                          setUserIdToUnblock(user._id);
+                          setShowUnblockingConfirmation(true);
+                        } else {
+                          setUserIdToBlock(user._id);
+                          setShowBlockingConfirmation(true);
+                        }
+                      }}
+                    >
+                      {user.blocked ? 'Unblock' : 'Block'}
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      className="custom-dropdown-item mb-1"
+                      style={{ backgroundColor: '#DC3545', color: '#fff' }}
+                      onClick={() => {
+                        setUserIdToDelete(user._id);
+                        setShowDeleteConfirmation(true);
+                      }}
+                    >
+                      Delete
+                    </Dropdown.Item>
+                    {!user.isActive &&                     <Dropdown.Item
+                      className="custom-dropdown-item mb-1"
+                      style={{
+                        backgroundColor: '#198754',
+                        color: '#fff',
+                      }}
+                      onClick={() => {
+                        setUserIdToActivate(user._id);
+                        setShowActivateConfirmation(true);
+                      }}
+                    >
+                      {user.isActive ? 'Active' : 'Activate'}
+                    </Dropdown.Item>}
+                  </Dropdown.Menu>
+                </Dropdown>
               </td>
             </tr>
           ))}

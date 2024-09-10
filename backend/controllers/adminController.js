@@ -157,7 +157,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
   // Define the query options
   const limit = 10;
   const start = page > 1 ? (page - 1) * limit : 0;
-  const sort = { timestamp: -1 }; // Sort by latest first
+  const sort = { timestamp: -1 };
 
   const totalUsers = await User.countDocuments({
     $or: [
