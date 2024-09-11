@@ -148,6 +148,8 @@ const updateAdminProfile = asyncHandler(async (req, res) => {
       name: updatedAdminData.name,
       email: updatedAdminData.email,
       profileImageName: updatedAdminData.profileImageName,
+      isActive: updatedAdminData.isActive,
+      isAdmin: updatedAdminData.isAdmin,
     });
   } else {
     // If requested admin was not found in db, return error

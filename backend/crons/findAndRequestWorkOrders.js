@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+import cron, { schedule } from 'node-cron';
 import logger from "../config/logger/winston-logger/loggerConfig.js";
 import UserService from '../services/userService.js';
 import IntegrationService from '../services/integrationService.js';
@@ -69,6 +69,17 @@ cron.schedule('*/30 * * * *', async () => {
 
             if (workOrdersResponse && workOrdersResponse.results) {
                 workOrdersResponse.results.map((workOrder) => {
+                    logger.info(
+                        `Found Work Order, #ID: ${workOrder.id}, Title: ${workOrder.title}`,
+                        {
+                                workorder_id: workOrder.id,
+                                title: workOrder.title,
+                                schedule: workOrder.schedule,
+                                pay: workOrder.pay,
+                                location: workOrder.location,
+                                types_of_work: workOrder.types_of_work,
+                            }
+                        );
                     // DO LOGIC & CONDITIONS TO REQUEST A WORK ORDER
                     // if (workOrder.pay.type == 'hourly' && workOrder.pay.units >= 2) {
                     //     if (typeof workOrder.schedule.exact !== 'undefined') {
@@ -84,8 +95,9 @@ cron.schedule('*/30 * * * *', async () => {
                     //     }
                     // }
 
+                    // TODO: Enable when actually want to request workorders
                     // Request work order
-                    requestWorkOrders(workOrder.id, cron.cronId, user.userId, integration.fnUserId, adminAccessToken);
+                    // requestWorkOrders(workOrder.id, cron.cronId, user.userId, integration.fnUserId, adminAccessToken);
                 })
             }
         });
