@@ -13,6 +13,7 @@ import {
 } from '../../slices/adminApiSlice';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
+import { JSONTree } from 'react-json-tree';
 
 const LogsDataTable = () => {
   const [getLogs] = useGetLogsMutation();
@@ -66,6 +67,16 @@ const LogsDataTable = () => {
     }
   };
 
+  const isJsonString = (str) => {
+    try {
+      JSON.parse(str);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+  
+
   const getLogLevelColor = (level) => {
     switch (level) {
       case 'info':
@@ -111,35 +122,31 @@ const LogsDataTable = () => {
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              <th className="text-center align-middle d-none d-md-table-cell">Index</th>
+              <th className="text-center align-middle d-none d-md-table-cell">
+                Index
+              </th>
               <th>Time</th>
               <th>Level</th>
               <th>Message</th>
-              <th>Detail</th>
             </tr>
           </thead>
           <tbody>
             {filteredLogs.map((log, index) => (
               <tr key={log._id}>
-                {/* Descending order index */}
-                <td>{(totalLogs - index) - (currentPage - 1) * limit}</td>
-                {/* Ascending order index */}
-                {/* <td>{index + 1 + (currentPage - 1) * limit}</td> */}
-                {/* log id index */}
-                {/* //<td className="text-center align-middle d-none d-md-table-cell">{log._id}</td> */}
+                <td>{totalLogs - index - (currentPage - 1) * limit}</td>
                 <td>
                   {format(new Date(log.timestamp), 'MM/dd/yyyy HH:mm:ss')}
                 </td>
-                <td style={{ color: getLogLevelColor(log.level) }}>{log.level}</td>
-                <td>{log.message}</td>
-                <td>
-                  <Button
-                    type="button"
-                    variant="primary"
-                    onClick={() => handleLogDetailClick(log._id)}
-                  >
-                    Detail
-                  </Button>
+                <td style={{ color: getLogLevelColor(log.level) }}>
+                  {log.level}
+                </td>
+                <td
+                  onClick={() => handleLogDetailClick(log._id)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {log.message.length > 500
+                    ? log.message.substring(0, 500) + '...'
+                    : log.message}
                 </td>
               </tr>
             ))}
@@ -186,15 +193,40 @@ const LogsDataTable = () => {
                 {format(new Date(selectedLog.timestamp), 'MM/dd/yyyy HH:mm:ss')}
               </p>
               <p>
-                <strong>Level:</strong> <span style={{ color: getLogLevelColor(selectedLog.level) }}>{selectedLog.level}</span>
+                <strong>Level:</strong>{' '}
+                <span style={{ color: getLogLevelColor(selectedLog.level) }}>
+                  {selectedLog.level}
+                </span>
               </p>
-              <p>
-                <strong>Message:</strong> {selectedLog.message}
-              </p>
-              <p>
-                <strong>Meta:</strong>{' '}
-                {selectedLog.meta && selectedLog.meta.metadata ? JSON.stringify(selectedLog.meta.metadata) : 'N/A'}
-              </p>
+              <div>
+                <strong>Message:</strong>{' '}
+                {isJsonString(selectedLog.message) ? (
+                  <pre>
+                    {JSON.stringify(JSON.parse(selectedLog.message), null, 2)}
+                  </pre>
+                ) : (
+                  selectedLog.message
+                )}
+              </div>
+              <p></p>
+              <div>
+              <strong>Meta:</strong>{' '}
+              <JSONTree 
+                data={typeof selectedLog.meta.metadata === 'string'
+                  ? JSON.parse(selectedLog.meta.metadata)
+                  : selectedLog.meta.metadata
+                }
+                theme={{
+                  scheme: 'monokai',
+                  base00: '#272822', base01: '#383830', base02: '#49483e', base03: '#75715e',
+                  base04: '#a59f85', base05: '#f8f8f2', base06: '#f5f4f1', base07: '#f9f8f5',
+                  base08: '#f92672', base09: '#fd971f', base0A: '#f4bf75', base0B: '#a6e22e',
+                  base0C: '#a1efe4', base0D: '#66d9ef', base0E: '#ae81ff', base0F: '#cc6633'
+                }}
+                shouldExpandNodeInitially={() => true} // Expands all nodes initially
+              />
+              </div>
+              <p></p>
               <p>
                 <strong>Host Name:</strong> {selectedLog.hostname}
               </p>

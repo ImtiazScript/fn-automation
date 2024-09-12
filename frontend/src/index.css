@@ -21,3 +21,87 @@
     padding-right: 0 !important; /* Remove the padding that Bootstrap adds to compensate for the scrollbar, does not shift left when modal pops up */
   }
 }
+
+.active-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: green;
+  animation: blink 1s infinite;
+}
+
+.inactive-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: red;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+
+.custom-dropdown-item {
+  font-size: 0.875rem; /* Smaller font size */
+  padding: 0.25rem 0.5rem; /* Reduced padding for less space */
+  display: flex; /* Enable flexbox layout */
+  align-items: center; /* Center items vertically */
+  justify-content: center; /* Center items horizontally */
+  text-align: center; /* Ensure text is centered */
+  border-radius: 0.25rem; /* Slightly rounded corners */
+  transition: background-color 0.3s, transform 0.2s; /* Smooth transition for background color and scaling */
+}
+
+.custom-dropdown-item.mb-1 {
+  margin-bottom: 0.25rem; /* Smaller margin between items */
+}
+
+/* Hover effect */
+.custom-dropdown-item:hover {
+  background-color: rgba(0, 0, 0, 0.1); /* Light background on hover */
+  transform: scale(1.02); /* Slightly scale up the item */
+}
+
+/* Active (click) effect */
+.custom-dropdown-item:active {
+  background-color: rgba(0, 0, 0, 0.2); /* Darker background on click */
+  transform: scale(0.98); /* Slightly scale down the item */
+}
+
+
+.dropdown-menu {
+  --bs-dropdown-min-width: 6rem;
+  --bs-dropdown-padding-y: 0rem;
+}
+
+
+/* Ensures the content area grows to push the footer to the bottom when the page content is short */
+html, body {
+  height: 100%;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.container-content {
+  flex: 1; /* Grow to fill available space */
+}
+
+.footer {
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}
+
+
+.copyright {
+  color: #FFFFFF;
+}

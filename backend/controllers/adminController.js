@@ -7,12 +7,14 @@ import { BadRequestError, NotAuthorizedError, NotFoundError } from "base-error-h
 import generateAuthToken from "../utils/jwtHelpers/generateAuthToken.js";
 import destroyAuthToken from "../utils/jwtHelpers/destroyAuthToken.js";
 import winston, { Logger, format } from "winston";
+import CronService from '../services/cronService.js';
 import {
   fetchAllUsers,
   updateUser,
   blockUserHelper,
   unBlockUserHelper,
-  activateUserHelper
+  activateUserHelper,
+  deleteUserHelper,
 } from "../utils/adminHelpers.js";
 
 /*
@@ -128,7 +130,7 @@ const getAdminProfile = asyncHandler(async (req, res) => {
     */
 const updateAdminProfile = asyncHandler(async (req, res) => {
   // Find the user data with user id in the request object
-  const admin = await UserModel.findById(req.user._id);
+  const admin = await User.findById(req.user._id);
   if (admin) {
     // Update the admin-user with new data if found or keep the old data itself.
     admin.name = req.body.name || admin.name;
@@ -137,11 +139,17 @@ const updateAdminProfile = asyncHandler(async (req, res) => {
     if (req.body.password) {
       admin.password = req.body.password;
     }
+    if (req.file) {
+      admin.profileImageName = req.file.filename || admin.profileImageName;
+    }
     const updatedAdminData = await admin.save();
     // Send the response with updated user data
     res.status(200).json({
       name: updatedAdminData.name,
       email: updatedAdminData.email,
+      profileImageName: updatedAdminData.profileImageName,
+      isActive: updatedAdminData.isActive,
+      isAdmin: updatedAdminData.isAdmin,
     });
   } else {
     // If requested admin was not found in db, return error
@@ -150,9 +158,22 @@ const updateAdminProfile = asyncHandler(async (req, res) => {
 });
 
 const getAllUsers = asyncHandler(async (req, res) => {
-  const usersData = await fetchAllUsers();
+  const { page } = req.params;
+
+  // Define the query options
+  const limit = 10;
+  const start = page > 1 ? (page - 1) * limit : 0;
+  const sort = { timestamp: -1 };
+
+  const totalUsers = await User.countDocuments({
+    $or: [
+      { deleted: { $exists: false } },
+      { deleted: false }
+    ]});
+
+  const usersData = await fetchAllUsers(start, limit, sort);
   if (usersData) {
-    res.status(200).json({ usersData });
+    res.status(200).json({ usersData, totalUsers });
   } else {
     throw new NotFoundError();
   }
@@ -243,6 +264,33 @@ const updateFnServiceCompanyAdmin =  asyncHandler(async (req, res) => {
   });
 });
 
+const deleteUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  if (!userId) {
+    throw new BadRequestError("UserId not received in request");
+  }
+
+  const user = await User.findById(userId);
+
+  // If cron exist for the user, delete tem as well
+  const cronService = new CronService(user.userId);
+  const crons = await cronService.fetchAllCrons();
+  if (crons && crons.length) {
+    crons.map(async (cron) => {
+      await cronService.deleteCron(cron.cronId);
+    });
+  }
+
+  // delete the user
+  const userDeletingProcess = await deleteUserHelper(user._id);
+  const responseMessage = userDeletingProcess.message;
+  if (userDeletingProcess.success) {
+    res.status(204).json({ message: responseMessage });
+  } else {
+    throw new BadRequestError(responseMessage);
+  }
+});
+
 export {
   authAdmin,
   registerAdmin,
@@ -255,4 +303,5 @@ export {
   updateUserData,
   activateUser,
   updateFnServiceCompanyAdmin,
+  deleteUser,
 };

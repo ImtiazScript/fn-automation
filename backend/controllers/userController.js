@@ -141,6 +141,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       name: updatedUserData.name,
       email: updatedUserData.email,
       profileImageName: updatedUserData.profileImageName,
+      isActive: updatedUserData.isActive,
     });
   } else {
     throw new BadRequestError("User not found.");

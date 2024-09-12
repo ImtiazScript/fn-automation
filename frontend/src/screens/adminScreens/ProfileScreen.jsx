@@ -6,6 +6,7 @@ import { setCredentials } from '../../slices/authSlice';
 import { useUpdateAdminMutation } from '../../slices/adminApiSlice';
 import { toast } from 'react-toastify';
 import Loader from '../../components/Loader';
+import { PROFILE_IMAGE_DIR_PATH, PROFILE_PLACEHOLDER_IMAGE_NAME } from '../../utils/constants';
 
 const AdminProfileScreen = () => {
   const [name, setName] = useState('');
@@ -15,6 +16,7 @@ const AdminProfileScreen = () => {
   const dispatch = useDispatch();
   const { userInfo } = useSelector((state) => state.auth);
   const [updateProfile, { isLoading }] = useUpdateAdminMutation();
+  const [profileImage, setProfileImage] = useState();
 
   useEffect(() => {
     setName(userInfo.name);
@@ -27,11 +29,12 @@ const AdminProfileScreen = () => {
       toast.error('Passwords do not match.');
     } else {
       try {
-        const responseFromApiCall = await updateProfile({
-          name,
-          email,
-          password,
-        }).unwrap();
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('email', email);
+        formData.append('password', password);
+        formData.append('profileImage', profileImage);
+        const responseFromApiCall = await updateProfile(formData).unwrap();
         dispatch(setCredentials({ ...responseFromApiCall }));
         toast.success('Profile updated successfully');
       } catch (err) {
@@ -42,6 +45,22 @@ const AdminProfileScreen = () => {
 
   return (
     <FormContainer>
+      <img
+        src={
+          userInfo.profileImageName
+            ? PROFILE_IMAGE_DIR_PATH + userInfo.profileImageName
+            : PROFILE_IMAGE_DIR_PATH + PROFILE_PLACEHOLDER_IMAGE_NAME
+        }
+        alt={userInfo.name}
+        style={{
+          width: '150px',
+          height: '150px',
+          borderRadius: '50%',
+          objectFit: 'cover',
+          display: 'block',
+          margin: '5px auto 10px auto',
+        }}
+      />
       <h1>Update Profile</h1>
       <Form onSubmit={submitHandler}>
         <Form.Group className="my-2" controlId="name">
@@ -78,6 +97,13 @@ const AdminProfileScreen = () => {
             placeholder="Re-enter password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+          ></Form.Control>
+        </Form.Group>
+        <Form.Group className="my-2" controlId="profileImage">
+          <Form.Label>Profile Picture</Form.Label>
+          <Form.Control
+            type="file"
+            onChange={(e) => setProfileImage(e.target.files[0])}
           ></Form.Control>
         </Form.Group>
         <Button type="submit" variant="primary" className="mt-3">

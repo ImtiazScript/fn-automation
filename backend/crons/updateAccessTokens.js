@@ -8,13 +8,13 @@ cron.schedule('55 */23 * * *', async () => {
     // cron.schedule('* * * * *', async () => {
     const currentDateTime = new Date().toLocaleString();
     logger.info(`REFRESH ACCESS TOKEN:: Access-token updating cron running at: ${currentDateTime}`);
-    // Add your cron job logic here
     const userService = new UserService();
     const adminUsers = await userService.fetchAllAdminUsers();
     adminUsers.map(async (user) => {
         const integrationService = new IntegrationService(user.userId);
-        if (user.blocked || !user.isActive) {
-            logger.debug(`REFRESH ACCESS TOKEN:: User is blocked or not active yet, userId: ${user.userId}`);
+        if (user.blocked || !user.isActive || !user.isFnServiceCompanyAdmin) {
+            // Ignore silently since this is not an appropriate service company admin of Field Nation
+            // logger.debug(`REFRESH ACCESS TOKEN:: User is blocked or not active yet, userId: ${user.userId}`);
             return;
         }
         const integration = await integrationService.fetchIntegration();

@@ -193,7 +193,19 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
                 <ListGroup.Item>
                   <strong>WO IDs:</strong>{' '}
                   {cron.requestedWoIds && cron.requestedWoIds.length > 0
-                    ? cron.requestedWoIds.join(', ')
+                    ? cron.requestedWoIds.map((woId, index) => (
+                        <span key={woId}>
+                          <a
+                            href={`https://ui-qa5.fndev.net/workorders/${woId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ textDecoration: 'none', }}
+                          >
+                            {woId}
+                          </a>
+                          {index < cron.requestedWoIds.length - 1 && ', '}
+                        </span>
+                      ))
                     : 'None'}
                 </ListGroup.Item>
                 <ListGroup.Item>
