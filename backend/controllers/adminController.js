@@ -15,6 +15,7 @@ import {
   unBlockUserHelper,
   activateUserHelper,
   deleteUserHelper,
+  fetchAllActiveProviders,
 } from "../utils/adminHelpers.js";
 
 /*
@@ -179,6 +180,15 @@ const getAllUsers = asyncHandler(async (req, res) => {
   }
 });
 
+const getAllActiveProviders = asyncHandler(async (req, res) => {
+  const providers = await fetchAllActiveProviders();
+  if (providers) {
+    res.status(200).json({ providers });
+  } else {
+    throw new NotFoundError();
+  }
+});
+
 const activateUser = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   if (!userId) {
@@ -304,4 +314,5 @@ export {
   activateUser,
   updateFnServiceCompanyAdmin,
   deleteUser,
+  getAllActiveProviders,
 };

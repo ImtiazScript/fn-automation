@@ -101,6 +101,12 @@ export const adminApiSlice = apiSlice.injectEndpoints({
                 method: 'DELETE',
             })
         }),
+        getProviders: builder.mutation({
+            query: () => ({
+                url: `/api/v1/admin/get-providers`,
+                method: 'GET',
+            })
+        }),
     })
 
 })
@@ -119,4 +125,5 @@ export const {
     useGetTypesOfWorkOrderMutation,
     useActivateUserMutation,
     useDeleteUserMutation,
+    useGetProvidersMutation,
 } = adminApiSlice;

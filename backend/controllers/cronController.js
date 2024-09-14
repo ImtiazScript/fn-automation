@@ -15,9 +15,9 @@ import CronService from '../services/cronService.js';
 */
 const addCron = asyncHandler(async (req, res) => {
   try {
-    const { centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, typesOfWorkOrder } = req.body;
+    const { userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, typesOfWorkOrder, status } = req.body;
     const cron = await Cron.create({
-      userId: req.user.userId,
+      userId: req.user.isAdmin ? userId: req.user.userId,
       centerZip: centerZip,
       cronStartAt: cronStartAt,
       cronEndAt: cronEndAt,
@@ -27,7 +27,7 @@ const addCron = asyncHandler(async (req, res) => {
       requestedWoIds: [],
       totalRequested: 0,
       typesOfWorkOrder: typesOfWorkOrder,
-      status: 'active',
+      status: status,
     });
     if (cron) {
       res.status(201).json({ message: "Successfully added the cron", cron: cron });

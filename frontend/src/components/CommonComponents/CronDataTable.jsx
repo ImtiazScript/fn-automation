@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Button, Table, Modal, Badge, Row, Col, Dropdown, Form as BootstrapForm } from 'react-bootstrap';
 import { useGetCronsDataMutation, useGetTypesOfWorkOrderMutation, useAddCronMutation, useDeleteCronMutation } from '../../slices/commonApiSlice';
+import { useGetProvidersMutation } from '../../slices/adminApiSlice';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Select from 'react-select';
+import { useSelector } from 'react-redux';
 
 const CronsDataTable = () => {
   const [crons, setCrons] = useState([]);
@@ -12,6 +14,10 @@ const CronsDataTable = () => {
   const [typesOfWorkOrder, setTypesOfWorkOrder] = useState([]);
   const [typesOfWorkOrderFromAPI, { isLoadingTypesOfWorkOrder }] =
     useGetTypesOfWorkOrderMutation();
+
+  const { userInfo } = useSelector((state) => state.auth);
+  const [activeProvidersFromAPI, { isLoadingActiveProviders }] = useGetProvidersMutation();
+  const [activeProviders, setActiveProviders] = useState([]);
 
   const [totalCrons, setTotalCrons] = useState(0);
   const limit = 10;
@@ -21,17 +27,26 @@ const CronsDataTable = () => {
   useEffect(() => {
     try {
       const fetchData = async () => {
-        const responseFromApiCall = await cronsDataFromAPI({currentPage});
-        const cronsArray = responseFromApiCall.data.cronsData;
-        setCrons(cronsArray);
-        const totalCrons = responseFromApiCall.data.totalCrons;
-        setTotalCrons(totalCrons);
+        if(!crons.length || !totalCrons) {
+          const responseFromApiCall = await cronsDataFromAPI({currentPage});
+          const cronsData = responseFromApiCall.data.cronsData;
+          setCrons(cronsData);
+          const totalCrons = responseFromApiCall.data.totalCrons;
+          setTotalCrons(totalCrons);
+        }
 
         if (!typesOfWorkOrder.length) {
           // Getting types of work order
           const typesOfWorkOrderFromApiCall = await typesOfWorkOrderFromAPI();
           const typesOfWorkOrderArray = typesOfWorkOrderFromApiCall.data;
           setTypesOfWorkOrder(typesOfWorkOrderArray);
+        }
+
+        if (activeProviders && !activeProviders.length) {
+          // Getting activeProviders
+          const activeProvidersFromAPICall = await activeProvidersFromAPI();
+          const activeProvidersArray = activeProvidersFromAPICall.data.providers;
+          setActiveProviders(activeProvidersArray);
         }
       };
       fetchData();
@@ -47,6 +62,7 @@ const CronsDataTable = () => {
   const [workOrderTypeOptions, setWorkOrderTypeOptions] = useState([]);
   const [isFormValid, setIsFormValid] = useState(false);
   const [formData, setFormData] = useState({
+    user: 0,
     cronStartAt: '',
     cronEndAt: '',
     workingWindowStartAt: '',
@@ -75,11 +91,24 @@ const CronsDataTable = () => {
     setWorkOrderTypeOptions(selectedOptions);
   };
 
+  const allActiveProvidersOptions = (activeProviders && activeProviders.length) ? activeProviders.map((provider) => ({
+    value: provider.userId,
+    label: provider.name,
+  })) : [];
+
+  const handleProviderChange = (selectedUser) => {
+    setFormData({ ...formData, user: selectedUser });
+  };
+
   useEffect(() => {
-    const isValid = formData.cronStartAt && formData.cronEndAt && 
+    let isValid = formData.cronStartAt && formData.cronEndAt && 
                     formData.workingWindowStartAt && formData.workingWindowEndAt &&
                     formData.drivingRadius && formData.status && formData.centerZip &&
                     workOrderTypeOptions.length > 0;
+    if (userInfo.isAdmin) {
+      // making sure, provider is also selected
+      isValid = (isValid && formData.user);
+    }
     setIsFormValid(isValid);
   }, [formData, workOrderTypeOptions]);
 
@@ -95,6 +124,7 @@ const CronsDataTable = () => {
     try {
       // Prepare the data to be sent
       const data = {
+        userId: (userInfo.isAdmin && formData.user) ? formData.user?.value : 0,
         centerZip: formData.centerZip,
         cronStartAt: formData.cronStartAt,
         cronEndAt: formData.cronEndAt,
@@ -295,6 +325,21 @@ const CronsDataTable = () => {
         </Modal.Header>
         <Modal.Body>
           <BootstrapForm>
+          {userInfo.isAdmin && (
+          <BootstrapForm.Group controlId="providerName">
+              <BootstrapForm.Label>Provider</BootstrapForm.Label>
+              <Select
+                value={formData.user}
+                name="userId"
+                options={allActiveProvidersOptions}
+                onChange={(selectedOption) =>
+                  handleProviderChange(selectedOption)
+                }
+                classNamePrefix="select"
+                required
+              />
+            </BootstrapForm.Group>
+          )}
             <BootstrapForm.Group controlId="cronStartAt">
               <BootstrapForm.Label>Cron Start At</BootstrapForm.Label>
               <BootstrapForm.Control

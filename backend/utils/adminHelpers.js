@@ -28,6 +28,30 @@ const fetchAllUsers = async (start, limit, sort) => {
   }
 };
 
+const fetchAllActiveProviders = async () => {
+  try {
+    const users = await User.find(
+      { 
+        isActive: true,
+        blocked: false, 
+        isAdmin: false,
+        $or: [
+          { deleted: { $exists: false } },  // Documents where 'deleted' field doesn't exist
+          { deleted: false }                // Documents where 'deleted' is explicitly set to false
+        ]
+      },
+      { password: 0, isFnServiceCompanyAdmin: 0, } // Exclude fields
+    )
+      .lean();
+
+    return users;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
+};
+
+
 const blockUserHelper = async (userId) => {
   try {
     // Attempt to find the user by their _id
@@ -129,4 +153,4 @@ const deleteUserHelper = async (userId) => {
   }
 };
 
-export { fetchAllUsers, blockUserHelper, unBlockUserHelper, updateUser, activateUserHelper, deleteUserHelper };
+export { fetchAllUsers, blockUserHelper, unBlockUserHelper, updateUser, activateUserHelper, deleteUserHelper, fetchAllActiveProviders };
