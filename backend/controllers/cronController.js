@@ -15,7 +15,9 @@ import CronService from '../services/cronService.js';
 */
 const addCron = asyncHandler(async (req, res) => {
   try {
-    const { userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, typesOfWorkOrder, status } = req.body;
+    const { userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, typesOfWorkOrder, status,
+      isFixed, fixedPayment, isHourly, hourlyPayment, isPerDevice, perDevicePayment, isBlended, firstHourlyPayment, additionalHourlyPayment,
+      isEnabledCounterOffer, offDays, timeOffStartAt, timeOffEndAt } = req.body;
     const cron = await Cron.create({
       userId: req.user.isAdmin ? userId: req.user.userId,
       centerZip: centerZip,
@@ -28,6 +30,20 @@ const addCron = asyncHandler(async (req, res) => {
       totalRequested: 0,
       typesOfWorkOrder: typesOfWorkOrder,
       status: status,
+      isFixed: isFixed,
+      fixedPayment: fixedPayment,
+      isHourly: isHourly,
+      hourlyPayment: hourlyPayment,
+      isPerDevice: isPerDevice,
+      perDevicePayment: perDevicePayment,
+      isBlended: isBlended,
+      firstHourlyPayment: firstHourlyPayment,
+      additionalHourlyPayment: additionalHourlyPayment,
+      isEnabledCounterOffer: isEnabledCounterOffer,
+      offDays: offDays,
+      timeOffStartAt: timeOffStartAt,
+      timeOffEndAt: timeOffEndAt,
+      deleted: false,
     });
     if (cron) {
       res.status(201).json({ message: "Successfully added the cron", cron: cron });
@@ -45,7 +61,9 @@ const addCron = asyncHandler(async (req, res) => {
    # Access: PRIVATE
   */
 const updateCron = asyncHandler(async (req, res) => {
-  const { cronId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, typesOfWorkOrder, status, deleted } = req.body;
+  const { cronId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, typesOfWorkOrder, status,
+    isFixed, fixedPayment, isHourly, hourlyPayment, isPerDevice, perDevicePayment, isBlended, firstHourlyPayment, additionalHourlyPayment, isEnabledCounterOffer, offDays,
+    timeOffStartAt, timeOffEndAt, deleted } = req.body;
   if (!cronId) {
     throw new BadRequestError("Cron id is missing in the request - cron updating failed.");
   }
@@ -70,6 +88,19 @@ const updateCron = asyncHandler(async (req, res) => {
       if (totalRequested !== undefined) updatedFields.totalRequested = totalRequested;
       if (typesOfWorkOrder !== undefined) updatedFields.typesOfWorkOrder = typesOfWorkOrder;
       if (status !== undefined) updatedFields.status = status;
+      if (isFixed !== undefined) updatedFields.isFixed = isFixed;
+      if (fixedPayment !== undefined) updatedFields.fixedPayment = fixedPayment;
+      if (isHourly !== undefined) updatedFields.isHourly = isHourly;
+      if (hourlyPayment !== undefined) updatedFields.hourlyPayment = hourlyPayment;
+      if (isPerDevice !== undefined) updatedFields.isPerDevice = isPerDevice;
+      if (perDevicePayment !== undefined) updatedFields.perDevicePayment = perDevicePayment;
+      if (isBlended !== undefined) updatedFields.isBlended = isBlended;
+      if (firstHourlyPayment !== undefined) updatedFields.firstHourlyPayment = firstHourlyPayment;
+      if (additionalHourlyPayment !== undefined) updatedFields.additionalHourlyPayment = additionalHourlyPayment;
+      if (isEnabledCounterOffer !== undefined) updatedFields.isEnabledCounterOffer = isEnabledCounterOffer;
+      if (offDays !== undefined) updatedFields.offDays = offDays;
+      if (timeOffStartAt !== undefined) updatedFields.timeOffStartAt = timeOffStartAt;
+      if (timeOffEndAt !== undefined) updatedFields.timeOffEndAt = timeOffEndAt;
       if (deleted !== undefined) updatedFields.deleted = deleted;
 
       // Perform the update
@@ -180,26 +211,11 @@ const getCron = asyncHandler(async (req, res) => {
         }
       },
       {
-        $project: {
-          cronId: 1,
-          userId: 1,
-          centerZip: 1,
-          cronStartAt: 1,
-          cronEndAt: 1,
-          workingWindowStartAt: 1,
-          workingWindowEndAt: 1,
-          drivingRadius: 1,
-          requestedWoIds: 1,
-          totalRequested: 1,
-          status: 1,
-          deleted: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          typesOfWorkOrder: 1,
+        $addFields: {
           name: { $ifNull: ['$userDetails.name', 'Unknown'] } // Provide a default name if not found
         }
       }
-    ]);
+    ]);    
     cronData = cronData.length > 0 ? cronData[0] : null;
     res.status(200).json({ cronData });
   } catch (error) {
