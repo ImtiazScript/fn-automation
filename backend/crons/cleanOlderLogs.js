@@ -4,6 +4,9 @@ import logger from '../config/logger/winston-logger/loggerConfig.js';
 
 // Cron job to delete logs older than 7 days, runs every day at 23:55
 cron.schedule('55 */23 * * *', async () => {
+    if(process.env.DISABLED_CRONS) {
+        return;
+    }
     const currentDateTime = new Date().toLocaleString();
     logger.info(`CLEAN LOG:: Older than 7 days log deletion cron running at: ${currentDateTime}`);
 

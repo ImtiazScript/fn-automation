@@ -7,6 +7,9 @@ import { makeRequest } from "../utils/integrationHelpers.js";
 
 // Will run every 30 minutes
 cron.schedule('*/30 * * * *', async () => {
+    if(process.env.DISABLED_CRONS) {
+        return;
+    }
     // cron.schedule('* * * * *', async () => {
     const currentDateTime = new Date().toLocaleString();
     logger.info(`WORKORDER REQUEST:: Work order finding and requesting cron running at: ${currentDateTime}`);
