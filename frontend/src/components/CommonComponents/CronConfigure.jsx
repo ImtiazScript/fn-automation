@@ -140,10 +140,10 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
 
   const handleOffDayChange = (e) => {
     const value = e.target.value;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
       offDays: prevData.offDays.includes(value)
-        ? prevData.offDays.filter(day => day !== value)
+        ? prevData.offDays.filter((day) => day !== value)
         : [...prevData.offDays, value],
     }));
   };
@@ -165,14 +165,24 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
         status: formData.status,
         typesOfWorkOrder: selectedFnTypeIds,
         isFixed: formData.isFixed,
-        fixedPayment: formData.fixedPayment ? parseInt(formData.fixedPayment) : 0,
+        fixedPayment: formData.fixedPayment
+          ? parseInt(formData.fixedPayment)
+          : 0,
         isHourly: formData.isHourly,
-        hourlyPayment: formData.hourlyPayment ? parseInt(formData.hourlyPayment) : 0,
+        hourlyPayment: formData.hourlyPayment
+          ? parseInt(formData.hourlyPayment)
+          : 0,
         isPerDevice: formData.isPerDevice,
-        perDevicePayment: formData.perDevicePayment ? parseInt(formData.perDevicePayment) : 0,
+        perDevicePayment: formData.perDevicePayment
+          ? parseInt(formData.perDevicePayment)
+          : 0,
         isBlended: formData.isBlended,
-        firstHourlyPayment: formData.firstHourlyPayment ? parseInt(formData.firstHourlyPayment) : 0,
-        additionalHourlyPayment: formData.additionalHourlyPayment ? parseInt(formData.additionalHourlyPayment) : 0,
+        firstHourlyPayment: formData.firstHourlyPayment
+          ? parseInt(formData.firstHourlyPayment)
+          : 0,
+        additionalHourlyPayment: formData.additionalHourlyPayment
+          ? parseInt(formData.additionalHourlyPayment)
+          : 0,
         isEnabledCounterOffer: formData.isEnabledCounterOffer,
         offDays: formData.offDays,
         timeOffStartAt: formData.timeOffStartAt,
@@ -219,26 +229,6 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
             <Col md={4}>
               <ListGroup variant="flush">
                 <ListGroup.Item>
-                  <strong>Center Zip:</strong> {cron.centerZip}
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Driving Radius:</strong> {cron.drivingRadius} miles
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Work Start:</strong>{' '}
-                  {formatTime(cron.workingWindowStartAt)}
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Work End:</strong>{' '}
-                  {formatTime(cron.workingWindowEndAt)}
-                </ListGroup.Item>
-              </ListGroup>
-            </Col>
-          </Row>
-          <Row className="mt-4">
-            <Col md={4}>
-              <ListGroup variant="flush">
-                <ListGroup.Item>
                   <strong>Status:</strong>{' '}
                   <Badge
                     bg={cron.status === 'active' ? 'success' : 'secondary'}
@@ -246,6 +236,94 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
                     {cron.status}
                   </Badge>
                 </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Center Zip:</strong> {cron.centerZip}
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Driving Radius:</strong> {cron.drivingRadius} miles
+                </ListGroup.Item>
+              </ListGroup>
+            </Col>
+          </Row>
+
+          <Row style={{ marginBottom: '20px' }}>
+            <Col md={8}>
+            <strong>Payment Types:</strong>{' '}
+              <ListGroup variant="flush">
+              {cron.isFixed && (
+                    <ListGroup.Item>
+                      <strong>Fixed Payment:</strong> ${cron.fixedPayment}
+                    </ListGroup.Item>
+                  )}
+                  {cron.isHourly && (
+                    <ListGroup.Item>
+                      <strong>Hourly Payment:</strong> ${cron.hourlyPayment}/hour
+                    </ListGroup.Item>
+                  )}
+                  {cron.isPerDevice && (
+                    <ListGroup.Item>
+                      <strong>Per Device Payment:</strong> ${cron.perDevicePayment}/device
+                    </ListGroup.Item>
+                  )}
+                  {cron.isBlended && (
+                    <ListGroup.Item>
+                      <strong>Blended Payment:</strong> ${cron.firstHourlyPayment}/hour (first hours),
+                      ${cron.additionalHourlyPayment}/hour (additional hours)
+                    </ListGroup.Item>
+                  )}
+              </ListGroup>
+            </Col>
+
+            <Col md={4}>
+            <strong>Schedule:</strong>{' '}
+              <ListGroup variant="flush">
+                <ListGroup.Item>
+                  <strong>Daily Working Schedule:</strong>{' '}
+                  {formatTime(cron.workingWindowStartAt)} to{' '}
+                  {formatTime(cron.workingWindowEndAt)}
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Off Days:</strong>{' '}
+                  {cron.offDays?.length > 0 ? cron.offDays.join(', ') : 'None'}
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Planned Time Off:</strong>{' '}
+                  {cron.timeOffStartAt && cron.timeOffEndAt ? (
+                    <span>
+                      {' '}
+                      {formatDateTime(cron.timeOffStartAt)} to{' '}
+                      {formatDateTime(cron.timeOffEndAt)}
+                    </span>
+                  ) : (
+                    'None'
+                  )}
+                </ListGroup.Item>
+              </ListGroup>
+            </Col>
+          </Row>
+
+          <Row style={{ marginBottom: '20px' }}>
+            <Col md={8}>
+              <ListGroup variant="flush">
+                <ListGroup.Item>
+                  <strong>Counter Offer:</strong>{' '}
+                  {cron.isEnabledCounterOffer ? 'Enabled' : 'Disabled'}
+                </ListGroup.Item>
+              </ListGroup>
+            </Col>
+            {/* <Col md={4}>
+              <ListGroup variant="flush">
+                <ListGroup.Item>
+                  <strong>Counter Offer:</strong>
+                  {cron.isEnabledCounterOffer ? 'Enabled' : 'Disabled'}
+                </ListGroup.Item>
+              </ListGroup>
+            </Col> */}
+          </Row>
+
+          <Row className="mt-4">
+            <Col md={4}>
+              <ListGroup variant="flush">
                 <ListGroup.Item>
                   <strong>Total Requested:</strong> {cron.totalRequested}
                 </ListGroup.Item>
