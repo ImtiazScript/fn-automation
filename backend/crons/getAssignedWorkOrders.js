@@ -7,8 +7,8 @@ import AssignedWorkOrders from '../models/assignedWorkOrdersModel.js';
 import { makeRequest } from "../utils/integrationHelpers.js";
 
 // Will run every 30 minutes
-cron.schedule('*/58 * * * *', async () => {
-    if(process.env.DISABLED_CRONS) {
+cron.schedule('*/25 * * * *', async () => {
+    if(process.env.DISABLED_CRONS === 'true') {
         return;
     }
     // cron.schedule('* * * * *', async () => {

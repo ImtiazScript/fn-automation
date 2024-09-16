@@ -3,6 +3,7 @@ import logger from "../config/logger/winston-logger/loggerConfig.js";
 import UserService from '../services/userService.js';
 import IntegrationService from '../services/integrationService.js';
 import CronService from '../services/cronService.js';
+import AssignedWorkOrder from '../services/assignedWorkOrdersService.js';
 import { makeRequest } from "../utils/integrationHelpers.js";
 
 // Will run every 30 minutes
@@ -216,6 +217,23 @@ async function isScheduleSatisfied(workOrderSchedule, cron) {
     const workOrderDayName = workOrderStart.toLocaleString('en-US', { weekday: 'long' });
     const workingWindowStartTime = cron.workingWindowStartAt.split(':');
     const workingWindowEndTime = cron.workingWindowEndAt.split(':');
+
+    const assignedWorkOrderService = new AssignedWorkOrder();
+    const alreadyAssignedSchedules = await assignedWorkOrderService.fetchAssignedWorkOrdersSchedules();
+
+    // Check if the current work order overlaps with already assigned schedules
+    alreadyAssignedSchedules.map((assignedSchedule) => {
+        const assignedStart = new Date(assignedSchedule.start.utc);
+        const assignedEnd = new Date(assignedSchedule.end.utc);
+
+        // If the workOrder overlaps with an already assigned schedule, return false
+        if ((workOrderStart >= assignedStart && workOrderStart <= assignedEnd)
+            || (workOrderEnd >= assignedStart && workOrderEnd <= assignedEnd)
+            || (workOrderStart <= assignedStart && workOrderEnd >= assignedEnd)
+        ) {
+            return false;
+        }
+    });
 
     // Check common conditions (off days, cron start/end times, time-off periods)
     if (workOrderStart < cronStartAt || workOrderEnd > cronEndAt || cron.offDays.includes(workOrderDayName)) {
@@ -457,8 +475,8 @@ async function getPaymentCounterOfferRequestPayload(workOrderPayment, cron) {
                 amount: cron.fixedPayment
             },
             additional: {
-                units: 0,
-                amount: 0
+                units: workOrderPayment.additional.units,
+                amount: workOrderPayment.additional.amount,
             },
             validation: {}
         };
@@ -473,8 +491,8 @@ async function getPaymentCounterOfferRequestPayload(workOrderPayment, cron) {
                 amount: cron.hourlyPayment,
             },
             additional: {
-                units: 0,
-                amount: 0
+                units: workOrderPayment.additional.units,
+                amount: workOrderPayment.additional.amount,
             },
             validation: {}
         };
@@ -489,8 +507,8 @@ async function getPaymentCounterOfferRequestPayload(workOrderPayment, cron) {
                 amount: cron.perDevicePayment,
             },
             additional: {
-                units: 0,
-                amount: 0
+                units: workOrderPayment.additional.units,
+                amount: workOrderPayment.additional.amount,
             },
             validation: {}
         };
@@ -507,7 +525,7 @@ async function getPaymentCounterOfferRequestPayload(workOrderPayment, cron) {
             },
             additional: {
                 units: workOrderPayment.additional.units,
-                amount: workOrderPayment.additional.units * cron.additionalHourlyPayment,
+                amount: cron.additionalHourlyPayment,
             },
             validation: {}
         };
@@ -520,6 +538,14 @@ async function getPaymentCounterOfferRequestPayload(workOrderPayment, cron) {
 
 async function getScheduleCounterOfferRequestPayload(workOrderSchedule, cron) {
     let scheduleRequestPayload = {};
+
+    const { startTime, endTime } = await getNextAvailableTimeSchedule(workOrderSchedule, cron);
+    
+    const startDate = startTime.toISOString().split('T')[0]; // Extract date in YYYY-MM-DD format
+    const startTimeStr = startTime.toISOString().split('T')[1].slice(0, 8); // Extract time in HH:MM:SS format
+    const endDate = endTime.toISOString().split('T')[0]; // Extract date in YYYY-MM-DD format
+    const endTimeStr = endTime.toISOString().split('T')[1].slice(0, 8); // Extract time in HH:MM:SS format
+
     // Arrive at a specific date and time - (Hard Start)
     if (workOrderSchedule.service_window.mode === 'exact') {
         // form request
@@ -528,8 +554,8 @@ async function getScheduleCounterOfferRequestPayload(workOrderSchedule, cron) {
                 mode: "exact",
                 start: {
                     local: {
-                        date: "2024-09-20",
-                        time: "10:00:00"
+                        date: startDate,
+                        time: startTimeStr
                     }
                 },
                 time_zone: {
@@ -549,14 +575,14 @@ async function getScheduleCounterOfferRequestPayload(workOrderSchedule, cron) {
                 mode: "between",
                 start: {
                     local: {
-                        date: "2024-09-20",
-                        time: "10:00:00"
+                        date: startDate,
+                        time: startTimeStr,
                     }
                 },
                 end: {
                     local: {
-                        date: "2024-09-25",
-                        time: "11:15:00"
+                        date: endDate,
+                        time: endTimeStr
                     }
                 },
                 time_zone: {
@@ -569,6 +595,97 @@ async function getScheduleCounterOfferRequestPayload(workOrderSchedule, cron) {
     }
 
     return scheduleRequestPayload;
+}
+
+async function getNextAvailableTimeSchedule(workOrderSchedule, cron) {
+    const assignedWorkOrderService = new AssignedWorkOrder();
+    const alreadyAssignedSchedules = await assignedWorkOrderService.fetchAssignedWorkOrdersSchedules();
+
+    const workingWindowStartTime = cron.workingWindowStartAt.split(':');
+    const workingWindowEndTime = cron.workingWindowEndAt.split(':');
+    
+    let startTime;
+    let endTime;
+
+    // Start with the work order's start time
+    let potentialStartTime = new Date(workOrderSchedule.service_window.start.utc);
+
+    // Helper function to check if a day is an off day
+    const isOffDay = (date) => {
+        const dayName = date.toLocaleString('en-US', { weekday: 'long' });
+        return cron.offDays.includes(dayName);
+    };
+
+    // Helper function to check if the time is within planned time off
+    const isPlannedTimeOff = (start, end) => {
+        if (cron.timeOffStartAt && cron.timeOffEndAt) {
+            const timeOffStart = new Date(cron.timeOffStartAt.$date);
+            const timeOffEnd = new Date(cron.timeOffEndAt.$date);
+            return (start >= timeOffStart && start <= timeOffEnd) ||
+                   (end >= timeOffStart && end <= timeOffEnd) ||
+                   (start <= timeOffStart && end >= timeOffEnd);
+        }
+        return false;
+    };
+
+    // Adjust to next working window if the potential start time is outside the working window
+    const potentialStartHour = potentialStartTime.getUTCHours();
+    if (potentialStartHour < parseInt(workingWindowStartTime[0])) {
+        potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
+    } else if (potentialStartHour >= parseInt(workingWindowEndTime[0])) {
+        // If it's after working hours, move to the next day and set to start of the next working window
+        potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
+        potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
+    }
+
+    // Loop to find the next available time slot that doesn't overlap with off days, time off, or already assigned schedules
+    let foundSlot = false;
+    while (!foundSlot) {
+        const potentialEndTime = new Date(potentialStartTime.getTime() + (workOrderSchedule.est_labor_hours || 1) * 60 * 60 * 1000);
+
+        // Ensure the potential end time is within the working window
+        const potentialEndHour = potentialEndTime.getUTCHours();
+        if (potentialEndHour >= parseInt(workingWindowEndTime[0])) {
+            potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
+            potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
+            continue;
+        }
+
+        // Skip off days and planned time off
+        if (isOffDay(potentialStartTime) || isPlannedTimeOff(potentialStartTime, potentialEndTime)) {
+            potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
+            potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
+            continue;
+        }
+
+        // Check against already assigned schedules for conflicts
+        let hasConflict = false;
+        for (const assignedSchedule of alreadyAssignedSchedules) {
+            const assignedStart = new Date(assignedSchedule.start.utc);
+            const assignedEnd = new Date(assignedSchedule.end.utc);
+
+            if (
+                (potentialStartTime >= assignedStart && potentialStartTime <= assignedEnd) ||
+                (potentialEndTime >= assignedStart && potentialEndTime <= assignedEnd) ||
+                (potentialStartTime <= assignedStart && potentialEndTime >= assignedEnd)
+            ) {
+                hasConflict = true;
+                break;
+            }
+        }
+
+        if (!hasConflict) {
+            foundSlot = true;
+            startTime = potentialStartTime;
+            endTime = potentialEndTime;
+        } else {
+            // If there's a conflict, move to the next possible working time
+            potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
+            potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
+        }
+    }
+
+    return { startTime, endTime };
 }
 
 // Function to get available work orders
