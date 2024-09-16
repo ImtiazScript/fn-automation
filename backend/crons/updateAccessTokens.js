@@ -5,7 +5,9 @@ import IntegrationService from '../services/integrationService.js';
 
 // Will run every 23 hours 55 minutes
 cron.schedule('55 */23 * * *', async () => {
-    // cron.schedule('* * * * *', async () => {
+    if(process.env.DISABLED_AUTHENTICATION_CRONS === 'true') {
+        return;
+    }
     const currentDateTime = new Date().toLocaleString();
     logger.info(`REFRESH ACCESS TOKEN:: Access-token updating cron running at: ${currentDateTime}`);
     const userService = new UserService();
