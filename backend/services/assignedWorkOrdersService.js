@@ -18,6 +18,7 @@ class AssignedWorkOrder {
       assignedWorkOrdersList.filter((assignedWorkOrder) => assignedWorkOrder.schedule.service_window.mode === 'exact' || assignedWorkOrder.eta.start.local.date)
         .map((assignedWorkOrder) => {
           const schedule = {
+            work_order_id: assignedWorkOrder.schedule.work_order_id,
             mode: assignedWorkOrder.schedule.service_window.mode,
             start: {
               local: {

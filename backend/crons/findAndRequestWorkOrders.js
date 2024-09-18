@@ -7,7 +7,7 @@ import AssignedWorkOrder from '../services/assignedWorkOrdersService.js';
 import { makeRequest } from "../utils/integrationHelpers.js";
 
 // Will run every 30 minutes
-cron.schedule('*/30 * * * *', async () => {
+cron.schedule('*  * * * *', async () => {
     if(process.env.DISABLED_CRONS === 'true') {
         return;
     }
@@ -91,6 +91,7 @@ cron.schedule('*/30 * * * *', async () => {
                         );
 
                     const workOrderRequestValidation = await getWorkOrderRequestValidation(workOrder, cron);
+                    logger.info(`Work Order Request validation, #ID: ${workOrder.id}, isPaymentValid: ${workOrderRequestValidation.isPaymentValid}, isScheduleValid: ${workOrderRequestValidation.isScheduleValid} `, workOrderRequestValidation);
                     if (workOrderRequestValidation.isValid) {
                         logger.info(
                             `OK to request work order #${workOrder.id}`,
@@ -207,260 +208,164 @@ async function isScheduleSatisfied(workOrderSchedule, cron) {
         end: { utc: workOrderEndUtc } = {},
         est_labor_hours: estLaborHours = 0,
     } = workOrderSchedule.service_window;
-    
+    const workOrderId = workOrderSchedule.work_order_id;
     const workOrderStart = new Date(workOrderStartUtc);
     const workOrderEnd = workOrderEndUtc ? new Date(workOrderEndUtc) : new Date(workOrderStart.getTime() + estLaborHours * 60 * 60 * 1000);
-    
-    const cronStartAt = new Date(cron.cronStartAt.$date);
-    const cronEndAt = new Date(cron.cronEndAt.$date);
 
-    const workOrderDayName = workOrderStart.toLocaleString('en-US', { weekday: 'long' });
-    const workingWindowStartTime = cron.workingWindowStartAt.split(':');
-    const workingWindowEndTime = cron.workingWindowEndAt.split(':');
-
-    const assignedWorkOrderService = new AssignedWorkOrder();
-    const alreadyAssignedSchedules = await assignedWorkOrderService.fetchAssignedWorkOrdersSchedules();
-
-    // Check if the current work order overlaps with already assigned schedules
-    alreadyAssignedSchedules.map((assignedSchedule) => {
-        const assignedStart = new Date(assignedSchedule.start.utc);
-        const assignedEnd = new Date(assignedSchedule.end.utc);
-
-        // If the workOrder overlaps with an already assigned schedule, return false
-        if ((workOrderStart >= assignedStart && workOrderStart <= assignedEnd)
-            || (workOrderEnd >= assignedStart && workOrderEnd <= assignedEnd)
-            || (workOrderStart <= assignedStart && workOrderEnd >= assignedEnd)
-        ) {
-            return false;
-        }
-    });
-
-    // Check common conditions (off days, cron start/end times, time-off periods)
-    if (workOrderStart < cronStartAt || workOrderEnd > cronEndAt || cron.offDays.includes(workOrderDayName)) {
+    // Check for off-days
+    const outsideOffDays = await outSideOfOffDays(workOrderId, cron, workOrderStart, workOrderEnd);
+    if (!outsideOffDays) {
         return false;
     }
 
+    // Check for planned time-off
+    const outSidePlannedTimeOff = await outSideOfPlannedTimeOff(workOrderId, cron, workOrderStart, workOrderEnd);
+    if (!outSidePlannedTimeOff) {
+        return false;
+    }
+
+    // Check for work order overlaps with already assigned schedules
+    const isOverLapping = await isOverlappingWithAssignedWorkOrders(workOrderId, workOrderStart, workOrderEnd, mode);
+    if (isOverLapping) {
+        return false;
+    }
+
+    // Check for daily working schedule
+    const fitsWorkingWindow = await isInsideWorkingWindow(workOrderId, cron, mode, workOrderStart, workOrderEnd);
+    if (!fitsWorkingWindow) {
+        return false;
+    }
+
+    return true;
+}
+
+async function outSideOfOffDays(workOrderId, cron, workOrderStart, workOrderEnd) {
+    const workOrderStartClone = new Date(workOrderStart.getTime());
+    const workOrderEndClone = new Date(workOrderEnd.getTime());
+    const workOrderDayNames = await getWorkOrderDayNames(workOrderStartClone, workOrderEndClone);
+    if (workOrderDayNames.every(day => cron.offDays.includes(day))) {
+        console.log(`off day conflict, id # ${workOrderId}`);
+        return false;
+    }
+
+    true;
+}
+
+async function getWorkOrderDayNames(workOrderStartDayTime, workOrderEndDayTime) {
+    const dayNames = new Set();
+
+    while (workOrderStartDayTime <= workOrderEndDayTime) {
+        const dayName = workOrderStartDayTime.toLocaleString('en-US', { weekday: 'long' });
+        dayNames.add(dayName);
+
+        workOrderStartDayTime.setUTCDate(workOrderStartDayTime.getUTCDate() + 1);
+    }
+
+    return Array.from(dayNames); // Convert Set to Array
+}
+
+async function outSideOfPlannedTimeOff(workOrderId, cron, workOrderStart, workOrderEnd) {
     if (cron.timeOffStartAt && cron.timeOffEndAt) {
-        const timeOffStart = new Date(cron.timeOffStartAt.$date);
-        const timeOffEnd = new Date(cron.timeOffEndAt.$date);
-        if (
-            (workOrderStart >= timeOffStart && workOrderStart <= timeOffEnd) ||
-            (workOrderEnd >= timeOffStart && workOrderEnd <= timeOffEnd)
-        ) {
+        const timeOffStart = new Date(cron.timeOffStartAt);
+        const timeOffEnd = new Date(cron.timeOffEndAt);
+        if (workOrderStart >= timeOffStart && workOrderEnd <= timeOffEnd){
+            console.log(`planned time-off conflict, id # ${workOrderId}`);
             return false;
         }
     }
+    return true;
+}
 
-    // Specific checks for different modes
+async function isOverlappingWithAssignedWorkOrders(workOrderId, workOrderStart, workOrderEnd, mode) {
+    try {
+        const assignedWorkOrderService = new AssignedWorkOrder();
+        const alreadyAssignedSchedules = await assignedWorkOrderService.fetchAssignedWorkOrdersSchedules();
+
+        // Use `some` to determine if any schedule overlaps
+        const isOverlapping = alreadyAssignedSchedules.some((assignedSchedule) => {
+            const assignedStart = new Date(assignedSchedule.start.utc);
+            const assignedEnd = new Date(assignedSchedule.end.utc);
+
+            switch (mode) {
+                case 'exact':
+                    if (
+                        // if workorder start-time is inside another workorders schedule
+                        (workOrderStart >= assignedStart && workOrderStart <= assignedEnd) ||
+                        // if workorder start-time is inside another workorders schedule
+                        (workOrderEnd >= assignedStart && workOrderEnd <= assignedEnd) ||
+                        // if workorder start-time is before and end-time is after another wororder's schedule
+                        (workOrderStart <= assignedStart && workOrderEnd >= assignedEnd)
+                    ) {
+                        console.log(`overlapped workorder #id ${workOrderId} with assigned workorder, #id ${assignedSchedule.work_order_id}`);
+                        return true;
+                    }
+                    break;
+
+                case 'hours':
+                case 'between':
+                    if (
+                        // if work order start and end time is inside another workorder's schedule
+                        (workOrderStart >= assignedStart && workOrderEnd <= assignedEnd) ||
+                        // if work order start -time is before and end-time is after another assigned work order's schedule
+                        (workOrderStart <= assignedStart && workOrderEnd >= assignedEnd)
+                    ) {
+                        console.log(`overlapped workorder #id ${workOrderId} with assigned workorder, #id ${assignedSchedule.work_order_id}`);
+                        return true;
+                    }
+                    break;
+
+                default:
+                    return false;
+            }
+        });
+
+        return isOverlapping;
+    } catch (error) {
+        // Handle potential errors
+        logger.error('Error checking overlap with assigned work orders:', error);
+        return false;
+    }
+}
+
+async function isInsideWorkingWindow(workOrderId, cron, mode, workOrderStart, workOrderEnd) {
+    const workingWindowStartTime = cron.workingWindowStartAt.split(':');
+    const workingWindowEndTime = cron.workingWindowEndAt.split(':');
     switch (mode) {
         case 'exact':
-            const workingWindowStart = new Date(workOrderStart);
-            workingWindowStart.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1]);
-
-            const workingWindowEnd = new Date(workOrderStart);
-            workingWindowEnd.setUTCHours(workingWindowEndTime[0], workingWindowEndTime[1]);
-
-            if (workOrderStart < workingWindowStart || workOrderEnd > workingWindowEnd) {
-                return false;
-            }
-            break;
-
         case 'hours':
-            const hoursWindowStart = new Date(workOrderStart);
-            hoursWindowStart.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1]);
+            // Initialize working window times
+            const workingWindowStart = new Date();
+            const workingWindowEnd = new Date();
+            workingWindowStart.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
+            workingWindowEnd.setUTCHours(workingWindowEndTime[0], workingWindowEndTime[1], 0, 0);
+            // Check if the working window spans across two days (e.g., 20:00 - 08:00)
+            if (workingWindowEnd < workingWindowStart) {
+                workingWindowEnd.setUTCDate(workingWindowEnd.getUTCDate() + 1);
+            }
 
-            const hoursWindowEnd = new Date(workOrderEnd);
-            hoursWindowEnd.setUTCHours(workingWindowEndTime[0], workingWindowEndTime[1]);
+            // Initialize work order times
+            const workOrderWindowStart = new Date();
+            workOrderWindowStart.setUTCHours(workOrderStart.getUTCHours(), workOrderStart.getUTCMinutes(), 0, 0);
+            const workOrderWindowEnd = new Date();
+            workOrderWindowEnd.setUTCHours(workOrderEnd.getUTCHours(), workOrderEnd.getUTCMinutes(), 0, 0);
+            // Check if the workorder window spans across two days (e.g., 20:00 - 08:00)
+            if (workOrderWindowEnd < workOrderWindowStart) {
+                workOrderWindowEnd.setUTCDate(workOrderWindowEnd.getUTCDate() + 1);
+            }
 
-            if (workOrderStart < hoursWindowStart || workOrderEnd > hoursWindowEnd) {
+
+            // Compare work order times with the working window times
+            if (workOrderWindowStart < workingWindowStart || workOrderWindowEnd > workingWindowEnd) {
+                console.log(`daily working schedule conflict, id # ${workOrderId}`);
                 return false;
             }
             break;
 
         case 'between':
-            if (workOrderStart < cronStartAt || workOrderEnd > cronEndAt) {
-                return false;
-            }
-            break;
+            return true;
 
         default:
             return false; // Unsupported mode
-    }
-
-    return true; // If all checks passed
-}
-
-async function isScheduleSatisfiedOld(workOrderSchedule, cron) {
-    // Arrive at a specific date and time - (Hard Start)
-    if (workOrderSchedule.service_window.mode === 'exact') {
-        // Convert the work order's start time to a Date object
-        const workOrderStart = new Date(workOrderSchedule.service_window.start.utc);
-
-        // Convert cron start and end times
-        const cronStartAt = new Date(cron.cronStartAt.$date);
-        const cronEndAt = new Date(cron.cronEndAt.$date);
-
-        // Convert working window times
-        const workingWindowStartTime = cron.workingWindowStartAt.split(':');
-        const workingWindowEndTime = cron.workingWindowEndAt.split(':');
-
-        // Check if the work order falls within the cron start and end times
-        if (workOrderStart < cronStartAt || workOrderStart > cronEndAt) {
-            return false; // Work order is outside the cron period
-        }
-
-        // Check if the work order is on an off day
-        const workOrderDayName = workOrderStart.toLocaleString('en-US', { weekday: 'long' });
-        if (cron.offDays.includes(workOrderDayName)) {
-            return false; // Work order is on an off day
-        }
-
-        // Calculate work order end time using the estimated labor hours
-        const estLaborHours = workOrderSchedule.est_labor_hours || 0;
-        const workOrderEnd = new Date(workOrderStart.getTime() + estLaborHours * 60 * 60 * 1000);
-
-        // Check if the work order falls within the cron's time-off period
-        if (cron.timeOffStartAt && cron.timeOffEndAt) {
-            const timeOffStart = new Date(cron.timeOffStartAt.$date);
-            const timeOffEnd = new Date(cron.timeOffEndAt.$date);
-
-            // Check if work start or end falls in time-off period
-            if (
-                (workOrderStart >= timeOffStart && workOrderStart <= timeOffEnd) ||
-                (workOrderEnd >= timeOffStart && workOrderEnd <= timeOffEnd)
-            ) {
-                return false; // Work order falls within time-off period
-            }
-        }
-
-        // Check if the work order falls within the cron's working hours for that day
-        const workingWindowStart = new Date(workOrderStart);
-        workingWindowStart.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1]);
-
-        const workingWindowEnd = new Date(workOrderStart);
-        workingWindowEnd.setUTCHours(workingWindowEndTime[0], workingWindowEndTime[1]);
-
-        // Ensure both the start and end of the work order fall within the working window
-        if (workOrderStart < workingWindowStart || workOrderEnd > workingWindowEnd) {
-            return false; // Work order is outside of working hours
-        }
-
-        // If all checks are passed, the schedule is satisfied
-        return true;
-    }
-
-    // Complete work between specific hours
-    if (workOrderSchedule.service_window.mode === 'hours') {
-        // Convert the work order's start and end times to Date objects
-        const workOrderStart = new Date(workOrderSchedule.service_window.start.utc);
-        const workOrderEnd = new Date(workOrderSchedule.service_window.end.utc);
-
-        // Convert cron start and end times
-        const cronStartAt = new Date(cron.cronStartAt.$date);
-        const cronEndAt = new Date(cron.cronEndAt.$date);
-
-        // Convert working window times
-        const workingWindowStartTime = cron.workingWindowStartAt.split(':');
-        const workingWindowEndTime = cron.workingWindowEndAt.split(':');
-
-        // Check if the work order falls within the cron start and end times
-        if (workOrderStart < cronStartAt || workOrderEnd > cronEndAt) {
-            return false; // Work order is outside the cron period
-        }
-
-        // Check if the work order is on an off day
-        const workOrderDayName = workOrderStart.toLocaleString('en-US', { weekday: 'long' });
-        if (cron.offDays.includes(workOrderDayName)) {
-            return false; // Work order is on an off day
-        }
-
-        // Calculate work order end time using the estimated labor hours
-        const estLaborHours = workOrderSchedule.est_labor_hours || 0;
-        const estimatedWorkOrderEnd = new Date(workOrderStart.getTime() + estLaborHours * 60 * 60 * 1000);
-
-        // Check if the work order falls within the cron's time-off period
-        if (cron.timeOffStartAt && cron.timeOffEndAt) {
-            const timeOffStart = new Date(cron.timeOffStartAt.$date);
-            const timeOffEnd = new Date(cron.timeOffEndAt.$date);
-
-            // Check if work start or end falls in time-off period
-            if (
-                (workOrderStart >= timeOffStart && workOrderStart <= timeOffEnd) ||
-                (estimatedWorkOrderEnd >= timeOffStart && estimatedWorkOrderEnd <= timeOffEnd)
-            ) {
-                return false; // Work order falls within time-off period
-            }
-        }
-
-        // Check if the work order falls within the cron's working hours for that day (using hours mode)
-        if (workOrderSchedule.service_window.mode === 'hours') {
-            const workingWindowStart = new Date(workOrderStart);
-            const workingWindowEnd = new Date(workOrderEnd);
-
-            // Set the working window's start and end times for each day
-            workingWindowStart.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1]);
-            workingWindowEnd.setUTCHours(workingWindowEndTime[0], workingWindowEndTime[1]);
-
-            // Ensure both the start and end of the work order fall within the working window for that day range
-            if (workOrderStart < workingWindowStart || estimatedWorkOrderEnd > workingWindowEnd) {
-                return false; // Work order is outside of working hours
-            }
-        }
-
-        // If all checks are passed, the schedule is satisfied
-        return true;
-    }
-    
-    // Complete work anytime over a date range
-    if (workOrderSchedule.service_window.mode === 'between') {
-        // Convert the work order's start and end times to Date objects
-        const workOrderStart = new Date(workOrderSchedule.service_window.start.utc);
-        const workOrderEnd = new Date(workOrderSchedule.service_window.end.utc);
-
-        // Convert cron start and end times
-        const cronStartAt = new Date(cron.cronStartAt.$date);
-        const cronEndAt = new Date(cron.cronEndAt.$date);
-
-        // Check if the work order falls within the cron start and end times
-        if (workOrderStart < cronStartAt || workOrderEnd > cronEndAt) {
-            return false; // Work order is outside the cron period
-        }
-
-        // Check if the work order is on an off day
-        const workOrderDayName = workOrderStart.toLocaleString('en-US', { weekday: 'long' });
-        if (cron.offDays.includes(workOrderDayName)) {
-            return false; // Work order is on an off day
-        }
-
-        // Calculate work order end time using the estimated labor hours
-        const estLaborHours = workOrderSchedule.est_labor_hours || 0;
-        const estimatedWorkOrderEnd = new Date(workOrderStart.getTime() + estLaborHours * 60 * 60 * 1000);
-
-        // Check if the work order falls within the cron's time-off period
-        if (cron.timeOffStartAt && cron.timeOffEndAt) {
-            const timeOffStart = new Date(cron.timeOffStartAt.$date);
-            const timeOffEnd = new Date(cron.timeOffEndAt.$date);
-
-            // Check if work start or end falls in time-off period
-            if (
-                (workOrderStart >= timeOffStart && workOrderStart <= timeOffEnd) ||
-                (estimatedWorkOrderEnd >= timeOffStart && estimatedWorkOrderEnd <= timeOffEnd)
-            ) {
-                return false; // Work order falls within time-off period
-            }
-        }
-
-        // Check if the work order mode is "between"
-        if (workOrderSchedule.service_window.mode === 'between') {
-            // No specific working hours, just ensure work fits within the start and end date range
-            if (workOrderStart < cronStartAt || estimatedWorkOrderEnd > workOrderEnd) {
-                return false; // Work order starts before or ends after the defined window
-            }
-        }
-
-        // If all checks are passed, the schedule is satisfied
-        return true;
-
     }
 }
 
@@ -619,8 +524,8 @@ async function getNextAvailableTimeSchedule(workOrderSchedule, cron) {
     // Helper function to check if the time is within planned time off
     const isPlannedTimeOff = (start, end) => {
         if (cron.timeOffStartAt && cron.timeOffEndAt) {
-            const timeOffStart = new Date(cron.timeOffStartAt.$date);
-            const timeOffEnd = new Date(cron.timeOffEndAt.$date);
+            const timeOffStart = new Date(cron.timeOffStartAt);
+            const timeOffEnd = new Date(cron.timeOffEndAt);
             return (start >= timeOffStart && start <= timeOffEnd) ||
                    (end >= timeOffStart && end <= timeOffEnd) ||
                    (start <= timeOffStart && end >= timeOffEnd);
