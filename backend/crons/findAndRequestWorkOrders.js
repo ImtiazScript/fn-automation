@@ -7,7 +7,7 @@ import AssignedWorkOrder from '../services/assignedWorkOrdersService.js';
 import { makeRequest } from "../utils/integrationHelpers.js";
 
 // Will run every 30 minutes
-cron.schedule('*  * * * *', async () => {
+cron.schedule('*/30  * * * *', async () => {
     if(process.env.DISABLED_CRONS === 'true') {
         return;
     }
@@ -33,7 +33,7 @@ cron.schedule('*  * * * *', async () => {
         const integrationService = new IntegrationService(user.userId);
         const integration = await integrationService.fetchIntegration();
         if (!integration || !integration.fnUserId || integration.integrationStatus == 'Not Connected' || integration.disabled) {
-            logger.info(`WORKORDER REQUEST:: User id: ${user.userId} is not integrated with Field Nation`);
+            // logger.info(`WORKORDER REQUEST:: User id: ${user.userId} is not integrated with Field Nation`);
             return;
         }
 
@@ -41,7 +41,7 @@ cron.schedule('*  * * * *', async () => {
         const cronService = new CronService(user.userId);
         const crons = await cronService.fetchAllCrons();
         if (crons && !crons.length) {
-            logger.info(`WORKORDER REQUEST:: User id: ${user.userId} has no cron configured`);
+            // logger.info(`WORKORDER REQUEST:: User id: ${user.userId} has no cron configured`);
             return;
         }
 
@@ -60,7 +60,7 @@ cron.schedule('*  * * * *', async () => {
 
             // check if cron has configured types of work orders
             if (!cron.typesOfWorkOrder.length) {
-                logger.info(`WORKORDER REQUEST:: Cron id: ${cron.cronId} has no configured types of work order`);
+                // logger.info(`WORKORDER REQUEST:: Cron id: ${cron.cronId} has no configured types of work order`);
                 return;
             }
 
@@ -73,6 +73,10 @@ cron.schedule('*  * * * *', async () => {
 
             if (workOrdersResponse && workOrdersResponse.results) {
                 workOrdersResponse.results.map(async (workOrder) => {
+                    // TODO: Remove DEBUG Code
+                    // if (workOrder.id !== 16768){
+                    //     return;
+                    // }
                     const allowedPaymentType = (workOrder.pay.type === 'fixed' && cron.isFixed) || (workOrder.pay.type === 'hourly' && cron.isHourly) || (workOrder.pay.type === 'device' && cron.isPerDevice) || (workOrder.pay.type === 'blended' && cron.isBlended);
                     if(!allowedPaymentType) {
                         logger.info(`WORKORDER REQUEST:: Payment type ${workOrder.pay.type} is not allowed, work order #${workOrder.id}, cron id: ${cron.cronId}`, workOrder);
@@ -91,7 +95,7 @@ cron.schedule('*  * * * *', async () => {
                         );
 
                     const workOrderRequestValidation = await getWorkOrderRequestValidation(workOrder, cron);
-                    logger.info(`Work Order Request validation, #ID: ${workOrder.id}, isPaymentValid: ${workOrderRequestValidation.isPaymentValid}, isScheduleValid: ${workOrderRequestValidation.isScheduleValid} `, workOrderRequestValidation);
+                    // logger.info(`Work Order Request validation, #ID: ${workOrder.id}, isPaymentValid: ${workOrderRequestValidation.isPaymentValid}, isScheduleValid: ${workOrderRequestValidation.isScheduleValid} `, workOrderRequestValidation);
                     if (workOrderRequestValidation.isValid) {
                         logger.info(
                             `OK to request work order #${workOrder.id}`,
@@ -248,7 +252,7 @@ async function outSideOfOffDays(workOrderId, cron, workOrderStart, workOrderEnd)
         return false;
     }
 
-    true;
+    return true;
 }
 
 async function getWorkOrderDayNames(workOrderStartDayTime, workOrderEndDayTime) {
@@ -367,6 +371,8 @@ async function isInsideWorkingWindow(workOrderId, cron, mode, workOrderStart, wo
         default:
             return false; // Unsupported mode
     }
+
+    return true;
 }
 
 async function getPaymentCounterOfferRequestPayload(workOrderPayment, cron) {
@@ -503,81 +509,66 @@ async function getScheduleCounterOfferRequestPayload(workOrderSchedule, cron) {
 }
 
 async function getNextAvailableTimeSchedule(workOrderSchedule, cron) {
-    const assignedWorkOrderService = new AssignedWorkOrder();
-    const alreadyAssignedSchedules = await assignedWorkOrderService.fetchAssignedWorkOrdersSchedules();
-
+    const workOrderId = workOrderSchedule.work_order_id;
     const workingWindowStartTime = cron.workingWindowStartAt.split(':');
-    const workingWindowEndTime = cron.workingWindowEndAt.split(':');
-    
+
     let startTime;
     let endTime;
+    const today = new Date();
 
     // Start with the work order's start time
     let potentialStartTime = new Date(workOrderSchedule.service_window.start.utc);
-
-    // Helper function to check if a day is an off day
-    const isOffDay = (date) => {
-        const dayName = date.toLocaleString('en-US', { weekday: 'long' });
-        return cron.offDays.includes(dayName);
-    };
-
-    // Helper function to check if the time is within planned time off
-    const isPlannedTimeOff = (start, end) => {
-        if (cron.timeOffStartAt && cron.timeOffEndAt) {
-            const timeOffStart = new Date(cron.timeOffStartAt);
-            const timeOffEnd = new Date(cron.timeOffEndAt);
-            return (start >= timeOffStart && start <= timeOffEnd) ||
-                   (end >= timeOffStart && end <= timeOffEnd) ||
-                   (start <= timeOffStart && end >= timeOffEnd);
-        }
-        return false;
-    };
-
-    // Adjust to next working window if the potential start time is outside the working window
-    const potentialStartHour = potentialStartTime.getUTCHours();
-    if (potentialStartHour < parseInt(workingWindowStartTime[0])) {
-        potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
-    } else if (potentialStartHour >= parseInt(workingWindowEndTime[0])) {
-        // If it's after working hours, move to the next day and set to start of the next working window
-        potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
-        potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
+    let potentialEndTime = new Date(workOrderSchedule.service_window.end.utc);
+    
+    // If the start day is a previous day or today then make that tomorrow
+    if (potentialStartTime <= today) {
+        potentialStartTime.setUTCDate(today.getUTCDate() + 1);
+        potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
     }
 
     // Loop to find the next available time slot that doesn't overlap with off days, time off, or already assigned schedules
     let foundSlot = false;
-    while (!foundSlot) {
-        const potentialEndTime = new Date(potentialStartTime.getTime() + (workOrderSchedule.est_labor_hours || 1) * 60 * 60 * 1000);
+    let iterationCount = 0; // Added counter to prevent infinite loop
+    const maxIterations = 50; // Define a maximum number of iterations
 
-        // Ensure the potential end time is within the working window
-        const potentialEndHour = potentialEndTime.getUTCHours();
-        if (potentialEndHour >= parseInt(workingWindowEndTime[0])) {
+    while (!foundSlot && iterationCount < maxIterations) {
+        iterationCount++;
+        const fitsWorkingWindow = await isInsideWorkingWindow(workOrderId, cron, workOrderSchedule.service_window.mode, potentialStartTime, potentialEndTime);
+        if (!fitsWorkingWindow) {
             potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
             potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
+
+            potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
+            potentialEndTime.setUTCHours(potentialStartTime.getUTCHours() + (workOrderSchedule.est_labor_hours || 1), potentialStartTime.getUTCMinutes(), 0, 0);
+            console.log(`Outside of working windows ${workOrderId}`);
             continue;
         }
 
-        // Skip off days and planned time off
-        if (isOffDay(potentialStartTime) || isPlannedTimeOff(potentialStartTime, potentialEndTime)) {
+        const outsideOffDays = await outSideOfOffDays(workOrderSchedule.work_order_id, cron, potentialStartTime, potentialEndTime);
+        if (!outsideOffDays) {
             potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
             potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
+
+            potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
+            potentialEndTime.setUTCHours(potentialStartTime.getUTCHours() + (workOrderSchedule.est_labor_hours || 1), potentialStartTime.getUTCMinutes(), 0, 0);
+            console.log(`In off-day, ${workOrderId}`);
+            continue;
+        }
+
+        const outsidePlannedTimeOff = await outSideOfPlannedTimeOff(workOrderSchedule.work_order_id, cron, potentialStartTime, potentialEndTime);
+        if (!outsidePlannedTimeOff) {
+            // TODO: Get the number of leave days and find remaing days than today then add here
+            potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
+            potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
+
+            potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
+            potentialEndTime.setUTCHours(potentialStartTime.getUTCHours() + (workOrderSchedule.est_labor_hours || 1), potentialStartTime.getUTCMinutes(), 0, 0);
+            console.log(`In planned off-day, ${workOrderId}`);
             continue;
         }
 
         // Check against already assigned schedules for conflicts
-        let hasConflict = false;
-        for (const assignedSchedule of alreadyAssignedSchedules) {
-            const assignedStart = new Date(assignedSchedule.start.utc);
-            const assignedEnd = new Date(assignedSchedule.end.utc);
-
-            if (
-                (potentialStartTime >= assignedStart && potentialStartTime <= assignedEnd) ||
-                (potentialEndTime >= assignedStart && potentialEndTime <= assignedEnd) ||
-                (potentialStartTime <= assignedStart && potentialEndTime >= assignedEnd)
-            ) {
-                hasConflict = true;
-                break;
-            }
-        }
+        let hasConflict = await isOverlappingWithAssignedWorkOrders(workOrderSchedule.work_order_id, potentialStartTime, potentialEndTime, workOrderSchedule.service_window.mode);
 
         if (!hasConflict) {
             foundSlot = true;
@@ -585,8 +576,13 @@ async function getNextAvailableTimeSchedule(workOrderSchedule, cron) {
             endTime = potentialEndTime;
         } else {
             // If there's a conflict, move to the next possible working time
+            // TODO: Get the assigned workorders schedule and add the eta labour hours from there
             potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
             potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
+
+            potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
+            potentialEndTime.setUTCHours(potentialStartTime.getUTCHours() + (workOrderSchedule.est_labor_hours || 1), potentialStartTime.getUTCMinutes(), 0, 0);
+            console.log(`Has conflict with assigned work order, ${workOrderId}`);
         }
     }
 
