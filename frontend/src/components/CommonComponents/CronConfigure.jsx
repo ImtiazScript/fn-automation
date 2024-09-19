@@ -111,7 +111,19 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
   );
 
   const formatDateTime = (dateTime) => {
-    return dateTime ? format(new Date(dateTime), 'MM/dd/yyyy hh:mm a') : 'N/A';
+    if (!dateTime) return 'N/A';
+  
+    // Split the dateTime string into date and time parts
+    const [date, time] = dateTime.split('T');
+    const [year, month, day] = date.split('-');
+    let [hours, minutes] = time.split(':');
+  
+    // Convert to 12-hour format and determine AM/PM
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12; // Convert 0 hours to 12 for AM
+  
+    // Return formatted date and time
+    return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
   };
 
   const formatTime = (timeString) => {
@@ -130,7 +142,19 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
   };
 
   const formatDateForInput = (dateTime) => {
-    return dateTime ? format(new Date(dateTime), "yyyy-MM-dd'T'HH:mm") : '';
+    if (!dateTime) return '';
+  
+    // Split the dateTime string into date and time parts
+    const [date, time] = dateTime.split('T');
+    const [year, month, day] = date.split('-');
+    let [hours, minutes] = time.split(':');
+  
+    // Ensure hours and minutes are two digits for proper input formatting
+    hours = hours.padStart(2, '0');
+    minutes = minutes.padStart(2, '0');
+  
+    // Return the date in the correct format for input
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   const handleEditClick = () => setShowEditModal(true);
@@ -206,6 +230,8 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
       toast.error('Failed to update cron.');
     }
   };
+
+  console.log(cron.cronStartAt);
 
   return (
     <Container>
