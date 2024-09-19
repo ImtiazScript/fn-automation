@@ -7,7 +7,7 @@ import AssignedWorkOrder from '../services/assignedWorkOrdersService.js';
 import { makeRequest } from "../utils/integrationHelpers.js";
 
 // Will run every 30 minutes
-cron.schedule('*/30  * * * *', async () => {
+cron.schedule('*/30 * * * *', async () => {
     if(process.env.DISABLED_CRONS === 'true') {
         return;
     }
@@ -95,7 +95,10 @@ cron.schedule('*/30  * * * *', async () => {
                         );
 
                     const workOrderRequestValidation = await getWorkOrderRequestValidation(workOrder, cron);
-                    // logger.info(`Work Order Request validation, #ID: ${workOrder.id}, isPaymentValid: ${workOrderRequestValidation.isPaymentValid}, isScheduleValid: ${workOrderRequestValidation.isScheduleValid} `, workOrderRequestValidation);
+                    logger.info(
+                        `Payment & Schedule checking: #ID: ${workOrder.id}, isPaymentSatisfied: ${workOrderRequestValidation.isPaymentValid}, isScheduleSatisfied: ${workOrderRequestValidation.isScheduleValid} `,
+                        workOrderRequestValidation
+                    );
                     if (workOrderRequestValidation.isValid) {
                         logger.info(
                             `OK to request work order #${workOrder.id}`,
@@ -229,8 +232,8 @@ async function isScheduleSatisfied(workOrderSchedule, cron) {
     }
 
     // Check for work order overlaps with already assigned schedules
-    const isOverLapping = await isOverlappingWithAssignedWorkOrders(workOrderId, workOrderStart, workOrderEnd, mode);
-    if (isOverLapping) {
+    const checkOverLapping = await checkOverlappingWithAssignedWorkOrders(workOrderId, workOrderStart, workOrderEnd, mode);
+    if (checkOverLapping.isOverlapped) {
         return false;
     }
 
@@ -280,54 +283,61 @@ async function outSideOfPlannedTimeOff(workOrderId, cron, workOrderStart, workOr
     return true;
 }
 
-async function isOverlappingWithAssignedWorkOrders(workOrderId, workOrderStart, workOrderEnd, mode) {
+async function checkOverlappingWithAssignedWorkOrders(workOrderId, workOrderStart, workOrderEnd, mode) {
     try {
         const assignedWorkOrderService = new AssignedWorkOrder();
         const alreadyAssignedSchedules = await assignedWorkOrderService.fetchAssignedWorkOrdersSchedules();
 
-        // Use `some` to determine if any schedule overlaps
-        const isOverlapping = alreadyAssignedSchedules.some((assignedSchedule) => {
+        // Use `find` to return the first overlapping schedule, or undefined if none
+        const overlappingSchedule = alreadyAssignedSchedules.find((assignedSchedule) => {
             const assignedStart = new Date(assignedSchedule.start.utc);
             const assignedEnd = new Date(assignedSchedule.end.utc);
 
             switch (mode) {
                 case 'exact':
-                    if (
-                        // if workorder start-time is inside another workorders schedule
-                        (workOrderStart >= assignedStart && workOrderStart <= assignedEnd) ||
-                        // if workorder start-time is inside another workorders schedule
-                        (workOrderEnd >= assignedStart && workOrderEnd <= assignedEnd) ||
-                        // if workorder start-time is before and end-time is after another wororder's schedule
-                        (workOrderStart <= assignedStart && workOrderEnd >= assignedEnd)
-                    ) {
-                        console.log(`overlapped workorder #id ${workOrderId} with assigned workorder, #id ${assignedSchedule.work_order_id}`);
-                        return true;
-                    }
-                    break;
+                    // Exact mode: Check for any overlap
+                    return (
+                        (workOrderStart >= assignedStart && workOrderStart <= assignedEnd) || // Work order start overlaps
+                        (workOrderEnd >= assignedStart && workOrderEnd <= assignedEnd) || // Work order end overlaps
+                        (workOrderStart <= assignedStart && workOrderEnd >= assignedEnd)    // Work order completely overlaps another
+                    );
 
                 case 'hours':
                 case 'between':
-                    if (
-                        // if work order start and end time is inside another workorder's schedule
-                        (workOrderStart >= assignedStart && workOrderEnd <= assignedEnd) ||
-                        // if work order start -time is before and end-time is after another assigned work order's schedule
-                        (workOrderStart <= assignedStart && workOrderEnd >= assignedEnd)
-                    ) {
-                        console.log(`overlapped workorder #id ${workOrderId} with assigned workorder, #id ${assignedSchedule.work_order_id}`);
-                        return true;
-                    }
-                    break;
+                    // Hours or Between mode: Check for inclusion or full overlap
+                    return (
+                        (workOrderStart >= assignedStart && workOrderEnd <= assignedEnd) || // Work order is within assigned schedule
+                        (workOrderStart <= assignedStart && workOrderEnd >= assignedEnd)    // Work order completely overlaps
+                    );
 
                 default:
                     return false;
             }
         });
 
-        return isOverlapping;
+        // If an overlap is found, return the details, otherwise return no overlap
+        if (overlappingSchedule) {
+            const assignedWorkOrderId = overlappingSchedule.work_order_id;
+            console.log(`Overlapped work order #id ${workOrderId} with assigned work order, #id ${assignedWorkOrderId}`);
+            return {
+                isOverlapped: true,
+                overlappedWorkOrderId: assignedWorkOrderId,
+            };
+        }
+
+        // No overlap found
+        return {
+            isOverlapped: false,
+            overlappedWorkOrderId: 0,
+        };
+
     } catch (error) {
         // Handle potential errors
         logger.error('Error checking overlap with assigned work orders:', error);
-        return false;
+        return {
+            isOverlapped: false,
+            overlappedWorkOrderId: 0,
+        };
     }
 }
 
@@ -568,24 +578,62 @@ async function getNextAvailableTimeSchedule(workOrderSchedule, cron) {
         }
 
         // Check against already assigned schedules for conflicts
-        let hasConflict = await isOverlappingWithAssignedWorkOrders(workOrderSchedule.work_order_id, potentialStartTime, potentialEndTime, workOrderSchedule.service_window.mode);
+        let checkOverLapping = await checkOverlappingWithAssignedWorkOrders(workOrderSchedule.work_order_id, potentialStartTime, potentialEndTime, workOrderSchedule.service_window.mode);
 
-        if (!hasConflict) {
+        if (checkOverLapping.isOverlapped) {
+            // Handle overlap by adjusting the schedule
+            const assignedWorkOrderService = new AssignedWorkOrder();
+            const overlappedWorkOrderSchedule = await assignedWorkOrderService.getAssignedWorkOrderScheduleByWorkOrderId(checkOverLapping.overlappedWorkOrderId);
+
+            // Adjust potential time for the overlap
+            const adjustedTimes = await adjustForOverlap(potentialStartTime, potentialEndTime, overlappedWorkOrderSchedule, workOrderSchedule);
+            potentialStartTime = adjustedTimes.startTime;
+            potentialEndTime = adjustedTimes.endTime;
+
+            console.log(`Work order #${workOrderId} has conflict with assigned work order #${checkOverLapping.overlappedWorkOrderId}`);
+            continue;
+        } else {
             foundSlot = true;
             startTime = potentialStartTime;
             endTime = potentialEndTime;
-        } else {
-            // If there's a conflict, move to the next possible working time
-            // TODO: Get the assigned workorders schedule and add the eta labour hours from there
-            potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
-            potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
-
-            potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
-            potentialEndTime.setUTCHours(potentialStartTime.getUTCHours() + (workOrderSchedule.est_labor_hours || 1), potentialStartTime.getUTCMinutes(), 0, 0);
-            console.log(`Has conflict with assigned work order, ${workOrderId}`);
         }
     }
 
+    return { startTime, endTime };
+}
+
+// Helper function to add hours to a date and handle day rollover
+async function addHoursToDate(date, hoursToAdd) {
+    const newDate = new Date(date);
+    
+    if (newDate.getUTCHours() + hoursToAdd >= 24) {
+        newDate.setUTCDate(newDate.getUTCDate() + 1);
+        newDate.setUTCHours(newDate.getUTCHours() % 24);
+    } else {
+        newDate.setUTCHours(newDate.getUTCHours() + hoursToAdd);
+    }
+    
+    return newDate;
+}
+
+// Helper function to check for conflict and adjust times
+async function adjustForOverlap(potentialStartTime, potentialEndTime, overlappedWorkOrderSchedule, workOrderSchedule) {
+    let startTime = potentialStartTime;
+    let endTime = potentialEndTime;
+
+    // Calculate potential end time based on labor hours
+    const totalLaborHours = workOrderSchedule.est_labor_hours || 1 + overlappedWorkOrderSchedule.est_labor_hours;
+
+    // If conflict exists and the total exceeds 24 hours, move to next day
+    if (startTime.getUTCHours() + overlappedWorkOrderSchedule.est_labor_hours >= 24) {
+        startTime = await addHoursToDate(startTime, overlappedWorkOrderSchedule.est_labor_hours);
+        endTime = await addHoursToDate(startTime, totalLaborHours);
+    } else {
+        // Adjust end time based on the current schedule
+        startTime.setUTCHours(startTime.getUTCHours() + overlappedWorkOrderSchedule.est_labor_hours);
+        endTime = await addHoursToDate(startTime, totalLaborHours);
+    }
+    
     return { startTime, endTime };
 }
 
