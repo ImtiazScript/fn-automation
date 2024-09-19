@@ -5,6 +5,7 @@ import IntegrationService from '../services/integrationService.js';
 import CronService from '../services/cronService.js';
 import AssignedWorkOrder from '../services/assignedWorkOrdersService.js';
 import { makeRequest } from "../utils/integrationHelpers.js";
+import moment from 'moment-timezone';
 
 // Will run every 30 minutes
 cron.schedule('*/30 * * * *', async () => {
@@ -458,14 +459,20 @@ async function getPaymentCounterOfferRequestPayload(workOrderPayment, cron) {
 }
 
 async function getScheduleCounterOfferRequestPayload(workOrderSchedule, cron) {
-    let scheduleRequestPayload = {};
-
     const { startTime, endTime } = await getNextAvailableTimeSchedule(workOrderSchedule, cron);
-    
-    const startDate = startTime.toISOString().split('T')[0]; // Extract date in YYYY-MM-DD format
-    const startTimeStr = startTime.toISOString().split('T')[1].slice(0, 8); // Extract time in HH:MM:SS format
-    const endDate = endTime.toISOString().split('T')[0]; // Extract date in YYYY-MM-DD format
-    const endTimeStr = endTime.toISOString().split('T')[1].slice(0, 8); // Extract time in HH:MM:SS format
+
+    // Convert UTC time to local time based on work order timeZone
+    const timeZone = workOrderSchedule.time_zone.name;
+    const localStartTime = moment(startTime).tz(timeZone);
+    const localEndTime = moment(endTime).tz(timeZone);
+
+    // Extract date and time for local start and end times
+    const startDate = localStartTime.format('YYYY-MM-DD');
+    const startTimeStr = localStartTime.format('HH:mm:ss');
+    const endDate = localEndTime.format('YYYY-MM-DD');
+    const endTimeStr = localEndTime.format('HH:mm:ss');
+
+    let scheduleRequestPayload = {};
 
     // Arrive at a specific date and time - (Hard Start)
     if (workOrderSchedule.service_window.mode === 'exact') {
