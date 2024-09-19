@@ -37,7 +37,10 @@ class AssignedWorkOrder {
             },
             time_zone: {
               id: assignedWorkOrder.schedule.time_zone.id,
-            }
+              name: assignedWorkOrder.schedule.time_zone.name,
+              offset: assignedWorkOrder.schedule.time_zone.offset,
+              short: assignedWorkOrder.schedule.time_zone.short,
+            },
           };
           assignedWorkOrdersSchedules.push(schedule);
         });
@@ -77,7 +80,10 @@ class AssignedWorkOrder {
         },
         time_zone: {
           id: assignedWorkOrder.schedule.time_zone.id,
-        }
+          name: assignedWorkOrder.schedule.time_zone.name,
+          offset: assignedWorkOrder.schedule.time_zone.offset,
+          short: assignedWorkOrder.schedule.time_zone.short,
+        },
       };
 
       return assignedWorkOrderSchedule;
