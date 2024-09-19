@@ -22,6 +22,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Select from 'react-select';
 import { useSelector } from 'react-redux';
+import TimeZoneSelect from '../utils/TimeZoneSelect';
 
 const CronsDataTable = () => {
   const [crons, setCrons] = useState([]);
@@ -103,6 +104,7 @@ const CronsDataTable = () => {
     offDays: [],
     timeOffStartAt: '',
     timeOffEndAt: '',
+    timeZone: '',
   });
 
   const handleSearch = (event) => {
@@ -145,6 +147,7 @@ const CronsDataTable = () => {
       formData.drivingRadius &&
       formData.status &&
       formData.centerZip &&
+      formData.timeZone &&
       workOrderTypeOptions.length > 0;
     if (userInfo.isAdmin) {
       // making sure, provider is also selected
@@ -196,6 +199,7 @@ const CronsDataTable = () => {
         offDays: formData.offDays,
         timeOffStartAt: formData.timeOffStartAt,
         timeOffEndAt: formData.timeOffEndAt,
+        timeZone: formData.timeZone,
       };
 
       const response = await addCron(data).unwrap();
@@ -633,6 +637,17 @@ const CronsDataTable = () => {
             <div style={{ marginTop: '20px' }}>
               <h5>Schedule</h5>
             </div>
+            <Row style={{ marginBottom: '20px' }}>
+              <Col>
+                <TimeZoneSelect
+                  onChange={(value) =>
+                    setFormData({ ...formData, timeZone: value })
+                  }
+                  selectedTimeZone={formData.timeZone}
+                />
+              </Col>
+            </Row>
+
             <Row style={{ marginBottom: '20px' }}>
               <Col>
                 <BootstrapForm.Group controlId="workingWindowStartAt">

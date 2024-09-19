@@ -104,6 +104,10 @@ const cronSchema = mongoose.Schema({
         type: Date,
         required: false,
     },
+    timeZone: {
+        type: String,
+        required: true,
+    },
     deleted: {
         type: Boolean,
         default: false,

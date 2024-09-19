@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { useUpdateCronByCronIdMutation } from '../../slices/commonApiSlice';
 import { toast } from 'react-toastify';
 import Select from 'react-select';
+import TimeZoneSelect from '../utils/TimeZoneSelect';
 
 const CronConfigure = ({ cron, typesOfWorkOrder }) => {
   const [updateCron] = useUpdateCronByCronIdMutation();
@@ -44,6 +45,7 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
     offDays: [],
     timeOffStartAt: '',
     timeOffEndAt: '',
+    timeZone: '',
   });
 
   useEffect(() => {
@@ -71,6 +73,7 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
         offDays: cron.offDays || [],
         timeOffStartAt: cron.timeOffStartAt,
         timeOffEndAt: cron.timeOffEndAt,
+        timeZone: cron.timeZone,
       });
     }
   }, [cron]);
@@ -187,6 +190,7 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
         offDays: formData.offDays,
         timeOffStartAt: formData.timeOffStartAt,
         timeOffEndAt: formData.timeOffEndAt,
+        timeZone: formData.timeZone,
       };
 
       // Call the mutation function
@@ -619,6 +623,14 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
             <div style={{ marginTop: '20px' }}>
               <h5>Schedule</h5>
             </div>
+            <Row style={{ marginBottom: '20px' }}>
+              <Col>
+              <TimeZoneSelect
+                onChange={(value) => setFormData({ ...formData, timeZone: value })}
+                selectedTimeZone={formData.timeZone}
+            />
+              </Col>
+            </Row>
             <Row style={{ marginBottom: '20px' }}>
               <Col>
                 <BootstrapForm.Group controlId="workingWindowStartAt">

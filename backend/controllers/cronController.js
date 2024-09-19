@@ -17,7 +17,7 @@ const addCron = asyncHandler(async (req, res) => {
   try {
     const { userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, typesOfWorkOrder, status,
       isFixed, fixedPayment, isHourly, hourlyPayment, isPerDevice, perDevicePayment, isBlended, firstHourlyPayment, additionalHourlyPayment,
-      isEnabledCounterOffer, offDays, timeOffStartAt, timeOffEndAt } = req.body;
+      isEnabledCounterOffer, offDays, timeOffStartAt, timeOffEndAt, timeZone } = req.body;
     const cron = await Cron.create({
       userId: req.user.isAdmin ? userId: req.user.userId,
       centerZip: centerZip,
@@ -43,6 +43,7 @@ const addCron = asyncHandler(async (req, res) => {
       offDays: offDays,
       timeOffStartAt: timeOffStartAt,
       timeOffEndAt: timeOffEndAt,
+      timeZone: timeZone,
       deleted: false,
     });
     if (cron) {
@@ -63,7 +64,7 @@ const addCron = asyncHandler(async (req, res) => {
 const updateCron = asyncHandler(async (req, res) => {
   const { cronId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, typesOfWorkOrder, status,
     isFixed, fixedPayment, isHourly, hourlyPayment, isPerDevice, perDevicePayment, isBlended, firstHourlyPayment, additionalHourlyPayment, isEnabledCounterOffer, offDays,
-    timeOffStartAt, timeOffEndAt, deleted } = req.body;
+    timeOffStartAt, timeOffEndAt, timeZone, deleted } = req.body;
   if (!cronId) {
     throw new BadRequestError("Cron id is missing in the request - cron updating failed.");
   }
@@ -101,6 +102,7 @@ const updateCron = asyncHandler(async (req, res) => {
       if (offDays !== undefined) updatedFields.offDays = offDays;
       if (timeOffStartAt !== undefined) updatedFields.timeOffStartAt = timeOffStartAt;
       if (timeOffEndAt !== undefined) updatedFields.timeOffEndAt = timeOffEndAt;
+      if (timeZone !== undefined) updatedFields.timeZone = timeZone;
       if (deleted !== undefined) updatedFields.deleted = deleted;
 
       // Perform the update
@@ -230,13 +232,17 @@ const deleteCron = asyncHandler(async (req, res) => {
   }
 
   try {
-    const cron = await Cron.findById(cronId);
-    if (req.user && !req.user.isAdmin && req.user.userId !== cron.userId) {
-      throw new NotAuthorizedError("Authorization Error - you do not have permission to delete this cron");
+    // Find and delete the cron by ID
+    const cron = await Cron.findByIdAndDelete(cronId);
+
+    // If cron does not exist, send a 404 error
+    if (!cron) {
+      return res.status(404).json({ message: 'Cron not found' });
     }
-    cron.deleted = true;
-    cron.save();
-    res.status(204).json({ message: 'Successfully deleted the cron' });
+
+    // Respond with success message
+    res.status(200).json({ message: 'Successfully deleted the cron' });
+
   } catch (error) {
     res.status(500).json({ message: "Failed to delete cron", error: error.message });
   }
