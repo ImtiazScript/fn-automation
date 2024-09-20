@@ -99,8 +99,9 @@ app.all("*", () => {
   throw new NotFoundError();
 });
 
+//  TODO: Enable or replace with a better error handler
 // Custom Error Handler Configuration
-app.use(errorHandler);
+// app.use(errorHandler);
 
 
 export { app };

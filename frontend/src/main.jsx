@@ -33,6 +33,8 @@ import LoginScreen from "./screens/commonScreens/LoginScreen.jsx";
 import IntegrationScreen from "./screens/commonScreens/IntegrationScreen.jsx";
 import AboutScreen from "./screens/commonScreens/AboutScreen.jsx";
 import ContactScreen from "./screens/commonScreens/ContactScreen.jsx";
+import PasswordForgotScreen from "./screens/commonScreens/PasswordForgotScreen.jsx";
+import PasswordResetScreen from './screens/commonScreens/PasswordResetScreen.jsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -43,6 +45,8 @@ const router = createBrowserRouter(
       <Route path="/register" element={<RegisterScreen />} />
       <Route path="/about" element={<AboutScreen />} />
       <Route path="/contact" element={<ContactScreen />} />
+      <Route path="/forgot-password" element={<PasswordForgotScreen />} />
+      <Route path="/reset-password" element={<PasswordResetScreen />} />
       {/* COMMON PRIVATE ROUTES */}
       <Route path="" element={<CommonPrivateRoutes />}>
         <Route path="/crons/manage-crons" element={<CronsManagementScreen />} />

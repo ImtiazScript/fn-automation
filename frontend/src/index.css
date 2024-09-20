@@ -105,3 +105,8 @@ html, body {
 .copyright {
   color: #FFFFFF;
 }
+
+/* Removed underline from all links across application */
+a {
+  text-decoration: none;
+}
