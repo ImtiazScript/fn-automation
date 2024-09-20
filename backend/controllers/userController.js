@@ -7,8 +7,8 @@ import { BadRequestError } from "base-error-handler";
 import User from "../models/userModel.js";
 import generateAuthToken from "../utils/jwtHelpers/generateAuthToken.js";
 import destroyAuthToken from "../utils/jwtHelpers/destroyAuthToken.js";
-import sendResetPasswordEmail from '../utils/emailHelpers/sendResetPasswordEmail.js';
 import generatePasswordResetToken from '../utils/jwtHelpers/generatePasswordResetToken.js';
+import { sendResetPasswordEmail, sendUserSignedUpEmail, sendAdminNewUserNotificationEmail } from '../utils/emailHelpers/SendMail.js';
 
 /*
    # Desc: Auth user/set token
@@ -84,6 +84,12 @@ const registerUser = asyncHandler(async (req, res) => {
       isAdmin: user.isAdmin,
       isActive: user.isActive,
     };
+
+    // Send mail to admin
+    await sendAdminNewUserNotificationEmail(user.userId, user.name, user.email, user.isAdmin);
+    // Send mail to sign-up user
+    await sendUserSignedUpEmail(user.userId, user.name, user.email, user.isAdmin);
+
     res.status(201).json(registeredUserData);
   } else {
     // If user was NOT Created, send error back

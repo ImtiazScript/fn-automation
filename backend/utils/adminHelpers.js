@@ -64,11 +64,7 @@ const blockUserHelper = async (userId) => {
 
     user.blocked = true;
     // Save the updated user data
-    await user.save();
-
-    // If the user was successfully blocked, return a status indicating success
-    return { success: true, message: "User blocked successfully." };
-
+    return await user.save();
   } catch (error) {
     console.error("Error blocking user:", error);
 
@@ -83,8 +79,7 @@ const activateUserHelper = async (userId) => {
       return { success: false, message: "User not found." };
     }
     user.isActive = true;
-    await user.save();
-    return { success: true, message: "User activated successfully." };
+    return await user.save();
   } catch (error) {
     console.error("Error activating user:", error);
     throw error;
@@ -103,11 +98,7 @@ const unBlockUserHelper = async (userId) => {
 
     user.blocked = false;
     // Save the updated user data
-    await user.save();
-
-    // If the user was successfully unblocked, return a status indicating success
-    return { success: true, message: "User Un-blocked successfully." };
-
+    return await user.save();
   } catch (error) {
     console.error("Error Un-blocking user:", error);
 
