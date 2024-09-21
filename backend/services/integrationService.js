@@ -1,5 +1,5 @@
 import Integration from '../models/integrationModel.js';
-import { makeRequest } from "../utils/integrationHelpers.js";
+import { makeRequest } from "../utils/makeRequest.js";
 
 class IntegrationService {
   constructor(userId) {

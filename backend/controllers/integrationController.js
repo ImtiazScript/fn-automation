@@ -1,7 +1,7 @@
 // ===================================================== Integration Controller =====================================================
 
 import asyncHandler from "express-async-handler";
-import { makeRequest } from "../utils/integrationHelpers.js";
+import { makeRequest } from "../utils/makeRequest.js";
 import Integration from "../models/integrationModel.js";
 import IntegrationService from '../services/integrationService.js';
 import moment from 'moment-timezone';
