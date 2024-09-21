@@ -3,10 +3,8 @@
 // ===================== Importing necessary modules/files =====================
 import asyncHandler from "express-async-handler";
 import Cron from "../models/cronModel.js";
-import User from "../models/userModel.js";
 import { BadRequestError, NotAuthorizedError } from "base-error-handler";
-import winston, { Logger, format } from "winston";
-import CronService from '../services/cronService.js';
+import { localToUtc, utcToLocal, localTimeToUtcTime, utcTimeToLocalTime } from "../utils/timeZoneConverter.js";
 
 /*
   # Desc: Add a new cron
@@ -14,7 +12,6 @@ import CronService from '../services/cronService.js';
   # Access: PRIVATE
 */
 const addCron = asyncHandler(async (req, res) => {
-  const cronService = new CronService(req.user.userId);
   try {
     const { userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, typesOfWorkOrder, status,
       isFixed, fixedPayment, isHourly, hourlyPayment, isPerDevice, perDevicePayment, isBlended, firstHourlyPayment, additionalHourlyPayment,
@@ -22,10 +19,10 @@ const addCron = asyncHandler(async (req, res) => {
     const cron = await Cron.create({
       userId: req.user.isAdmin ? userId: req.user.userId,
       centerZip: centerZip,
-      cronStartAt: cronService.localToUtc(cronStartAt, timeZone),
-      cronEndAt: cronService.localToUtc(cronEndAt, timeZone),
-      workingWindowStartAt: cronService.localTimeToUtcTime(workingWindowStartAt, timeZone),
-      workingWindowEndAt: cronService.localTimeToUtcTime(workingWindowEndAt, timeZone),
+      cronStartAt: localToUtc(cronStartAt, timeZone),
+      cronEndAt: localToUtc(cronEndAt, timeZone),
+      workingWindowStartAt: localTimeToUtcTime(workingWindowStartAt, timeZone),
+      workingWindowEndAt: localTimeToUtcTime(workingWindowEndAt, timeZone),
       drivingRadius: drivingRadius,
       requestedWoIds: [],
       totalRequested: 0,
@@ -42,8 +39,8 @@ const addCron = asyncHandler(async (req, res) => {
       additionalHourlyPayment: additionalHourlyPayment,
       isEnabledCounterOffer: isEnabledCounterOffer,
       offDays: offDays,
-      timeOffStartAt: cronService.localToUtc(timeOffStartAt, timeZone),
-      timeOffEndAt: cronService.localToUtc(timeOffEndAt, timeZone),
+      timeOffStartAt: localToUtc(timeOffStartAt, timeZone),
+      timeOffEndAt: localToUtc(timeOffEndAt, timeZone),
       timeZone: timeZone,
       deleted: false,
     });
@@ -76,16 +73,15 @@ const updateCron = asyncHandler(async (req, res) => {
     throw new NotAuthorizedError("Authorization Error - you do not have permission to update this cron");
   }
 
-  const cronService = new CronService(req.user.userId);
   try {
     if (cronExist) {
       // Update only the fields that are provided in the request
       const updatedFields = {};
       if (centerZip !== undefined) updatedFields.centerZip = centerZip;
-      if (cronStartAt !== undefined) updatedFields.cronStartAt = cronService.localToUtc(cronStartAt, timeZone);
-      if (cronEndAt !== undefined) updatedFields.cronEndAt = cronService.localToUtc(cronEndAt, timeZone);
-      if (workingWindowStartAt !== undefined) updatedFields.workingWindowStartAt = cronService.localTimeToUtcTime(workingWindowStartAt, timeZone);
-      if (workingWindowEndAt !== undefined) updatedFields.workingWindowEndAt = cronService.localTimeToUtcTime(workingWindowEndAt, timeZone);
+      if (cronStartAt !== undefined) updatedFields.cronStartAt = localToUtc(cronStartAt, timeZone);
+      if (cronEndAt !== undefined) updatedFields.cronEndAt = localToUtc(cronEndAt, timeZone);
+      if (workingWindowStartAt !== undefined) updatedFields.workingWindowStartAt = localTimeToUtcTime(workingWindowStartAt, timeZone);
+      if (workingWindowEndAt !== undefined) updatedFields.workingWindowEndAt = localTimeToUtcTime(workingWindowEndAt, timeZone);
       if (drivingRadius !== undefined) updatedFields.drivingRadius = drivingRadius;
       if (requestedWoIds !== undefined) updatedFields.requestedWoIds = requestedWoIds;
       if (totalRequested !== undefined) updatedFields.totalRequested = totalRequested;
@@ -102,8 +98,8 @@ const updateCron = asyncHandler(async (req, res) => {
       if (additionalHourlyPayment !== undefined) updatedFields.additionalHourlyPayment = additionalHourlyPayment;
       if (isEnabledCounterOffer !== undefined) updatedFields.isEnabledCounterOffer = isEnabledCounterOffer;
       if (offDays !== undefined) updatedFields.offDays = offDays;
-      if (timeOffStartAt !== undefined) updatedFields.timeOffStartAt = cronService.localToUtc(timeOffStartAt, timeZone);
-      if (timeOffEndAt !== undefined) updatedFields.timeOffEndAt = cronService.localToUtc(timeOffEndAt, timeZone);
+      if (timeOffStartAt !== undefined) updatedFields.timeOffStartAt = localToUtc(timeOffStartAt, timeZone);
+      if (timeOffEndAt !== undefined) updatedFields.timeOffEndAt = localToUtc(timeOffEndAt, timeZone);
       if (timeZone !== undefined) updatedFields.timeZone = timeZone;
       if (deleted !== undefined) updatedFields.deleted = deleted;
 
@@ -192,7 +188,6 @@ const getAllCrons = asyncHandler(async (req, res) => {
    # Access: PRIVATE
   */
 const getCron = asyncHandler(async (req, res) => {
-  const cronService = new CronService(req.user.userId);
   const { cronId } = req.params;
   try {
     let cronData = await Cron.aggregate([
@@ -225,23 +220,23 @@ const getCron = asyncHandler(async (req, res) => {
     cronData = cronData.length > 0 ? cronData[0] : null;
 
     if (cronData.cronStartAt) {
-      cronData.cronStartAt = cronService.utcToLocal(cronData.cronStartAt, cronData.timeZone);
+      cronData.cronStartAt = utcToLocal(cronData.cronStartAt, cronData.timeZone);
     }
     if (cronData.cronEndAt) {
-      cronData.cronEndAt = cronService.utcToLocal(cronData.cronEndAt, cronData.timeZone);
+      cronData.cronEndAt = utcToLocal(cronData.cronEndAt, cronData.timeZone);
     }
     if (cronData.timeOffStartAt) {
-      cronData.timeOffStartAt = cronService.utcToLocal(cronData.timeOffStartAt, cronData.timeZone);
+      cronData.timeOffStartAt = utcToLocal(cronData.timeOffStartAt, cronData.timeZone);
     }
     if (cronData.timeOffEndAt) {
-      cronData.timeOffEndAt = cronService.utcToLocal(cronData.timeOffEndAt, cronData.timeZone);
+      cronData.timeOffEndAt = utcToLocal(cronData.timeOffEndAt, cronData.timeZone);
     }
 
     if (cronData.workingWindowStartAt) {
-      cronData.workingWindowStartAt = cronService.utcTimeToLocalTime(cronData.workingWindowStartAt, cronData.timeZone);
+      cronData.workingWindowStartAt = utcTimeToLocalTime(cronData.workingWindowStartAt, cronData.timeZone);
     }
     if (cronData.workingWindowEndAt) {
-      cronData.workingWindowEndAt = cronService.utcTimeToLocalTime(cronData.workingWindowEndAt, cronData.timeZone);
+      cronData.workingWindowEndAt = utcTimeToLocalTime(cronData.workingWindowEndAt, cronData.timeZone);
     }
 
     res.status(200).json({ cronData });
