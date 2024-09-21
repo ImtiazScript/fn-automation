@@ -24,8 +24,8 @@ const addCron = asyncHandler(async (req, res) => {
       centerZip: centerZip,
       cronStartAt: cronService.localToUtc(cronStartAt, timeZone),
       cronEndAt: cronService.localToUtc(cronEndAt, timeZone),
-      workingWindowStartAt: workingWindowStartAt,
-      workingWindowEndAt: workingWindowEndAt,
+      workingWindowStartAt: cronService.localTimeToUtcTime(workingWindowStartAt, timeZone),
+      workingWindowEndAt: cronService.localTimeToUtcTime(workingWindowEndAt, timeZone),
       drivingRadius: drivingRadius,
       requestedWoIds: [],
       totalRequested: 0,
@@ -84,8 +84,8 @@ const updateCron = asyncHandler(async (req, res) => {
       if (centerZip !== undefined) updatedFields.centerZip = centerZip;
       if (cronStartAt !== undefined) updatedFields.cronStartAt = cronService.localToUtc(cronStartAt, timeZone);
       if (cronEndAt !== undefined) updatedFields.cronEndAt = cronService.localToUtc(cronEndAt, timeZone);
-      if (workingWindowStartAt !== undefined) updatedFields.workingWindowStartAt = workingWindowStartAt;
-      if (workingWindowEndAt !== undefined) updatedFields.workingWindowEndAt = workingWindowEndAt;
+      if (workingWindowStartAt !== undefined) updatedFields.workingWindowStartAt = cronService.localTimeToUtcTime(workingWindowStartAt, timeZone);
+      if (workingWindowEndAt !== undefined) updatedFields.workingWindowEndAt = cronService.localTimeToUtcTime(workingWindowEndAt, timeZone);
       if (drivingRadius !== undefined) updatedFields.drivingRadius = drivingRadius;
       if (requestedWoIds !== undefined) updatedFields.requestedWoIds = requestedWoIds;
       if (totalRequested !== undefined) updatedFields.totalRequested = totalRequested;
@@ -235,6 +235,13 @@ const getCron = asyncHandler(async (req, res) => {
     }
     if (cronData.timeOffEndAt) {
       cronData.timeOffEndAt = cronService.utcToLocal(cronData.timeOffEndAt, cronData.timeZone);
+    }
+
+    if (cronData.workingWindowStartAt) {
+      cronData.workingWindowStartAt = cronService.utcTimeToLocalTime(cronData.workingWindowStartAt, cronData.timeZone);
+    }
+    if (cronData.workingWindowEndAt) {
+      cronData.workingWindowEndAt = cronService.utcTimeToLocalTime(cronData.workingWindowEndAt, cronData.timeZone);
     }
 
     res.status(200).json({ cronData });

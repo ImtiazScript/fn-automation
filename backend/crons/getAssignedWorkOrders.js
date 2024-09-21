@@ -5,6 +5,7 @@ import IntegrationService from '../services/integrationService.js';
 import CronService from '../services/cronService.js';
 import AssignedWorkOrders from '../models/assignedWorkOrdersModel.js';
 import { makeRequest } from "../utils/integrationHelpers.js";
+import moment from 'moment-timezone';
 
 // Will run every 30 minutes
 cron.schedule('*/57 * * * *', async () => {
@@ -12,7 +13,7 @@ cron.schedule('*/57 * * * *', async () => {
         return;
     }
     // cron.schedule('* * * * *', async () => {
-    const currentDateTime = new Date().toLocaleString();
+    const currentDateTime = moment.utc().toDate().toLocaleString();
     logger.info(`GET ASSIGNED WORKORDERS:: cron running at: ${currentDateTime}`);
     const userService = new UserService();
     const users = await userService.fetchAllUsers();
@@ -98,7 +99,7 @@ async function processAssignedWorkOrder(userId, workOrder) {
                     pay: workOrder.pay,
                     eta: workOrder.eta,
                     assignee: workOrder.eta,
-                    updatedAt: new Date()
+                    updatedAt: moment.utc().toDate(),
                 }
             );
             logger.info(`GET ASSIGNED WORKORDERS:: Updated Assigned Work Order, #ID: ${workOrder.id}, Title: ${workOrder.title}`);

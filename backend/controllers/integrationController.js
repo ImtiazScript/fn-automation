@@ -4,6 +4,7 @@ import asyncHandler from "express-async-handler";
 import { makeRequest } from "../utils/integrationHelpers.js";
 import Integration from "../models/integrationModel.js";
 import IntegrationService from '../services/integrationService.js';
+import moment from 'moment-timezone';
 
 const connectAccount = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
@@ -28,7 +29,7 @@ const connectAccount = asyncHandler(async (req, res) => {
                 // Update existing integration
                 integration.fnUserId = fnUserId;
                 integration.fnUserName = username;
-                integration.lastConnectedAt = new Date();
+                integration.lastConnectedAt =  moment.utc().toDate();
                 integration.integrationStatus = 'Connected';
             } else {
                 // Create new integration
@@ -36,7 +37,7 @@ const connectAccount = asyncHandler(async (req, res) => {
                     userId: req.user.userId,  // assuming you're attaching the logged-in user
                     fnUserId,
                     fnUserName: username,
-                    lastConnectedAt: new Date(),
+                    lastConnectedAt:  moment.utc().toDate(),
                     integrationStatus: 'Connected',
                 });
             }
@@ -63,8 +64,8 @@ const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
     const integrationInfo = await Integration.findOne({userId: req.params.id});
     let lastTimeRefreshTokenGeneratedAt = '';
     if (integrationInfo && integrationInfo.lastConnectedAt) {
-        const lastConnectedAt = new Date(integrationInfo.lastConnectedAt);
-        const currentDate = new Date();
+        const lastConnectedAt = moment.utc(integrationInfo.lastConnectedAt).toDate();
+        const currentDate =  moment.utc().toDate().toLocaleString();
 
         const differenceInTime = currentDate - lastConnectedAt;
         let differenceInDays = Math.floor(differenceInTime / (1000 * 3600 * 24));

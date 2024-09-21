@@ -4,6 +4,7 @@
 import asyncHandler from "express-async-handler";
 import mongoose from "mongoose";
 import winston, { Logger, format } from "winston";
+import moment from 'moment-timezone';
 
 /**
  * Desc: Get all crons
@@ -15,8 +16,8 @@ const getLogs = asyncHandler(async (req, res) => {
     // Define the log model based on the MongoDB collection schema
     const Log = mongoose.models.Log || mongoose.model('Log', new mongoose.Schema({}, { strict: false, collection: 'server_logs' }));
     // Define the query options
-    const from = (fromDate && fromDate !== '0') ? new Date(fromDate) : new Date(new Date() - 168 * 60 * 60 * 1000);
-    const until = (untilDate && untilDate !== '0') ? new Date(untilDate) : new Date();
+    const from = (fromDate && fromDate !== '0') ? moment.utc(fromDate).toDate() : moment.utc(moment.utc().toDate() - 168 * 60 * 60 * 1000).toDate();
+    const until = (untilDate && untilDate !== '0') ? moment.utc(untilDate).toDate() : moment.utc().toDate();
     const limit = req.body.limit ? parseInt(req.body.limit) : 50;
     const start = page > 1 ? (page - 1) * limit : 0;
     const sort = { timestamp: -1 }; // Sort by latest first

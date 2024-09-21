@@ -8,7 +8,7 @@ cron.schedule('55 */23 * * *', async () => {
     if(process.env.DISABLED_AUTHENTICATION_CRONS === 'true') {
         return;
     }
-    const currentDateTime = new Date().toLocaleString();
+    const currentDateTime = moment.utc().toDate().toLocaleString();
     logger.info(`REFRESH ACCESS TOKEN:: Access-token updating cron running at: ${currentDateTime}`);
     const userService = new UserService();
     const adminUsers = await userService.fetchAllAdminUsers();

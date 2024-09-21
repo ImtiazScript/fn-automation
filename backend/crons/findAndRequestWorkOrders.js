@@ -13,7 +13,7 @@ cron.schedule('*/30 * * * *', async () => {
         return;
     }
     // cron.schedule('* * * * *', async () => {
-    const currentDateTime = new Date().toLocaleString();
+    const currentDateTime = moment.utc().toDate().toLocaleString();
     logger.info(`WORKORDER REQUEST:: Work order finding and requesting cron running at: ${currentDateTime}`);
     const userService = new UserService();
     const users = await userService.fetchAllUsers();
@@ -48,9 +48,9 @@ cron.schedule('*/30 * * * *', async () => {
 
         crons.map(async (cron) => {
             const locationRadius = cron.drivingRadius > 1 ? cron.drivingRadius : 50;
-            const currentDateTime = new Date();
-            const cronStartAt = new Date(cron.cronStartAt);
-            const cronEndAt = new Date(cron.cronEndAt);
+            const currentDateTime = moment.utc().toDate();
+            const cronStartAt = moment.utc(cron.cronStartAt).toDate();
+            const cronEndAt = moment.utc(cron.cronEndAt).toDate();
             const cronCenterZip = cron.centerZip ? cron.centerZip : '';
             const withinCronContractTime = (currentDateTime >= cronStartAt && currentDateTime <= cronEndAt);
 
@@ -217,14 +217,14 @@ async function isScheduleSatisfied(workOrderSchedule, cron) {
         est_labor_hours: estLaborHours = 0,
     } = workOrderSchedule.service_window;
     const workOrderId = workOrderSchedule.work_order_id;
-    const workOrderStart = new Date(workOrderStartUtc);
-    const workOrderEnd = workOrderEndUtc ? new Date(workOrderEndUtc) : new Date(workOrderStart.getTime() + estLaborHours * 60 * 60 * 1000);
 
     // Check for off-days
-    const outsideOffDays = await outSideOfOffDays(workOrderId, cron, workOrderStart, workOrderEnd);
+    const outsideOffDays = await outSideOfOffDays(workOrderId, cron, workOrderStartUtc, workOrderEndUtc);
     if (!outsideOffDays) {
         return false;
     }
+    const workOrderStart = moment.utc(workOrderStartUtc).toDate();
+    const workOrderEnd = workOrderEndUtc ? moment.utc(workOrderEndUtc).toDate() : moment.utc(workOrderStart.getTime() + estLaborHours * 60 * 60 * 1000).toDate();
 
     // Check for planned time-off
     const outSidePlannedTimeOff = await outSideOfPlannedTimeOff(workOrderId, cron, workOrderStart, workOrderEnd);
@@ -247,10 +247,8 @@ async function isScheduleSatisfied(workOrderSchedule, cron) {
     return true;
 }
 
-async function outSideOfOffDays(workOrderId, cron, workOrderStart, workOrderEnd) {
-    const workOrderStartClone = new Date(workOrderStart.getTime());
-    const workOrderEndClone = new Date(workOrderEnd.getTime());
-    const workOrderDayNames = await getWorkOrderDayNames(workOrderStartClone, workOrderEndClone);
+async function outSideOfOffDays(workOrderId, cron, workOrderStartUtc, workOrderEndUtc) {
+    const workOrderDayNames = await getWorkOrderDayNames(workOrderStartUtc, workOrderEndUtc, cron.timeZone);
     if (workOrderDayNames.every(day => cron.offDays.includes(day))) {
         console.log(`off day conflict, id # ${workOrderId}`);
         return false;
@@ -259,23 +257,28 @@ async function outSideOfOffDays(workOrderId, cron, workOrderStart, workOrderEnd)
     return true;
 }
 
-async function getWorkOrderDayNames(workOrderStartDayTime, workOrderEndDayTime) {
+async function getWorkOrderDayNames(workOrderStartDayTimeUtc, workOrderEndDayTimeUtc, timeZone) {
     const dayNames = new Set();
 
-    while (workOrderStartDayTime <= workOrderEndDayTime) {
-        const dayName = workOrderStartDayTime.toLocaleString('en-US', { weekday: 'long' });
+    // Convert UTC time to providers local timezone
+    let currentTime = moment.utc(workOrderStartDayTimeUtc).tz(timeZone); 
+    const endTime = moment.utc(workOrderEndDayTimeUtc).tz(timeZone);
+
+    while (currentTime.isSameOrBefore(endTime)) {
+        const dayName = currentTime.format('dddd'); // Get day name in local time
         dayNames.add(dayName);
 
-        workOrderStartDayTime.setUTCDate(workOrderStartDayTime.getUTCDate() + 1);
+        // Add 1 day to the current time in the same timezone
+        currentTime.add(1, 'days');
     }
 
-    return Array.from(dayNames); // Convert Set to Array
+    return Array.from(dayNames);
 }
 
 async function outSideOfPlannedTimeOff(workOrderId, cron, workOrderStart, workOrderEnd) {
     if (cron.timeOffStartAt && cron.timeOffEndAt) {
-        const timeOffStart = new Date(cron.timeOffStartAt);
-        const timeOffEnd = new Date(cron.timeOffEndAt);
+        const timeOffStart = moment.utc(cron.timeOffStartAt).toDate();
+        const timeOffEnd = moment.utc(cron.timeOffEndAt).toDate();
         if (workOrderStart >= timeOffStart && workOrderEnd <= timeOffEnd){
             console.log(`planned time-off conflict, id # ${workOrderId}`);
             return false;
@@ -291,8 +294,8 @@ async function checkOverlappingWithAssignedWorkOrders(workOrderId, workOrderStar
 
         // Use `find` to return the first overlapping schedule, or undefined if none
         const overlappingSchedule = alreadyAssignedSchedules.find((assignedSchedule) => {
-            const assignedStart = new Date(assignedSchedule.start.utc);
-            const assignedEnd = new Date(assignedSchedule.end.utc);
+            const assignedStart = moment.utc(assignedSchedule.start.utc).toDate();
+            const assignedEnd = moment.utc(assignedSchedule.end.utc).toDate();
 
             switch (mode) {
                 case 'exact':
@@ -349,8 +352,8 @@ async function isInsideWorkingWindow(workOrderId, cron, mode, workOrderStart, wo
         case 'exact':
         case 'hours':
             // Initialize working window times
-            const workingWindowStart = new Date();
-            const workingWindowEnd = new Date();
+            const workingWindowStart = moment.utc().toDate();
+            const workingWindowEnd = moment.utc().toDate();
             workingWindowStart.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
             workingWindowEnd.setUTCHours(workingWindowEndTime[0], workingWindowEndTime[1], 0, 0);
             // Check if the working window spans across two days (e.g., 20:00 - 08:00)
@@ -359,15 +362,14 @@ async function isInsideWorkingWindow(workOrderId, cron, mode, workOrderStart, wo
             }
 
             // Initialize work order times
-            const workOrderWindowStart = new Date();
+            const workOrderWindowStart = moment.utc().toDate();
+            const workOrderWindowEnd = moment.utc().toDate();
             workOrderWindowStart.setUTCHours(workOrderStart.getUTCHours(), workOrderStart.getUTCMinutes(), 0, 0);
-            const workOrderWindowEnd = new Date();
             workOrderWindowEnd.setUTCHours(workOrderEnd.getUTCHours(), workOrderEnd.getUTCMinutes(), 0, 0);
             // Check if the workorder window spans across two days (e.g., 20:00 - 08:00)
             if (workOrderWindowEnd < workOrderWindowStart) {
                 workOrderWindowEnd.setUTCDate(workOrderWindowEnd.getUTCDate() + 1);
             }
-
 
             // Compare work order times with the working window times
             if (workOrderWindowStart < workingWindowStart || workOrderWindowEnd > workingWindowEnd) {
@@ -528,14 +530,15 @@ async function getScheduleCounterOfferRequestPayload(workOrderSchedule, cron) {
 async function getNextAvailableTimeSchedule(workOrderSchedule, cron) {
     const workOrderId = workOrderSchedule.work_order_id;
     const workingWindowStartTime = cron.workingWindowStartAt.split(':');
+    const workingWindowEndTime = cron.workingWindowEndAt.split(':');
 
     let startTime;
     let endTime;
-    const today = new Date();
+    const today = moment.utc().toDate();
 
     // Start with the work order's start time
-    let potentialStartTime = new Date(workOrderSchedule.service_window.start.utc);
-    let potentialEndTime = new Date(workOrderSchedule.service_window.end.utc);
+    let potentialStartTime = moment.utc(workOrderSchedule.service_window.start.utc).toDate();
+    let potentialEndTime = moment.utc(workOrderSchedule.service_window.end.utc).toDate();
     
     // If the start day is a previous day or today then make that tomorrow
     if (potentialStartTime <= today) {
@@ -552,10 +555,17 @@ async function getNextAvailableTimeSchedule(workOrderSchedule, cron) {
         iterationCount++;
         const fitsWorkingWindow = await isInsideWorkingWindow(workOrderId, cron, workOrderSchedule.service_window.mode, potentialStartTime, potentialEndTime);
         if (!fitsWorkingWindow) {
+            // Setting potential start time
             potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
             potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
 
-            potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
+            // Setting potential end time
+            if (workingWindowStartTime[0] > workingWindowEndTime[0]) {
+                // if provider work in night-shift (across two days) - Utc
+                potentialEndTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
+            } else {
+                potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
+            }
             potentialEndTime.setUTCHours(potentialStartTime.getUTCHours() + (workOrderSchedule.est_labor_hours || 1), potentialStartTime.getUTCMinutes(), 0, 0);
             console.log(`Outside of working windows ${workOrderId}`);
             continue;
@@ -566,7 +576,13 @@ async function getNextAvailableTimeSchedule(workOrderSchedule, cron) {
             potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
             potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
 
-            potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
+            // Setting potential end time
+            if (workingWindowStartTime[0] > workingWindowEndTime[0]) {
+                // if provider work in night-shift (across two days) - Utc
+                potentialEndTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
+            } else {
+                potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
+            }
             potentialEndTime.setUTCHours(potentialStartTime.getUTCHours() + (workOrderSchedule.est_labor_hours || 1), potentialStartTime.getUTCMinutes(), 0, 0);
             console.log(`In off-day, ${workOrderId}`);
             continue;
@@ -578,7 +594,13 @@ async function getNextAvailableTimeSchedule(workOrderSchedule, cron) {
             potentialStartTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
             potentialStartTime.setUTCHours(workingWindowStartTime[0], workingWindowStartTime[1], 0, 0);
 
-            potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
+            // Setting potential end time
+            if (workingWindowStartTime[0] > workingWindowEndTime[0]) {
+                // if provider work in night-shift (across two days) - Utc
+                potentialEndTime.setUTCDate(potentialStartTime.getUTCDate() + 1);
+            } else {
+                potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
+            }
             potentialEndTime.setUTCHours(potentialStartTime.getUTCHours() + (workOrderSchedule.est_labor_hours || 1), potentialStartTime.getUTCMinutes(), 0, 0);
             console.log(`In planned off-day, ${workOrderId}`);
             continue;
@@ -611,7 +633,7 @@ async function getNextAvailableTimeSchedule(workOrderSchedule, cron) {
 
 // Helper function to add hours to a date and handle day rollover
 async function addHoursToDate(date, hoursToAdd) {
-    const newDate = new Date(date);
+    const newDate = moment.utc(date).toDate();
     
     if (newDate.getUTCHours() + hoursToAdd >= 24) {
         newDate.setUTCDate(newDate.getUTCDate() + 1);

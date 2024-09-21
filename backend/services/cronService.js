@@ -56,7 +56,19 @@ class CronService {
   utcToLocal(utcTime, timeZone) {
     const utcDate = moment.utc(utcTime);
     return utcDate.tz(timeZone).format();
-}
+  }
+
+  localTimeToUtcTime(localTime, timeZone) {
+    const [hours, minutes] = localTime.split(':');
+    const localDateTime = moment.tz({ hour: hours, minute: minutes }, timeZone);
+    return localDateTime.utc().format('HH:mm');
+  }
+
+  utcTimeToLocalTime(utcTime, timeZone) {
+    const [hours, minutes] = utcTime.split(':');
+    const utcDateTime = moment.utc({ hour: hours, minute: minutes });
+    return utcDateTime.tz(timeZone).format('HH:mm');
+  }
 
 }
 
