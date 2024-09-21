@@ -1,5 +1,5 @@
 import AssignedWorkOrder from '../../services/assignedWorkOrdersService.js';
-import { isInsideWorkingWindow } from '../cronHelpers/commonWorkOrdersHelper.js';
+import { isInsideWorkingWindow, outSideOfPlannedTimeOff, outSideOfOffDays, checkOverlappingWithAssignedWorkOrders, adjustForOverlap } from '../cronHelpers/commonWorkOrdersHelper.js';
 import moment from 'moment-timezone';
 
 // Todo: fetch the note from cron

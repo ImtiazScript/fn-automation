@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import logger from "../config/logger/winston-logger/loggerConfig.js";
 import UserService from '../services/userService.js';
 import IntegrationService from '../services/integrationService.js';
+import moment from 'moment-timezone';
 
 // Will run every 23 hours 55 minutes
 cron.schedule('55 */23 * * *', async () => {

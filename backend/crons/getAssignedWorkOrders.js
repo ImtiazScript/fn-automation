@@ -2,8 +2,9 @@ import cron from 'node-cron';
 import logger from "../config/logger/winston-logger/loggerConfig.js";
 import UserService from '../services/userService.js';
 import IntegrationService from '../services/integrationService.js';
+import AssignedWorkOrder from '../services/assignedWorkOrdersService.js';
 import CronService from '../services/cronService.js';
-import { getAssignedWorkOrders, processAssignedWorkOrder, deleteOutdatedWorkOrders } from '../utils/cronHelpers/assignedWorkOrdersHelper.js';
+import { getAssignedWorkOrders } from '../utils/cronHelpers/assignedWorkOrdersHelper.js';
 import moment from 'moment-timezone';
 
 // Will run every 30 minutes
@@ -51,14 +52,15 @@ cron.schedule('*/57 * * * *', async () => {
 
         if (workOrdersResponse && workOrdersResponse.results) {
             const currentlyAssignedWorkOrderIds = workOrdersResponse.results.map(workOrder => workOrder.id);
-        
+
+            const assignedWorkOrders = new AssignedWorkOrder();
             for (const workOrder of workOrdersResponse.results) {
                 // Inser or update to assignedWorkOrders Collection
-                await processAssignedWorkOrder(user.userId, workOrder);
+                await assignedWorkOrders.processAssignedWorkOrder(user.userId, workOrder);
             }
         
             // Call the new function to delete outdated work orders
-            await deleteOutdatedWorkOrders(user.userId, currentlyAssignedWorkOrderIds);
+            await assignedWorkOrders.deleteOutdatedWorkOrders(user.userId, currentlyAssignedWorkOrderIds);
         }
         
 
