@@ -1,10 +1,28 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Button, Table, Modal, Badge, Row, Col, Dropdown, Form as BootstrapForm } from 'react-bootstrap';
-import { useGetCronsDataMutation, useGetTypesOfWorkOrderMutation, useAddCronMutation, useDeleteCronMutation } from '../../slices/commonApiSlice';
+import {
+  Button,
+  Table,
+  Modal,
+  Badge,
+  Row,
+  Col,
+  Dropdown,
+  Alert,
+  Form as BootstrapForm,
+} from 'react-bootstrap';
+import {
+  useGetCronsDataMutation,
+  useGetTypesOfWorkOrderMutation,
+  useAddCronMutation,
+  useDeleteCronMutation,
+} from '../../slices/commonApiSlice';
+import { useGetProvidersMutation } from '../../slices/adminApiSlice';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Select from 'react-select';
+import { useSelector } from 'react-redux';
+import TimeZoneSelect from '../utils/TimeZoneSelect';
 
 const CronsDataTable = () => {
   const [crons, setCrons] = useState([]);
@@ -13,25 +31,40 @@ const CronsDataTable = () => {
   const [typesOfWorkOrderFromAPI, { isLoadingTypesOfWorkOrder }] =
     useGetTypesOfWorkOrderMutation();
 
+  const { userInfo } = useSelector((state) => state.auth);
+  const [activeProvidersFromAPI, { isLoadingActiveProviders }] =
+    useGetProvidersMutation();
+  const [activeProviders, setActiveProviders] = useState([]);
+
   const [totalCrons, setTotalCrons] = useState(0);
   const limit = 10;
   const totalPages = Math.ceil(totalCrons / limit);
   const [currentPage, setCurrentPage] = useState(1);
-    
+
   useEffect(() => {
     try {
       const fetchData = async () => {
-        const responseFromApiCall = await cronsDataFromAPI({currentPage});
-        const cronsArray = responseFromApiCall.data.cronsData;
-        setCrons(cronsArray);
-        const totalCrons = responseFromApiCall.data.totalCrons;
-        setTotalCrons(totalCrons);
+        if (!crons.length || !totalCrons) {
+          const responseFromApiCall = await cronsDataFromAPI({ currentPage });
+          const cronsData = responseFromApiCall.data.cronsData;
+          setCrons(cronsData);
+          const totalCrons = responseFromApiCall.data.totalCrons;
+          setTotalCrons(totalCrons);
+        }
 
         if (!typesOfWorkOrder.length) {
           // Getting types of work order
           const typesOfWorkOrderFromApiCall = await typesOfWorkOrderFromAPI();
           const typesOfWorkOrderArray = typesOfWorkOrderFromApiCall.data;
           setTypesOfWorkOrder(typesOfWorkOrderArray);
+        }
+
+        if (activeProviders && !activeProviders.length) {
+          // Getting activeProviders
+          const activeProvidersFromAPICall = await activeProvidersFromAPI();
+          const activeProvidersArray =
+            activeProvidersFromAPICall.data.providers;
+          setActiveProviders(activeProvidersArray);
         }
       };
       fetchData();
@@ -47,6 +80,7 @@ const CronsDataTable = () => {
   const [workOrderTypeOptions, setWorkOrderTypeOptions] = useState([]);
   const [isFormValid, setIsFormValid] = useState(false);
   const [formData, setFormData] = useState({
+    user: 0,
     cronStartAt: '',
     cronEndAt: '',
     workingWindowStartAt: '',
@@ -54,6 +88,23 @@ const CronsDataTable = () => {
     drivingRadius: '',
     status: '',
     centerZip: '',
+    // Request configuration
+    isFixed: false,
+    fixedPayment: '',
+    isHourly: false,
+    hourlyPayment: '',
+    isPerDevice: false,
+    perDevicePayment: '',
+    isBlended: false,
+    firstHourlyPayment: '',
+    additionalHourlyPayment: '',
+    // Counter offer
+    isEnabledCounterOffer: false,
+    // Time-off and Off-day
+    offDays: [],
+    timeOffStartAt: '',
+    timeOffEndAt: '',
+    timeZone: '',
   });
 
   const handleSearch = (event) => {
@@ -75,17 +126,48 @@ const CronsDataTable = () => {
     setWorkOrderTypeOptions(selectedOptions);
   };
 
+  const allActiveProvidersOptions =
+    activeProviders && activeProviders.length
+      ? activeProviders.map((provider) => ({
+          value: provider.userId,
+          label: provider.name,
+        }))
+      : [];
+
+  const handleProviderChange = (selectedUser) => {
+    setFormData({ ...formData, user: selectedUser });
+  };
+
   useEffect(() => {
-    const isValid = formData.cronStartAt && formData.cronEndAt && 
-                    formData.workingWindowStartAt && formData.workingWindowEndAt &&
-                    formData.drivingRadius && formData.status && formData.centerZip &&
-                    workOrderTypeOptions.length > 0;
+    let isValid =
+      formData.cronStartAt &&
+      formData.cronEndAt &&
+      formData.workingWindowStartAt &&
+      formData.workingWindowEndAt &&
+      formData.drivingRadius &&
+      formData.status &&
+      formData.centerZip &&
+      formData.timeZone &&
+      workOrderTypeOptions.length > 0;
+    if (userInfo.isAdmin) {
+      // making sure, provider is also selected
+      isValid = isValid && formData.user;
+    }
     setIsFormValid(isValid);
   }, [formData, workOrderTypeOptions]);
 
-
   const formatDateForInput = (dateTime) => {
     return dateTime ? format(new Date(dateTime), "yyyy-MM-dd'T'HH:mm") : '';
+  };
+
+  const handleOffDayChange = (e) => {
+    const value = e.target.value;
+    setFormData((prevData) => ({
+      ...prevData,
+      offDays: prevData.offDays.includes(value)
+        ? prevData.offDays.filter((day) => day !== value)
+        : [...prevData.offDays, value],
+    }));
   };
 
   const handleSaveChanges = async () => {
@@ -95,6 +177,7 @@ const CronsDataTable = () => {
     try {
       // Prepare the data to be sent
       const data = {
+        userId: userInfo.isAdmin && formData.user ? formData.user?.value : 0,
         centerZip: formData.centerZip,
         cronStartAt: formData.cronStartAt,
         cronEndAt: formData.cronEndAt,
@@ -103,9 +186,23 @@ const CronsDataTable = () => {
         drivingRadius: formData.drivingRadius,
         status: formData.status,
         typesOfWorkOrder: selectedFnTypeIds,
+        isFixed: formData.isFixed,
+        fixedPayment: formData.fixedPayment ? parseInt(formData.fixedPayment) : 0,
+        isHourly: formData.isHourly,
+        hourlyPayment: formData.hourlyPayment ? parseInt(formData.hourlyPayment) : 0,
+        isPerDevice: formData.isPerDevice,
+        perDevicePayment: formData.perDevicePayment ? parseInt(formData.perDevicePayment) : 0,
+        isBlended: formData.isBlended,
+        firstHourlyPayment: formData.firstHourlyPayment ? parseInt(formData.firstHourlyPayment) : 0,
+        additionalHourlyPayment: formData.additionalHourlyPayment ? parseInt(formData.additionalHourlyPayment) : 0,
+        isEnabledCounterOffer: formData.isEnabledCounterOffer,
+        offDays: formData.offDays,
+        timeOffStartAt: formData.timeOffStartAt,
+        timeOffEndAt: formData.timeOffEndAt,
+        timeZone: formData.timeZone,
       };
 
-        const response = await addCron(data).unwrap();
+      const response = await addCron(data).unwrap();
 
       // Handle success (e.g., show a toast message or refresh the data)
       toast.success('Cron added successfully');
@@ -171,9 +268,15 @@ const CronsDataTable = () => {
                 Driving Radius
               </th>
               <th>#WO</th>
-              <th className="text-center align-middle d-none d-md-table-cell">Status</th>
-              <th className="text-center align-middle d-none d-md-table-cell">Configure</th>
-              <th className="text-center align-middle d-none d-md-table-cell">Delete</th>
+              <th className="text-center align-middle d-none d-md-table-cell">
+                Status
+              </th>
+              <th className="text-center align-middle d-none d-md-table-cell">
+                Configure
+              </th>
+              <th className="text-center align-middle d-none d-md-table-cell">
+                Delete
+              </th>
               <th className="text-center align-middle d-md-none">Status</th>
               <th className="text-center align-middle d-md-none">Actions</th>
             </tr>
@@ -186,7 +289,9 @@ const CronsDataTable = () => {
                 <td className="text-center align-middle d-none d-md-table-cell">
                   {cron.drivingRadius}
                 </td>
-                <td className="text-center align-middle">{cron.totalRequested}</td>
+                <td className="text-center align-middle">
+                  {cron.totalRequested}
+                </td>
                 <td className="text-center align-middle d-none d-md-table-cell">
                   <Badge
                     bg={cron.status === 'active' ? 'success' : 'secondary'}
@@ -196,7 +301,12 @@ const CronsDataTable = () => {
                 </td>
                 <td className="text-center align-middle d-none d-md-table-cell">
                   <Link to={`/crons/configure-cron/${cron.cronId}`}>
-                    <Button type="button" variant="primary" size="sm" className="mt-3">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      className="mt-3"
+                    >
                       Configure
                     </Button>
                   </Link>
@@ -236,7 +346,7 @@ const CronsDataTable = () => {
 
                     <Dropdown.Menu>
                       <Dropdown.Item
-                        className='custom-dropdown-item mb-1'
+                        className="custom-dropdown-item mb-1"
                         style={{ backgroundColor: 'gray', color: '#fff' }}
                         as={Link}
                         to={`/crons/configure-cron/${cron.cronId}`}
@@ -244,7 +354,7 @@ const CronsDataTable = () => {
                         Configure
                       </Dropdown.Item>
                       <Dropdown.Item
-                        className='custom-dropdown-item mb-1'
+                        className="custom-dropdown-item mb-1"
                         style={{ backgroundColor: '#f44336', color: '#fff' }}
                         onClick={() => {
                           setCronIdToDelete(cron._id);
@@ -256,7 +366,6 @@ const CronsDataTable = () => {
                     </Dropdown.Menu>
                   </Dropdown>
                 </td>
-
               </tr>
             ))}
           </tbody>
@@ -289,89 +398,84 @@ const CronsDataTable = () => {
       </Row>
 
       {/* Add cron modal */}
-      <Modal show={showAddModal} onHide={handleClose}>
+      <Modal show={showAddModal} onHide={handleClose} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Edit Cron Details</Modal.Title>
+          <Modal.Title>Add Cron Details</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <BootstrapForm>
-            <BootstrapForm.Group controlId="cronStartAt">
-              <BootstrapForm.Label>Cron Start At</BootstrapForm.Label>
-              <BootstrapForm.Control
-                type="datetime-local"
-                name="cronStartAt"
-                value={formatDateForInput(formData.cronStartAt)}
-                onChange={handleChange}
-                required
-              />
-            </BootstrapForm.Group>
-            <BootstrapForm.Group controlId="cronEndAt">
-              <BootstrapForm.Label>Cron End At</BootstrapForm.Label>
-              <BootstrapForm.Control
-                type="datetime-local"
-                name="cronEndAt"
-                value={formatDateForInput(formData.cronEndAt)}
-                onChange={handleChange}
-                required
-              />
-            </BootstrapForm.Group>
-            <BootstrapForm.Group controlId="workingWindowStartAt">
-              <BootstrapForm.Label>Working Window Start At</BootstrapForm.Label>
-              <BootstrapForm.Control
-                type="time"
-                name="workingWindowStartAt"
-                value={formData.workingWindowStartAt}
-                onChange={handleChange}
-                required
-              />
-            </BootstrapForm.Group>
-            <BootstrapForm.Group controlId="workingWindowEndAt">
-              <BootstrapForm.Label>Working Window End At</BootstrapForm.Label>
-              <BootstrapForm.Control
-                type="time"
-                name="workingWindowEndAt"
-                value={formData.workingWindowEndAt}
-                onChange={handleChange}
-                required
-              />
-            </BootstrapForm.Group>
-            <BootstrapForm.Group controlId="drivingRadius">
-              <BootstrapForm.Label>Driving Radius</BootstrapForm.Label>
-              <BootstrapForm.Control
-                type="number"
-                name="drivingRadius"
-                value={formData.drivingRadius || ''}
-                onChange={handleChange}
-                required
-              />
-            </BootstrapForm.Group>
-            <BootstrapForm.Group controlId="status">
-              <BootstrapForm.Label>Status</BootstrapForm.Label>
-              <BootstrapForm.Control
-                as="select"
-                name="status"
-                value={formData.status || ''}
-                onChange={handleChange}
-                required
-              >
-                <option value="" disabled>
-                  Select Status
-                </option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </BootstrapForm.Control>
-            </BootstrapForm.Group>
+            {userInfo.isAdmin && (
+              <Row style={{ marginBottom: '20px' }}>
+                <Col>
+                  <BootstrapForm.Group controlId="providerName">
+                    <BootstrapForm.Label>Provider</BootstrapForm.Label>
+                    <Select
+                      value={formData.user}
+                      name="userId"
+                      options={allActiveProvidersOptions}
+                      onChange={(selectedOption) =>
+                        handleProviderChange(selectedOption)
+                      }
+                      classNamePrefix="select"
+                      required
+                    />
+                  </BootstrapForm.Group>
+                </Col>
+              </Row>
+            )}
 
-            <BootstrapForm.Group controlId="centerZip">
-              <BootstrapForm.Label>Center Zip</BootstrapForm.Label>
-              <BootstrapForm.Control
-                type="text"
-                name="centerZip"
-                value={formData.centerZip || ''}
-                onChange={handleChange}
-                required
-              />
-            </BootstrapForm.Group>
+            <Row style={{ marginBottom: '20px' }}>
+              <Col>
+                <BootstrapForm.Group controlId="cronStartAt">
+                  <BootstrapForm.Label>Cron Start At</BootstrapForm.Label>
+                  <BootstrapForm.Control
+                    type="datetime-local"
+                    name="cronStartAt"
+                    value={formatDateForInput(formData.cronStartAt)}
+                    onChange={handleChange}
+                    required
+                  />
+                </BootstrapForm.Group>
+              </Col>
+              <Col>
+                <BootstrapForm.Group controlId="cronEndAt">
+                  <BootstrapForm.Label>Cron End At</BootstrapForm.Label>
+                  <BootstrapForm.Control
+                    type="datetime-local"
+                    name="cronEndAt"
+                    value={formatDateForInput(formData.cronEndAt)}
+                    onChange={handleChange}
+                    required
+                  />
+                </BootstrapForm.Group>
+              </Col>
+            </Row>
+
+            <Row style={{ marginBottom: '20px' }}>
+              <Col>
+                <BootstrapForm.Group controlId="centerZip">
+                  <BootstrapForm.Label>Center Zip</BootstrapForm.Label>
+                  <BootstrapForm.Control
+                    type="text"
+                    name="centerZip"
+                    value={formData.centerZip || ''}
+                    onChange={handleChange}
+                  />
+                </BootstrapForm.Group>
+              </Col>
+              <Col>
+                <BootstrapForm.Group controlId="drivingRadius">
+                  <BootstrapForm.Label>Driving Radius</BootstrapForm.Label>
+                  <BootstrapForm.Control
+                    type="number"
+                    name="drivingRadius"
+                    value={formData.drivingRadius || ''}
+                    onChange={handleChange}
+                  />
+                </BootstrapForm.Group>
+              </Col>
+            </Row>
+
             <BootstrapForm.Group controlId="workOrderTypes">
               <BootstrapForm.Label>Types of Work Order</BootstrapForm.Label>
               <Select
@@ -387,6 +491,303 @@ const CronsDataTable = () => {
                 required
               />
             </BootstrapForm.Group>
+
+            <div style={{ marginTop: '20px' }}>
+              <h5>Payments</h5>
+            </div>
+
+            {/* Fixed checkbox and conditional field */}
+            <Row style={{ marginBottom: '10px' }}>
+              <Col>
+                <BootstrapForm.Group controlId="fixedPayment">
+                  <BootstrapForm.Check
+                    type="checkbox"
+                    label="Fixed"
+                    checked={formData.isFixed}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isFixed: e.target.checked })
+                    }
+                  />
+                  {formData.isFixed && (
+                    <div style={{ marginTop: '10px' }}>
+                      <BootstrapForm.Control
+                        type="number"
+                        placeholder="Total payment"
+                        value={formData.fixedPayment || ''}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            fixedPayment: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  )}
+                </BootstrapForm.Group>
+              </Col>
+
+              {/* Hourly checkbox and conditional field */}
+              <Col>
+                <BootstrapForm.Group controlId="hourlyPayment">
+                  <BootstrapForm.Check
+                    type="checkbox"
+                    label="Hourly"
+                    checked={formData.isHourly}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isHourly: e.target.checked })
+                    }
+                  />
+                  {formData.isHourly && (
+                    <div style={{ marginTop: '10px' }}>
+                      <BootstrapForm.Control
+                        type="number"
+                        placeholder="Hourly payment"
+                        value={formData.hourlyPayment || ''}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            hourlyPayment: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  )}
+                </BootstrapForm.Group>
+              </Col>
+            </Row>
+
+            {/* Per Device checkbox and conditional field */}
+            <Row style={{ marginBottom: '20px' }}>
+              <Col>
+                <BootstrapForm.Group controlId="perDevicePayment">
+                  <BootstrapForm.Check
+                    type="checkbox"
+                    label="Per Device"
+                    checked={formData.isPerDevice}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        isPerDevice: e.target.checked,
+                      })
+                    }
+                  />
+                  {formData.isPerDevice && (
+                    <div style={{ marginTop: '10px' }}>
+                      <BootstrapForm.Control
+                        type="number"
+                        placeholder="Per device payment"
+                        value={formData.perDevicePayment || ''}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            perDevicePayment: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  )}
+                </BootstrapForm.Group>
+              </Col>
+
+              {/* Blended checkbox and conditional fields */}
+              <Col>
+                <BootstrapForm.Group controlId="blendedPayment">
+                  <BootstrapForm.Check
+                    type="checkbox"
+                    label="Blended"
+                    checked={formData.isBlended}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isBlended: e.target.checked })
+                    }
+                  />
+                  {formData.isBlended && (
+                    <>
+                      <div style={{ marginTop: '10px' }}>
+                        <BootstrapForm.Control
+                          type="number"
+                          placeholder="Fixed hourly payment"
+                          value={formData.firstHourlyPayment || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              firstHourlyPayment: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div style={{ marginTop: '10px' }}>
+                        <BootstrapForm.Control
+                          type="number"
+                          placeholder="Additional hourly payment"
+                          value={formData.additionalHourlyPayment || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              additionalHourlyPayment: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </>
+                  )}
+                </BootstrapForm.Group>
+              </Col>
+            </Row>
+
+            <div style={{ marginTop: '20px' }}>
+              <h5>Schedule</h5>
+            </div>
+            <Row style={{ marginBottom: '20px' }}>
+              <Col>
+                <TimeZoneSelect
+                  onChange={(value) =>
+                    setFormData({ ...formData, timeZone: value })
+                  }
+                  selectedTimeZone={formData.timeZone}
+                />
+              </Col>
+            </Row>
+
+            <Row style={{ marginBottom: '20px' }}>
+              <Col>
+                <BootstrapForm.Group controlId="workingWindowStartAt">
+                  <BootstrapForm.Label>Daily Start At</BootstrapForm.Label>
+                  <BootstrapForm.Control
+                    type="time"
+                    name="workingWindowStartAt"
+                    value={formData.workingWindowStartAt}
+                    onChange={handleChange}
+                  />
+                </BootstrapForm.Group>
+              </Col>
+              <Col>
+                <BootstrapForm.Group controlId="workingWindowEndAt">
+                  <BootstrapForm.Label>Daily End At</BootstrapForm.Label>
+                  <BootstrapForm.Control
+                    type="time"
+                    name="workingWindowEndAt"
+                    value={formData.workingWindowEndAt}
+                    onChange={handleChange}
+                  />
+                </BootstrapForm.Group>
+              </Col>
+            </Row>
+
+            <div>
+              <h6>Off Days</h6>
+            </div>
+            <Row style={{ marginBottom: '20px' }}>
+              <Col>
+                <BootstrapForm.Group controlId="offDays">
+                  <Row style={{ marginBottom: '20px' }}>
+                    {[
+                      'Monday',
+                      'Tuesday',
+                      'Wednesday',
+                      'Thursday',
+                      'Friday',
+                      'Saturday',
+                      'Sunday',
+                    ].map((day) => (
+                      <Col sm={4} key={day}>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <input
+                            type="checkbox"
+                            value={day}
+                            checked={
+                              formData.offDays && formData.offDays.includes(day)
+                            }
+                            onChange={handleOffDayChange}
+                            id={`offDayCheckbox-${day}`} // Unique id for each checkbox
+                          />
+                          <label
+                            htmlFor={`offDayCheckbox-${day}`}
+                            style={{ marginLeft: '8px' }}
+                          >
+                            {day}
+                          </label>
+                        </div>
+                      </Col>
+                    ))}
+                  </Row>
+                </BootstrapForm.Group>
+              </Col>
+            </Row>
+
+            <div>
+              <h6>Planned Time-Off</h6>
+            </div>
+            <Row style={{ marginBottom: '20px' }}>
+              <Col md={6}>
+                <BootstrapForm.Group controlId="timeOffStartAt">
+                  <BootstrapForm.Label>Start Date-Time</BootstrapForm.Label>
+                  <BootstrapForm.Control
+                    type="datetime-local"
+                    name="timeOffStartAt"
+                    value={formatDateForInput(formData.timeOffStartAt)}
+                    onChange={handleChange}
+                  />
+                </BootstrapForm.Group>
+              </Col>
+              <Col md={6}>
+                <BootstrapForm.Group controlId="timeOffEndAt">
+                  <BootstrapForm.Label>End Date-Time</BootstrapForm.Label>
+                  <BootstrapForm.Control
+                    type="datetime-local"
+                    name="timeOffEndAt"
+                    value={formatDateForInput(formData.timeOffEndAt)}
+                    onChange={handleChange}
+                  />
+                </BootstrapForm.Group>
+              </Col>
+            </Row>
+
+            <Row style={{ marginBottom: '20px' }}>
+              <Col>
+                {/* Counter-offer checkbox and conditional field */}
+                <BootstrapForm.Group controlId="counterOffer">
+                  <BootstrapForm.Check
+                    type="checkbox"
+                    label="Counter Offer"
+                    checked={formData.isEnabledCounterOffer}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        isEnabledCounterOffer: e.target.checked,
+                      })
+                    }
+                  />
+
+                  <div style={{ marginTop: '10px' }}>
+                    <Alert variant="info">
+                      If counter offer is enabled, the cron will counter-offer
+                      work orders that don't meet the configured payment and
+                      schedule conditions.
+                    </Alert>
+                  </div>
+                </BootstrapForm.Group>
+              </Col>
+            </Row>
+
+            <Row style={{ marginBottom: '20px' }}>
+              <Col>
+                <BootstrapForm.Group controlId="status">
+                  <BootstrapForm.Label>Status</BootstrapForm.Label>
+                  <BootstrapForm.Control
+                    as="select"
+                    name="status"
+                    value={formData.status || ''}
+                    onChange={handleChange}
+                  >
+                    <option value="" disabled>
+                      Select Status
+                    </option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </BootstrapForm.Control>
+                </BootstrapForm.Group>
+              </Col>
+            </Row>
           </BootstrapForm>
         </Modal.Body>
         <Modal.Footer>

@@ -14,8 +14,9 @@ import {
   blockUserHelper,
   unBlockUserHelper,
   activateUserHelper,
-  deleteUserHelper,
+  fetchAllActiveProviders,
 } from "../utils/adminHelpers.js";
+import { sendUserActivatedEmail, sendUserBlockedEmail, sendUserUnblockedEmail } from '../utils/emailHelpers/SendMail.js';
 
 /*
    # Desc: Auth user/set token
@@ -93,6 +94,10 @@ const registerAdmin = asyncHandler(async (req, res) => {
       isAdmin: user.isAdmin,
       isActive: user.isActive,
     };
+
+    // Send mail to admin
+    await sendUserSignedUpEmail(user.userId, user.name, user.email, user.isAdmin);
+
     res.status(201).json(registeredUserData);
   } else {
     // If user was NOT Created, send error back
@@ -179,17 +184,28 @@ const getAllUsers = asyncHandler(async (req, res) => {
   }
 });
 
+const getAllActiveProviders = asyncHandler(async (req, res) => {
+  const providers = await fetchAllActiveProviders();
+  if (providers) {
+    res.status(200).json({ providers });
+  } else {
+    throw new NotFoundError();
+  }
+});
+
 const activateUser = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   if (!userId) {
     throw new BadRequestError("UserId not received in request - User activation failed.");
   }
-  const userActivationProcess = await activateUserHelper(userId);
-  const responseMessage = userActivationProcess.message;
-  if (userActivationProcess.success) {
-    res.status(201).json({ message: responseMessage });
+  const activateUser = await activateUserHelper(userId);
+  if (activateUser) {
+    // Send mail to user
+    sendUserActivatedEmail(activateUser.name, activateUser.email);
+
+    res.status(201).json({ message: "User activated successfully." });
   } else {
-    throw new BadRequestError(responseMessage);
+    throw new BadRequestError('User activation failed.');
   }
 });
 
@@ -198,12 +214,14 @@ const blockUser = asyncHandler(async (req, res) => {
   if (!userId) {
     throw new BadRequestError("UserId not received in request - User blocking failed.");
   }
-  const userBlockingProcess = await blockUserHelper(userId);
-  const responseMessage = userBlockingProcess.message;
-  if (userBlockingProcess.success) {
-    res.status(201).json({ message: responseMessage });
+  const userBlocked = await blockUserHelper(userId);
+  if (userBlocked) {
+    // Send mail to user
+    sendUserBlockedEmail(userBlocked.name, userBlocked.email);
+
+    res.status(201).json({ message: "User blocked successfully." });
   } else {
-    throw new BadRequestError(responseMessage);
+    throw new BadRequestError("Failed to block user.");
   }
 });
 
@@ -212,12 +230,14 @@ const unBlockUser = asyncHandler(async (req, res) => {
   if (!userId) {
     throw new BadRequestError("UserId not received in request - User Un-blocking failed.");
   }
-  const userUnblockingProcess = await unBlockUserHelper(userId);
-  const responseMessage = userUnblockingProcess.message;
-  if (userUnblockingProcess.success) {
-    res.status(201).json({ message: responseMessage });
+  const userUnblocked = await unBlockUserHelper(userId);
+  if (userUnblocked) {
+    // Send mail to user
+    sendUserUnblockedEmail(userUnblocked.name, userUnblocked.email);
+
+    res.status(201).json({ message: "User un-blocked successfully." });
   } else {
-    throw new BadRequestError(responseMessage);
+    throw new BadRequestError("Failed to un-block user.");
   }
 });
 
@@ -281,13 +301,12 @@ const deleteUser = asyncHandler(async (req, res) => {
     });
   }
 
-  // delete the user
-  const userDeletingProcess = await deleteUserHelper(user._id);
-  const responseMessage = userDeletingProcess.message;
-  if (userDeletingProcess.success) {
-    res.status(204).json({ message: responseMessage });
+  // Find and delete the cron by ID
+  const deleteUser = await User.findByIdAndDelete(userId);
+  if (deleteUser) {
+    res.status(204).json({ message: "User deleted successfully." });
   } else {
-    throw new BadRequestError(responseMessage);
+    throw new BadRequestError("Failed to delete user.");
   }
 });
 
@@ -304,4 +323,5 @@ export {
   activateUser,
   updateFnServiceCompanyAdmin,
   deleteUser,
+  getAllActiveProviders,
 };

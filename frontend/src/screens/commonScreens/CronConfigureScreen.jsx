@@ -7,6 +7,8 @@ import {
   useGetTypesOfWorkOrderMutation,
 } from '../../slices/commonApiSlice';
 import Loader from '../../components/Loader';
+import { Breadcrumb } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 const CronConfigureScreen = () => {
   const { cronId } = useParams();
@@ -40,7 +42,18 @@ const CronConfigureScreen = () => {
 
   return (
     <div>
-      <h1>Configure Cron</h1>
+      <Breadcrumb>
+        <Breadcrumb.Item linkAs={Link} linkProps={{ to: '/' }}>
+          Home
+        </Breadcrumb.Item>
+        <Breadcrumb.Item
+          linkAs={Link}
+          linkProps={{ to: '/crons/manage-crons' }}
+        >
+          Manage Crons
+        </Breadcrumb.Item>
+        <Breadcrumb.Item active>Cron Details</Breadcrumb.Item>
+      </Breadcrumb>
       {isLoading || isLoadingTypesOfWorkOrder ? (
         <Loader />
       ) : (

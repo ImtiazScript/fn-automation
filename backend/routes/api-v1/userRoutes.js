@@ -9,6 +9,8 @@ import {
   logoutUser,
   getUserProfile,
   updateUserProfile,
+  forgotPassword,
+  resetPassword,
 } from "../../controllers/userController.js";
 import { userSignUpDataValidation, userSignInDataValidation } from "./backendDataValidationConfig.js";
 import { multerUploadUserProfile } from "../../config/multerConfig.js";
@@ -18,6 +20,10 @@ const router = express.Router();
 router.post("/", userSignUpDataValidation, validateRequest, registerUser);
 router.post("/auth", userSignInDataValidation, validateRequest, authUser);
 router.post("/logout", logoutUser);
+
+//* ==================== Reset password Routes ====================
+router.post("/forgot-password", validateRequest, forgotPassword);
+router.post("/reset-password", validateRequest, resetPassword);
 
 //* ==================== User Profile Routes ====================
 router

@@ -7,6 +7,8 @@ import { BadRequestError } from "base-error-handler";
 import User from "../models/userModel.js";
 import generateAuthToken from "../utils/jwtHelpers/generateAuthToken.js";
 import destroyAuthToken from "../utils/jwtHelpers/destroyAuthToken.js";
+import generatePasswordResetToken from '../utils/jwtHelpers/generatePasswordResetToken.js';
+import { sendResetPasswordEmail, sendUserSignedUpEmail, sendAdminNewUserNotificationEmail } from '../utils/emailHelpers/SendMail.js';
 
 /*
    # Desc: Auth user/set token
@@ -82,6 +84,12 @@ const registerUser = asyncHandler(async (req, res) => {
       isAdmin: user.isAdmin,
       isActive: user.isActive,
     };
+
+    // Send mail to admin
+    await sendAdminNewUserNotificationEmail(user.userId, user.name, user.email, user.isAdmin);
+    // Send mail to sign-up user
+    await sendUserSignedUpEmail(user.userId, user.name, user.email, user.isAdmin);
+
     res.status(201).json(registeredUserData);
   } else {
     // If user was NOT Created, send error back
@@ -148,10 +156,65 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
+/*
+  # Desc: Forgot password
+  # Route: POST /api/v1/user/forgot-password
+  # Access: PUBLIC
+*/
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new BadRequestError('No user found with that email.');
+  }
+
+  // Generate reset token and set expiration
+  const resetToken = generatePasswordResetToken(user._id);
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+  await user.save();
+
+  // Send email with reset link
+  // TODO: replace localhost:3000 with ${req.get('host')} when go live
+  const resetUrl = `${req.protocol}://localhost:3000/reset-password?reset_token=${resetToken}`;
+  await sendResetPasswordEmail(user.email, resetUrl);
+
+  res.status(200).json({ message: 'Reset link sent to email' });
+});
+
+
+/*
+  # Desc: Reset password
+  # Route: POST /api/v1/user/reset-password
+  # Access: PUBLIC
+*/
+const resetPassword = asyncHandler(async (req, res) => {
+  const { resetToken, password } = req.body;
+  const user = await User.findOne({
+    resetPasswordToken: resetToken,
+    resetPasswordExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new BadRequestError('Reset token is invalid or has expired.');
+  }
+
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  res.status(200).json({ message: 'Password updated successfully' });
+});
+
+
+
 export {
   authUser,
   registerUser,
   logoutUser,
   getUserProfile,
   updateUserProfile,
+  forgotPassword,
+  resetPassword,
 };

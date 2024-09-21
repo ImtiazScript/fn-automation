@@ -13,6 +13,7 @@ import logger from "./config/logger/winston-logger/loggerConfig.js";
 
 // Crons
 import './crons/cleanOlderLogs.js';
+import './crons/getAssignedWorkOrders.js';
 import './crons/findAndRequestWorkOrders.js';
 import './crons/updateAccessTokens.js';
 

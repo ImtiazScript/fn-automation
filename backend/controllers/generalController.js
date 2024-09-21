@@ -1,4 +1,5 @@
 //? ===================================================== General Routes Controller =====================================================
+import moment from 'moment-timezone';
 
 /*
    # Desc: Server Health Check Route
@@ -7,7 +8,7 @@
 */
 
 const getServerHealth = (req, res) => {
-  const currentDate = new Date();
+  const currentDate =  moment.utc().toDate();
   const options = {
     weekday: "long",
     year: "numeric",

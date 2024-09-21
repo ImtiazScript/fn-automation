@@ -1,4 +1,5 @@
 import Cron from '../models/cronModel.js';
+import moment from 'moment-timezone';
 
 class CronService {
   constructor(userId) {
@@ -46,6 +47,29 @@ class CronService {
       throw error;
     }
   };
+
+  localToUtc(localTime, timeZone) {
+    const localDate = moment.tz(localTime, timeZone);
+    return localDate.utc().format();
+  }
+
+  utcToLocal(utcTime, timeZone) {
+    const utcDate = moment.utc(utcTime);
+    return utcDate.tz(timeZone).format();
+  }
+
+  localTimeToUtcTime(localTime, timeZone) {
+    const [hours, minutes] = localTime.split(':');
+    const localDateTime = moment.tz({ hour: hours, minute: minutes }, timeZone);
+    return localDateTime.utc().format('HH:mm');
+  }
+
+  utcTimeToLocalTime(utcTime, timeZone) {
+    const [hours, minutes] = utcTime.split(':');
+    const utcDateTime = moment.utc({ hour: hours, minute: minutes });
+    return utcDateTime.tz(timeZone).format('HH:mm');
+  }
+
 }
 
 export default CronService

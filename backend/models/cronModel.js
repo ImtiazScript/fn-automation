@@ -52,6 +52,62 @@ const cronSchema = mongoose.Schema({
         type: [String],
         required: false
     },
+    isFixed: {
+        type: Boolean,
+        default: false,
+    },
+    fixedPayment: {
+        type: Number,
+        required: false
+    },
+    isHourly: {
+        type: Boolean,
+        default: false,
+    },
+    hourlyPayment: {
+        type: Number,
+        required: false
+    },
+    isPerDevice: {
+        type: Boolean,
+        default: false,
+    },
+    perDevicePayment: {
+        type: Number,
+        required: false
+    },
+    isBlended: {
+        type: Boolean,
+        default: false,
+    },
+    firstHourlyPayment: {
+        type: Number,
+        required: false
+    },
+    additionalHourlyPayment: {
+        type: Number,
+        required: false
+    },
+    isEnabledCounterOffer: {
+        type: Boolean,
+        default: false,
+    },
+    offDays: {
+        type: [String],
+        required: false
+    },
+    timeOffStartAt: {
+        type: Date,
+        required: false
+    },
+    timeOffEndAt: {
+        type: Date,
+        required: false,
+    },
+    timeZone: {
+        type: String,
+        required: true,
+    },
     deleted: {
         type: Boolean,
         default: false,

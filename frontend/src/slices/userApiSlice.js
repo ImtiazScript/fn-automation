@@ -1,5 +1,5 @@
 import { apiSlice } from "./apiSlice";
-import { USER_AUTHENTICATION_URL, USER_LOGOUT_URL, USER_REGISTRATION_URL, USER_PROFILE_URL, INTEGRATE_USER_URL } from '../utils/constants.js';
+import { USER_AUTHENTICATION_URL, USER_LOGOUT_URL, USER_REGISTRATION_URL, USER_PROFILE_URL, INTEGRATE_USER_URL, FORGOT_PASSWORD_URL, RESET_PASSWORD_URL } from '../utils/constants.js';
 
 const USER_AUTH_URL = USER_AUTHENTICATION_URL; 
 
@@ -45,7 +45,21 @@ export const usersApiSlice = apiSlice.injectEndpoints({
                 method: 'GET'
             })
         }),
+        forgotPassword: builder.mutation({
+            query: (data) => ({
+                url: FORGOT_PASSWORD_URL,
+                method: 'POST',
+                body: data
+            })
+        }),
+        resetPassword: builder.mutation({
+            query: (data) => ({
+                url: RESET_PASSWORD_URL,
+                method: 'POST',
+                body: data
+            })
+        }),
     })
 })
 
-export const { useLoginMutation, useLogoutMutation, useRegisterMutation, useUpdateUserMutation, useIntegrateUserMutation, useIntegrationInfoByUserIdMutation } = usersApiSlice;
+export const { useLoginMutation, useLogoutMutation, useRegisterMutation, useUpdateUserMutation, useIntegrateUserMutation, useIntegrationInfoByUserIdMutation, useForgotPasswordMutation, useResetPasswordMutation } = usersApiSlice;
