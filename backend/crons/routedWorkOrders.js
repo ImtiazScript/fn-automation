@@ -77,7 +77,7 @@ cron.schedule('*/30 * * * *', async () => {
             if (workOrdersResponse && workOrdersResponse.results) {
                 workOrdersResponse.results.map(async (workOrder) => {
                     // TODO: Remove DEBUG Code
-                    // if (workOrder.id !== 16768){
+                    // if (workOrder.id !== 65856){
                     //     return;
                     // }
                     const allowedPaymentType = (workOrder.pay.type === 'fixed' && cron.isFixed) || (workOrder.pay.type === 'hourly' && cron.isHourly) || (workOrder.pay.type === 'device' && cron.isPerDevice) || (workOrder.pay.type === 'blended' && cron.isBlended);

@@ -111,9 +111,11 @@ export const isScheduleSatisfied = async (workOrderSchedule, cron) => {
     const {
         mode,
         start: { utc: workOrderStartUtc },
-        end: { utc: workOrderEndUtc } = {},
+        // end: { utc: workOrderEndUtc } = {},
         est_labor_hours: estLaborHours = 0,
     } = workOrderSchedule.service_window;
+    const workOrderEndUtc = mode === 'exact' ? workOrderStartUtc : workOrderSchedule?.service_window?.end?.utc;
+
     const workOrderId = workOrderSchedule.work_order_id;
 
     // Check for off-days
@@ -170,7 +172,11 @@ export const isScheduleSatisfied = async (workOrderSchedule, cron) => {
 export const outSideOfOffDays = async (workOrderId, cron, workOrderStartUtc, workOrderEndUtc) => {
     const workOrderDayNames = await getWorkOrderDayNames(workOrderStartUtc, workOrderEndUtc, cron.timeZone);
     if (workOrderDayNames.every(day => cron.offDays.includes(day))) {
-        console.log(`off day conflict, id # ${workOrderId}`);
+        console.log(
+            `\n Off-day conflict, #WO ${workOrderId}:\n` +
+            `Work order days: ${workOrderDayNames.join(', ')}\n` +
+            `Off days: ${cron.offDays.join(', ')}\n`
+        );
         return false;
     }
 
@@ -231,7 +237,11 @@ export const outSideOfPlannedTimeOff = async (workOrderId, cron, workOrderStart,
         const timeOffStart = moment.utc(cron.timeOffStartAt).toDate();
         const timeOffEnd = moment.utc(cron.timeOffEndAt).toDate();
         if (workOrderStart >= timeOffStart && workOrderEnd <= timeOffEnd) {
-            console.log(`planned time-off conflict, id # ${workOrderId}`);
+            console.log(
+                `\n Planned time-off conflict, #WO ${workOrderId}:\n` +
+                `Planned time-off start: ${timeOffStart} --> Planned time-off end: ${timeOffEnd}\n` +
+                `Work order start: ${workOrderStart} --> Work order end: ${workOrderEnd}\n`
+            );
             return false;
         }
     }
@@ -358,7 +368,11 @@ export const isInsideWorkingWindow = async (workOrderId, cron, mode, workOrderSt
 
             // Compare work order times with the working window times
             if (workOrderWindowStart < workingWindowStart || workOrderWindowEnd > workingWindowEnd) {
-                console.log(`daily working schedule conflict, id # ${workOrderId}`);
+                console.log(
+                    `\n Working window conflict, #WO ${workOrderId}:\n` +
+                    `Working Window Start: ${workingWindowStart} --> Working Window End: ${workingWindowEnd}\n` +
+                    `Workorder Start: ${workOrderWindowStart} --> Workorder End: ${workOrderWindowEnd}\n`
+                );
                 return false;
             }
             break;

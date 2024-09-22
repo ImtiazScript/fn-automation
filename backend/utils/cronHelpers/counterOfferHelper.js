@@ -238,7 +238,7 @@ export const getNextAvailableTimeSchedule = async (workOrderSchedule, cron) => {
 
     // Start with the work order's start time
     let potentialStartTime = moment.utc(workOrderSchedule.service_window.start.utc).toDate();
-    let potentialEndTime = moment.utc(workOrderSchedule.service_window.end.utc).toDate();
+    let potentialEndTime = workOrderSchedule?.service_window?.mode === 'exact' ? potentialStartTime : moment.utc(workOrderSchedule.service_window.end.utc).toDate();
 
     // If the start day is a previous day or today then make that tomorrow
     if (potentialStartTime <= today) {
@@ -267,7 +267,6 @@ export const getNextAvailableTimeSchedule = async (workOrderSchedule, cron) => {
                 potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
             }
             potentialEndTime.setUTCHours(potentialStartTime.getUTCHours() + (workOrderSchedule.est_labor_hours || 1), potentialStartTime.getUTCMinutes(), 0, 0);
-            console.log(`Outside of working windows ${workOrderId}`);
             continue;
         }
 
