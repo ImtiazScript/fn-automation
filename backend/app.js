@@ -9,7 +9,8 @@ import cookieParser from "cookie-parser";
 // Custom Authentication & Error middleware from my npm package.
 // Reference: https://www.npmjs.com/package/base-auth-handler
 import { currentUser } from "base-auth-handler";
-import { NotFoundError, errorHandler } from "base-error-handler";
+import { NotFoundError } from '@emtiaj/custom-errors';
+import customErrorHandler from './utils/customErrorHandler.js';
 
 // ===================== Importing necessary files =====================
 import v1APIs from "./routes/api-v1-routes.js";
@@ -99,9 +100,7 @@ app.all("*", () => {
   throw new NotFoundError();
 });
 
-//  TODO: Enable or replace with a better error handler
-// Custom Error Handler Configuration
-// app.use(errorHandler);
+app.use(customErrorHandler);
 
 
 export { app };

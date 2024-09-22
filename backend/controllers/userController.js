@@ -2,13 +2,13 @@
 
 // ===================== Importing necessary modules/files =====================
 import asyncHandler from "express-async-handler";
-import { BadRequestError } from "base-error-handler";
 
 import User from "../models/userModel.js";
 import generateAuthToken from "../utils/jwtHelpers/generateAuthToken.js";
 import destroyAuthToken from "../utils/jwtHelpers/destroyAuthToken.js";
 import generatePasswordResetToken from '../utils/jwtHelpers/generatePasswordResetToken.js';
 import { sendResetPasswordEmail, sendUserSignedUpEmail, sendAdminNewUserNotificationEmail } from '../utils/emailHelpers/SendMail.js';
+import { BadRequestError, UnauthorizedError, NotFoundError } from '@emtiaj/custom-errors';
 
 /*
    # Desc: Auth user/set token
@@ -31,7 +31,7 @@ const authUser = asyncHandler(async (req, res) => {
     // If password verified, check user-blocked status. send response back with jwt token
     const blockedUser = user.isBlocked();
     if (blockedUser) {
-      throw new BadRequestError("Access Blocked - Contact Server Admin.");
+      throw new UnauthorizedError("Access Blocked - Contact Server Admin.");
     }
     // If password verified and user is not-blocked, send response back with jwt token
     generateAuthToken(res, user._id, user.email); // Middleware to Generate token and send it back in response object
@@ -49,7 +49,7 @@ const authUser = asyncHandler(async (req, res) => {
   }
   if (!user || !passwordValid) {
     // If user or user password is not valid, send error back
-    throw new BadRequestError("Invalid Email or Password - User authentication failed.");
+    throw new UnauthorizedError("Invalid Email or Password - User authentication failed.");
   }
 });
 
@@ -152,7 +152,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       isActive: updatedUserData.isActive,
     });
   } else {
-    throw new BadRequestError("User not found.");
+    throw new NotFoundError("User not found.");
   }
 });
 
@@ -165,7 +165,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
   if (!user) {
-    throw new BadRequestError('No user found with that email.');
+    throw new NotFoundError('No user found with that email.');
   }
 
   // Generate reset token and set expiration

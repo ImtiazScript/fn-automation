@@ -18,6 +18,7 @@
   "author": "Imtiaz Ahmed",
   "license": "MIT",
   "dependencies": {
+    "@emtiaj/custom-errors": "^1.0.6",
     "axios": "^1.7.7",
     "base-auth-handler": "^1.0.3",
     "base-error-handler": "^1.0.3",
