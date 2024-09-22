@@ -363,7 +363,7 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
                     ? cron.requestedWoIds.map((woId, index) => (
                         <span key={woId}>
                           <a
-                            href={`https://ui-sandbox.fndev.net/workorders/${woId}`}
+                            href={`${import.meta.env.VITE_FN_FRONT_END_BASE_URL}/workorders/${woId}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{ textDecoration: 'none' }}
