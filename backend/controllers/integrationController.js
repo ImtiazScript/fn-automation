@@ -5,6 +5,7 @@ import { makeRequest } from "../utils/makeRequest.js";
 import Integration from "../models/integrationModel.js";
 import IntegrationService from '../services/integrationService.js';
 import moment from 'moment-timezone';
+import { NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
 
 const connectAccount = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
@@ -29,7 +30,7 @@ const connectAccount = asyncHandler(async (req, res) => {
                 // Update existing integration
                 integration.fnUserId = fnUserId;
                 integration.fnUserName = username;
-                integration.lastConnectedAt =  moment.utc().toDate();
+                integration.lastConnectedAt = moment.utc().toDate();
                 integration.integrationStatus = 'Connected';
             } else {
                 // Create new integration
@@ -37,7 +38,7 @@ const connectAccount = asyncHandler(async (req, res) => {
                     userId: req.user.userId,  // assuming you're attaching the logged-in user
                     fnUserId,
                     fnUserName: username,
-                    lastConnectedAt:  moment.utc().toDate(),
+                    lastConnectedAt: moment.utc().toDate(),
                     integrationStatus: 'Connected',
                 });
             }
@@ -50,18 +51,18 @@ const connectAccount = asyncHandler(async (req, res) => {
             if (integration && integration.lastConnectedAt) {
                 const lastConnectedAt = integration.lastConnectedAt;
                 const currentDate = moment.utc();
-                
+
                 const differenceInDays = currentDate.diff(lastConnectedAt, 'days');
                 lastTimeRefreshTokenGeneratedAt = `${differenceInDays} ${differenceInDays > 1 ? 'days' : 'day'} ago`;
             }
-            res.status(200).json({...integration.toObject(), lastTimeRefreshTokenGeneratedAt});
+            res.status(200).json({ ...integration.toObject(), lastTimeRefreshTokenGeneratedAt });
         } else {
             await integrationService.updateIntegrationStatus(false);
-            res.status(400).json({ message: 'Failed to retrieve access token' });
+            throw new NotFoundError("Not found access token.");
         }
     } catch (error) {
         await integrationService.updateIntegrationStatus(false);
-        res.status(500).json({ message: 'Failed to connect account', error: error.message });
+        throw new InternalServerError("Failed t connect account.");
     }
 });
 
@@ -69,32 +70,31 @@ const connectAccount = asyncHandler(async (req, res) => {
 // @route   GET /api/v1/integration/:id
 // @access  Private
 const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
-    const integrationInfo = await Integration.findOne({userId: req.params.id});
+    const integrationInfo = await Integration.findOne({ userId: req.params.id });
     let lastTimeRefreshTokenGeneratedAt = '';
     if (integrationInfo && integrationInfo.lastConnectedAt) {
         const lastConnectedAt = integrationInfo.lastConnectedAt;
         const currentDate = moment.utc();
-        
+
         const differenceInDays = currentDate.diff(lastConnectedAt, 'days');
         lastTimeRefreshTokenGeneratedAt = `${differenceInDays} ${differenceInDays > 1 ? 'days' : 'day'} ago`;
     }
     try {
         if (integrationInfo) {
             res.status(200).json({ ...integrationInfo.toObject(), lastTimeRefreshTokenGeneratedAt });
-          } else {
-            res.status(404).json({ message: 'Integration information not found' });
-          }
+        } else {
+            throw new NotFoundError("Integration information not found.");
+        }
     } catch (error) {
-        console.error('Decryption error:', error);
-        res.status(500).json({ message: 'Error decrypting password' });
+        throw new InternalServerError("Failed to get integration info.");
     }
-  });
+});
 
-  const refreshConnection = asyncHandler(async (req, res) => {
-    const integrationInfo = await Integration.findOne({userId: req.params.id});
+const refreshConnection = asyncHandler(async (req, res) => {
+    const integrationInfo = await Integration.findOne({ userId: req.params.id });
     const integrationService = new IntegrationService(userId);
     if (!integrationInfo.fnRefreshToken) {
-        res.status(400).json({ message: 'Failed to retrieve existing refresh token' });
+        throw new NotFoundError("Failed to retrieve existing refresh token.");
     }
     const url = process.env.FN_REFRESH_AUTHENTICATION_URL;
     const data = new URLSearchParams({
@@ -113,18 +113,18 @@ const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
             let integration = await Integration.findOne({ fnUserId });
             if (integration) {
                 // Update existing integration
-                integration.fnAccessToken= result.access_token;
+                integration.fnAccessToken = result.access_token;
                 integration.integrationStatus = 'Connected';
             }
             await integration.save();
             res.status(200).json(integration);
         } else {
             await integrationService.updateIntegrationStatus(false);
-            res.status(400).json({ message: 'Failed to retrieve access token' });
+            throw new InternalServerError("Failed to retrieve access token.");
         }
     } catch (error) {
         await integrationService.updateIntegrationStatus(false);
-        res.status(500).json({ message: 'Failed to re-connect account', error: error.message });
+        throw new InternalServerError("Failed to re-connect account.");
     }
 });
 
@@ -132,4 +132,4 @@ export {
     connectAccount,
     getIntegrationInfoByUserId,
     refreshConnection,
-  };
+};

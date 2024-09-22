@@ -14,7 +14,7 @@ const destroyAuthToken = (res) => {
 
     };
 
-    res.cookie('jwt', jwtToken, cookieOptions); 
+    res.cookie('jwt', jwtToken, cookieOptions);
 
 };
 

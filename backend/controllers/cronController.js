@@ -5,6 +5,7 @@ import asyncHandler from "express-async-handler";
 import Cron from "../models/cronModel.js";
 import { BadRequestError, NotAuthorizedError } from "base-error-handler";
 import { localToUtc, utcToLocal, localTimeToUtcTime, utcTimeToLocalTime } from "../utils/timeZoneConverter.js";
+import { BadRequestError, NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
 
 /*
   # Desc: Add a new cron
@@ -17,7 +18,7 @@ const addCron = asyncHandler(async (req, res) => {
       isFixed, fixedPayment, isHourly, hourlyPayment, isPerDevice, perDevicePayment, isBlended, firstHourlyPayment, additionalHourlyPayment,
       isEnabledCounterOffer, offDays, timeOffStartAt, timeOffEndAt, timeZone } = req.body;
     const cron = await Cron.create({
-      userId: req.user.isAdmin ? userId: req.user.userId,
+      userId: req.user.isAdmin ? userId : req.user.userId,
       centerZip: centerZip,
       cronStartAt: localToUtc(cronStartAt, timeZone),
       cronEndAt: localToUtc(cronEndAt, timeZone),
@@ -48,8 +49,7 @@ const addCron = asyncHandler(async (req, res) => {
       res.status(201).json({ message: "Successfully added the cron", cron: cron });
     }
   } catch (error) {
-    console.error("Error adding cron:", error.message); // Print the error message to the console
-    res.status(500).json({ message: "Failed to add cron", error: error.message }); // Send a response with the error message
+    throw new InternalServerError("Failed to add cron.");
   }
 });
 
@@ -110,8 +110,7 @@ const updateCron = asyncHandler(async (req, res) => {
       throw new BadRequestError("Cron not found - updating failed.");
     }
   } catch (error) {
-    console.error("Error updating cron:", error.message);
-    res.status(500).json({ message: "Failed to update cron", error: error.message });
+    throw new InternalServerError("Failed to update cron.");
   }
 });
 
@@ -131,20 +130,21 @@ const getAllCrons = asyncHandler(async (req, res) => {
     $or: [
       { deleted: { $exists: false } },
       { deleted: false }
-    ]});
+    ]
+  });
   try {
     // Build match conditionally based on user role
     const matchCondition = req.user.isAdmin ? {} : { userId: req.user.userId };
     const cronsData = await Cron.aggregate([
-        {
-            $match: {
-              ...matchCondition,
-              $or: [
-                { deleted: { $exists: false } },
-                { deleted: false }
-              ]
-            } // Match based on user role
-          },
+      {
+        $match: {
+          ...matchCondition,
+          $or: [
+            { deleted: { $exists: false } },
+            { deleted: false }
+          ]
+        } // Match based on user role
+      },
       {
         $lookup: {
           from: 'users', // The collection name in MongoDB
@@ -161,10 +161,10 @@ const getAllCrons = asyncHandler(async (req, res) => {
       },
       {
         $project: {
-            password: 0, // Exclude sensitive fields from userDetails
-            'userDetails.password': 0,
-            'userDetails.email': 0 // Exclude unnecessary fields
-          }
+          password: 0, // Exclude sensitive fields from userDetails
+          'userDetails.password': 0,
+          'userDetails.email': 0 // Exclude unnecessary fields
+        }
       },
       {
         $sort: sort  // Sort by timestamp in descending order
@@ -178,7 +178,7 @@ const getAllCrons = asyncHandler(async (req, res) => {
     ]);
     res.status(200).json({ cronsData, totalCrons });
   } catch (error) {
-    res.status(500).json({ message: "Failed to get crons", error: error.message });
+    throw new InternalServerError("Failed to get crons.");
   }
 })
 
@@ -216,7 +216,7 @@ const getCron = asyncHandler(async (req, res) => {
         }
       }
     ]);
-    
+
     cronData = cronData.length > 0 ? cronData[0] : null;
 
     if (cronData.cronStartAt) {
@@ -257,14 +257,14 @@ const deleteCron = asyncHandler(async (req, res) => {
 
     // If cron does not exist, send a 404 error
     if (!cron) {
-      return res.status(404).json({ message: 'Cron not found' });
+      throw new NotFoundError("Not found cron.");
     }
 
     // Respond with success message
     res.status(200).json({ message: 'Successfully deleted the cron' });
 
   } catch (error) {
-    res.status(500).json({ message: "Failed to delete cron", error: error.message });
+    throw new InternalServerError("Failed to delete cron.");
   }
 });
 

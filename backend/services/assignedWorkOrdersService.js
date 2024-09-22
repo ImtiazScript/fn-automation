@@ -96,65 +96,65 @@ class AssignedWorkOrder {
   };
 
   // Function to process work orders (insert or update)
-async processAssignedWorkOrder(userId, workOrder) {
-  try {
+  async processAssignedWorkOrder(userId, workOrder) {
+    try {
       const existingWorkOrder = await AssignedWorkOrders.findOne({ workOrderId: workOrder.id });
 
       if (existingWorkOrder) {
-          // Update existing work order
-          await AssignedWorkOrders.updateOne(
-              { workOrderId: workOrder.id },
-              {
-                  schedule: workOrder.schedule,
-                  pay: workOrder.pay,
-                  eta: workOrder.eta,
-                  assignee: workOrder.eta,
-                  updatedAt: moment.utc().toDate(),
-              }
-          );
-          logger.info(`GET ASSIGNED WORKORDERS:: Updated Assigned Work Order, #ID: ${workOrder.id}, Title: ${workOrder.title}`);
+        // Update existing work order
+        await AssignedWorkOrders.updateOne(
+          { workOrderId: workOrder.id },
+          {
+            schedule: workOrder.schedule,
+            pay: workOrder.pay,
+            eta: workOrder.eta,
+            assignee: workOrder.eta,
+            updatedAt: moment.utc().toDate(),
+          }
+        );
+        logger.info(`GET ASSIGNED WORKORDERS:: Updated Assigned Work Order, #ID: ${workOrder.id}, Title: ${workOrder.title}`);
       } else {
-          // Insert new work order
-          await AssignedWorkOrders.create({
-              userId: userId,
-              workOrderId: workOrder.id,
-              schedule: workOrder.schedule,
-              pay: workOrder.pay,
-              eta: workOrder.eta,
-              assignee: workOrder.eta,
-          });
-          logger.info(`GET ASSIGNED WORKORDERS:: Inserted new Assigned Work Order, #ID: ${workOrder.id}, Title: ${workOrder.title}`, {
-              userId: userId,
-              workOrderId: workOrder.id,
-              schedule: workOrder.schedule,
-              pay: workOrder.pay,
-              eta: workOrder.eta,
-              assignee: workOrder.eta,
-          });
+        // Insert new work order
+        await AssignedWorkOrders.create({
+          userId: userId,
+          workOrderId: workOrder.id,
+          schedule: workOrder.schedule,
+          pay: workOrder.pay,
+          eta: workOrder.eta,
+          assignee: workOrder.eta,
+        });
+        logger.info(`GET ASSIGNED WORKORDERS:: Inserted new Assigned Work Order, #ID: ${workOrder.id}, Title: ${workOrder.title}`, {
+          userId: userId,
+          workOrderId: workOrder.id,
+          schedule: workOrder.schedule,
+          pay: workOrder.pay,
+          eta: workOrder.eta,
+          assignee: workOrder.eta,
+        });
       }
-  } catch (error) {
+    } catch (error) {
       logger.error(`GET ASSIGNED WORKORDERS:: Failed to process work order #ID: ${workOrder.id} for user ${userId}: ${error.message}`);
+    }
   }
-}
 
 
-// Function to delete outdated work orders
-async deleteOutdatedWorkOrders(userId, currentlyAssignedWorkOrderIds) {
-  try {
+  // Function to delete outdated work orders
+  async deleteOutdatedWorkOrders(userId, currentlyAssignedWorkOrderIds) {
+    try {
       // Delete work orders from the database that are not in the API response
       const deleteResult = await AssignedWorkOrders.deleteMany({
-          userId: userId,
-          workOrderId: { $nin: currentlyAssignedWorkOrderIds }
+        userId: userId,
+        workOrderId: { $nin: currentlyAssignedWorkOrderIds }
       });
 
       // Log only if any documents were deleted
       if (deleteResult.deletedCount > 0) {
-          logger.info(`GET ASSIGNED WORKORDERS:: Deleted ${deleteResult.deletedCount} work orders not present in the API response for user id: ${userId}`);
+        logger.info(`GET ASSIGNED WORKORDERS:: Deleted ${deleteResult.deletedCount} work orders not present in the API response for user id: ${userId}`);
       }
-  } catch (error) {
+    } catch (error) {
       logger.error(`GET ASSIGNED WORKORDERS:: Failed to delete outdated work orders for user ${userId}: ${error.message}`);
+    }
   }
-}
 
 }
 

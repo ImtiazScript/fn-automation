@@ -3,7 +3,7 @@ import User from "../models/userModel.js";
 const fetchAllUsers = async (start, limit, sort) => {
   try {
     const users = await User.find(
-      { 
+      {
         $or: [
           { deleted: { $exists: false } },  // Documents where 'deleted' field doesn't exist
           { deleted: false }                // Documents where 'deleted' is explicitly set to false
@@ -31,9 +31,9 @@ const fetchAllUsers = async (start, limit, sort) => {
 const fetchAllActiveProviders = async () => {
   try {
     const users = await User.find(
-      { 
+      {
         isActive: true,
-        blocked: false, 
+        blocked: false,
         isAdmin: false,
         $or: [
           { deleted: { $exists: false } },  // Documents where 'deleted' field doesn't exist

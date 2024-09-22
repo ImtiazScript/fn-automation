@@ -27,8 +27,8 @@ export const isPaymentSatisfied = async (workOrderPayment, cron) => {
     }
 
     if (workOrderPayment.type === 'blended' && cron.isBlended) {
-        const firstHourly = workOrderPayment.base.amount/workOrderPayment.base.base;
-        const additionalHourly = workOrderPayment.additional.amount/workOrderPayment.additional.base;
+        const firstHourly = workOrderPayment.base.amount / workOrderPayment.base.base;
+        const additionalHourly = workOrderPayment.additional.amount / workOrderPayment.additional.base;
 
         return (firstHourly >= cron.firstHourlyPayment && additionalHourly >= cron.additionalHourlyPayment);
     }
@@ -88,7 +88,7 @@ export const getWorkOrderDayNames = async (workOrderStartDayTimeUtc, workOrderEn
     const dayNames = new Set();
 
     // Convert UTC time to providers local timezone
-    let currentTime = moment.utc(workOrderStartDayTimeUtc).tz(timeZone); 
+    let currentTime = moment.utc(workOrderStartDayTimeUtc).tz(timeZone);
     const endTime = moment.utc(workOrderEndDayTimeUtc).tz(timeZone);
 
     while (currentTime.isSameOrBefore(endTime)) {
@@ -106,7 +106,7 @@ export const outSideOfPlannedTimeOff = async (workOrderId, cron, workOrderStart,
     if (cron.timeOffStartAt && cron.timeOffEndAt) {
         const timeOffStart = moment.utc(cron.timeOffStartAt).toDate();
         const timeOffEnd = moment.utc(cron.timeOffEndAt).toDate();
-        if (workOrderStart >= timeOffStart && workOrderEnd <= timeOffEnd){
+        if (workOrderStart >= timeOffStart && workOrderEnd <= timeOffEnd) {
             console.log(`planned time-off conflict, id # ${workOrderId}`);
             return false;
         }
@@ -218,14 +218,14 @@ export const isInsideWorkingWindow = async (workOrderId, cron, mode, workOrderSt
 // Helper function to add hours to a date and handle day rollover
 export const addHoursToDate = async (date, hoursToAdd) => {
     const newDate = moment.utc(date).toDate();
-    
+
     if (newDate.getUTCHours() + hoursToAdd >= 24) {
         newDate.setUTCDate(newDate.getUTCDate() + 1);
         newDate.setUTCHours(newDate.getUTCHours() % 24);
     } else {
         newDate.setUTCHours(newDate.getUTCHours() + hoursToAdd);
     }
-    
+
     return newDate;
 }
 
@@ -246,7 +246,7 @@ export const adjustForOverlap = async (potentialStartTime, potentialEndTime, ove
         startTime.setUTCHours(startTime.getUTCHours() + overlappedWorkOrderSchedule.est_labor_hours);
         endTime = await addHoursToDate(startTime, totalLaborHours);
     }
-    
+
     return { startTime, endTime };
 }
 

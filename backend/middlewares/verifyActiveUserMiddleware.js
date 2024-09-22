@@ -3,7 +3,7 @@ import { BadRequestError, NotAuthorizedError } from "base-error-handler";
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 
-const verifyActiveUser = asyncHandler( async (req, res, next) => {
+const verifyActiveUser = asyncHandler(async (req, res, next) => {
     const decodedJwtPayload = req.currentUser;
     // Search the Db with the userId obtained after decoding jwt payload to Verify the userId claimed by JWT Payload is valid.
     const requestUser = await User.findById(decodedJwtPayload.id).select('-password');

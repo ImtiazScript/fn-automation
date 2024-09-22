@@ -18,7 +18,7 @@ const customErrorHandler = (err, req, res, next) => {
         status: 'error',
         statusCode,
         message
-      };
+    };
 
     const sanitizedBody = sanitizeRequestBody(req);
 
@@ -28,8 +28,8 @@ const customErrorHandler = (err, req, res, next) => {
         request_payload: sanitizedBody,
         response: response
     });
-  
+
     res.status(statusCode).json(response);
-  };
-  
-  export default customErrorHandler;
+};
+
+export default customErrorHandler;

@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 const generateAuthToken = (res, userId, userEmail) => {
 
     // Creating a new json webtoken with userId and secret key
-    const jwtToken = jwt.sign({id: userId, email: userEmail}, process.env.JWT_KEY, { expiresIn: process.env.JWT_TOKEN_DURATION } );
+    const jwtToken = jwt.sign({ id: userId, email: userEmail }, process.env.JWT_KEY, { expiresIn: process.env.JWT_TOKEN_DURATION });
 
     const cookieOptions = {
 
@@ -17,7 +17,7 @@ const generateAuthToken = (res, userId, userEmail) => {
 
     };
 
-    res.cookie('jwt', jwtToken, cookieOptions); 
+    res.cookie('jwt', jwtToken, cookieOptions);
 
 };
 

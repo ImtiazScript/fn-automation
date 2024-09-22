@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import typesOfWorkOrder from '../models/typesOfWorkOrder.js';
+import { BadRequestError, UnauthorizedError, NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
 
 // @desc    Add a new work order type
 // @route   POST /api/v1/work-order-type/add
@@ -29,7 +30,7 @@ export const getAllWorkOrderTypes = asyncHandler(async (req, res) => {
     .select('typeId fnTypeId fnTypeName')                // Select only the fnTypeId field
     .sort({ typeId: 1 })                  // Sort by fnTypeId in ascending order
     .lean();                                // Return plain JavaScript objects instead of Mongoose documents
-  res.json(workOrderTypes);
+  res.status(200).json(workOrderTypes);
 });
 
 
@@ -39,9 +40,9 @@ export const getAllWorkOrderTypes = asyncHandler(async (req, res) => {
 export const getWorkOrderTypeById = asyncHandler(async (req, res) => {
   const workOrderType = await typesOfWorkOrder.findById(req.params.id);
   if (workOrderType) {
-    res.json(workOrderType);
+    res.status(200).json(workOrderType);
   } else {
-    res.status(404).json({ message: 'Work order type not found' });
+    throw new NotFoundError("Work order type not found.");
   }
 });
 
@@ -56,9 +57,9 @@ export const updateWorkOrderType = asyncHandler(async (req, res) => {
     workOrderType.fnTypeId = fnTypeId || workOrderType.fnTypeId;
     workOrderType.fnTypeName = fnTypeName || workOrderType.fnTypeName;
     const updatedWorkOrderType = await workOrderType.save();
-    res.json(updatedWorkOrderType);
+    res.status(200).json(updatedWorkOrderType);
   } else {
-    res.status(404).json({ message: 'Work order type not found' });
+    throw new NotFoundError("Work order type not found.");
   }
 });
 
@@ -71,8 +72,8 @@ export const disableWorkOrderType = asyncHandler(async (req, res) => {
   if (workOrderType) {
     workOrderType.disabled = true;
     await workOrderType.save();
-    res.json({ message: 'Work order type disabled' });
+    res.status(200).json({ message: 'Work order type disabled' });
   } else {
-    res.status(404).json({ message: 'Work order type not found' });
+    throw new NotFoundError("Work order type not found.");
   }
 });

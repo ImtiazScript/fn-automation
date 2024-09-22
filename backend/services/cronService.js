@@ -33,7 +33,7 @@ class CronService {
 
   async deleteCron(cronId) {
     try {
-      const cron = await Cron.findOne({cronId});
+      const cron = await Cron.findOne({ cronId });
       if (!cron) {
         return { success: false, message: "Cron not found." };
       }
@@ -42,7 +42,7 @@ class CronService {
       return { success: true, message: "Cron deleted successfully." };
     } catch (error) {
       console.error("Error deleting cron", error);
-  
+
       throw error;
     }
   };

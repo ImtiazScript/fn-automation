@@ -113,7 +113,7 @@ const cronSchema = mongoose.Schema({
         default: false,
     }
 
-},{
+}, {
 
     timestamps: true // This will automatically add timestamps for any operations done.
 

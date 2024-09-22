@@ -8,7 +8,7 @@ import moment from 'moment-timezone';
 */
 
 const getServerHealth = (req, res) => {
-  const currentDate =  moment.utc().toDate();
+  const currentDate = moment.utc().toDate();
   const options = {
     weekday: "long",
     year: "numeric",

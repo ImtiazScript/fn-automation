@@ -1,4 +1,4 @@
-import axios, {isCancel, AxiosError} from 'axios';
+import axios, { isCancel, AxiosError } from 'axios';
 import logger from "../config/logger/winston-logger/loggerConfig.js";
 
 const makeRequest = async (method, url, headers = {}, data = {}, params = {}, userId = 0) => {

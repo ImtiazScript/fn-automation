@@ -6,12 +6,12 @@ import CronService from '../services/cronService.js';
 import moment from 'moment-timezone';
 import { getAvailableWorkOrders } from '../utils/cronHelpers/availableWorkOrdersHelper.js';
 import { getCounterOfferNote } from '../utils/cronHelpers/counterOfferHelper.js';
-import {getWorkOrderRequestValidation, requestWorkOrders, counterOfferWorkOrders } from '../utils/cronHelpers/commonWorkOrdersHelper.js';
-import {getPaymentCounterOfferRequestPayload, getScheduleCounterOfferRequestPayload } from '../utils/cronHelpers/counterOfferHelper.js';
+import { getWorkOrderRequestValidation, requestWorkOrders, counterOfferWorkOrders } from '../utils/cronHelpers/commonWorkOrdersHelper.js';
+import { getPaymentCounterOfferRequestPayload, getScheduleCounterOfferRequestPayload } from '../utils/cronHelpers/counterOfferHelper.js';
 
 // Will run every 30 minutes
 cron.schedule('*/30 * * * *', async () => {
-    if(process.env.DISABLED_CRONS === 'true') {
+    if (process.env.DISABLED_CRONS === 'true') {
         return;
     }
     // cron.schedule('* * * * *', async () => {
@@ -81,21 +81,21 @@ cron.schedule('*/30 * * * *', async () => {
                     //     return;
                     // }
                     const allowedPaymentType = (workOrder.pay.type === 'fixed' && cron.isFixed) || (workOrder.pay.type === 'hourly' && cron.isHourly) || (workOrder.pay.type === 'device' && cron.isPerDevice) || (workOrder.pay.type === 'blended' && cron.isBlended);
-                    if(!allowedPaymentType) {
+                    if (!allowedPaymentType) {
                         logger.info(`WORKORDER REQUEST:: Payment type ${workOrder.pay.type} is not allowed, work order #${workOrder.id}, cron id: ${cron.cronId}`, workOrder);
                         return;
                     }
                     logger.info(
                         `Found Work Order, #ID: ${workOrder.id}, Title: ${workOrder.title}`,
                         {
-                                workorder_id: workOrder.id,
-                                title: workOrder.title,
-                                schedule: workOrder.schedule,
-                                pay: workOrder.pay,
-                                location: workOrder.location,
-                                types_of_work: workOrder.types_of_work,
-                            }
-                        );
+                            workorder_id: workOrder.id,
+                            title: workOrder.title,
+                            schedule: workOrder.schedule,
+                            pay: workOrder.pay,
+                            location: workOrder.location,
+                            types_of_work: workOrder.types_of_work,
+                        }
+                    );
 
                     const workOrderRequestValidation = await getWorkOrderRequestValidation(workOrder, cron);
                     logger.info(

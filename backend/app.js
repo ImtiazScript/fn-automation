@@ -64,8 +64,8 @@ app.use("/api/v1", v1APIs);
 
 //? ===================== Configuring Frontend for Production =====================
 
-if(process.env.NODE_ENV === 'production') {
-  
+if (process.env.NODE_ENV === 'production') {
+
   // Setting Frontend build directory as static directory
   const __dirname = path.resolve();
   const frontEndBuildDir = path.join(__dirname, 'frontend/dist');
@@ -73,9 +73,9 @@ if(process.env.NODE_ENV === 'production') {
   app.use(express.static(frontEndBuildDir));
 
   // ===================== Sending Index HTML page as response =====================
-  
+
   const frontEndIndexPage = path.resolve(__dirname, 'frontend', 'dist', 'index.html');
-  
+
   // Serve Home Page request
   app.get('/', (req, res) => {
 

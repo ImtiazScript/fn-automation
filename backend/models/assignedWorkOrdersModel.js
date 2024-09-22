@@ -32,7 +32,7 @@ const assignedWorkOrdersSchema = mongoose.Schema({
         type: Object,
         required: false,
     }
-},{
+}, {
 
     timestamps: true // This will automatically add timestamps for any operations done.
 

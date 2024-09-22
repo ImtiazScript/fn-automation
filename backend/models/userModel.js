@@ -53,7 +53,7 @@ const userSchema = mongoose.Schema({
         type: Boolean,
         required: false
     },
-},{
+}, {
     timestamps: true
 });
 
@@ -61,7 +61,7 @@ userSchema.plugin(AutoIncrement, { inc_field: 'userId' });
 
 // ============= Password Hashing Middleware =============
 userSchema.pre('save', async function (next) {
-    if( !this.isModified('password') ) {
+    if (!this.isModified('password')) {
         next();
         // If the existing password in user schema was not modified, then avoid hashing and move to next middleware
         // This check is done here because the user schema will have other updates which dosen't involve password updation
