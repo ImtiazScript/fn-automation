@@ -3,13 +3,17 @@ import dotenv from "dotenv";
 dotenv.config();
 import path from "path";
 import winston, { Logger, format } from "winston";
-const { combine, timestamp, metadata, colorize, simple } = format;
+const { combine, timestamp, metadata, colorize, simple, printf } = format;
 
 // Module to save logs to MongoDB
 import winstonMongoDB from "winston-mongodb";
 
 // Define the directory for log files internally
 // const logsDirectory = "../../../../logs"
+
+const logFormat = printf(({ level, message, timestamp }) => {
+  return `${timestamp} ${level}: ${message}`;
+});
 
 // Logger configuration
 const loggerConfiguration = {
@@ -25,7 +29,7 @@ const loggerConfiguration = {
     new winston.transports.Console({
       format: combine(
         colorize(), // Adds color to the console output for better readability
-        simple() // Use simple format for console logging (timestamp and message)
+        logFormat // using custom log format so only print the message in console, omitting metadata
       ),
     }),
 
