@@ -3,9 +3,8 @@
 // ===================== Importing necessary modules/files =====================
 import asyncHandler from "express-async-handler";
 import Cron from "../models/cronModel.js";
-import { BadRequestError, NotAuthorizedError } from "base-error-handler";
+import { BadRequestError, UnauthorizedError, NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
 import { localToUtc, utcToLocal, localTimeToUtcTime, utcTimeToLocalTime } from "../utils/timeZoneConverter.js";
-import { BadRequestError, NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
 
 /*
   # Desc: Add a new cron
@@ -70,7 +69,7 @@ const updateCron = asyncHandler(async (req, res) => {
   // Find the existing cron by Id
   const cronExist = await Cron.findOne({ cronId });
   if (req.user && !req.user.isAdmin && req.user.userId !== cronExist.userId) {
-    throw new NotAuthorizedError("Authorization Error - you do not have permission to update this cron");
+    throw new UnauthorizedError("Authorization Error - you do not have permission to update this cron");
   }
 
   try {

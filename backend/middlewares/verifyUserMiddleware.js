@@ -1,5 +1,5 @@
 //? ===================================================== User Authentication Middleware =====================================================
-import { BadRequestError, NotAuthorizedError } from "base-error-handler";
+import { BadRequestError, UnauthorizedError } from '@emtiaj/custom-errors';
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 
@@ -11,7 +11,7 @@ const verifyUser = asyncHandler(async (req, res, next) => {
         // If user is blocked - deny access.
         const blockedUser = requestUser.isBlocked();
         if (blockedUser) {
-            throw new NotAuthorizedError();
+            throw new UnauthorizedError();
         }
         req.user = requestUser; // Set the request user with the user data fetched from the Db
         next(); // Proceed to next function as the user is authenticated as Admin

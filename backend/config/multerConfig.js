@@ -1,7 +1,7 @@
 import multer from "multer";
 import path from "path";
 
-import { BadRequestError } from "base-error-handler";
+import { BadRequestError } from '@emtiaj/custom-errors';
 
 
 const storage = multer.diskStorage({
