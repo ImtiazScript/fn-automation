@@ -16,6 +16,7 @@ const IntegrationScreen = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [integrationStatus, setIntegrationStatus] = useState('');
   const [lastTimeRefreshTokenGeneratedAt, setLastTimeRefreshTokenGeneratedAt] =
     useState('');
@@ -63,7 +64,9 @@ const IntegrationScreen = () => {
 
       const result = await integrateUser(data).unwrap();
       setIntegrationStatus(result.integrationStatus || '');
-      setLastTimeRefreshTokenGeneratedAt(result.lastTimeRefreshTokenGeneratedAt || '');
+      setLastTimeRefreshTokenGeneratedAt(
+        result.lastTimeRefreshTokenGeneratedAt || '',
+      );
       toast.success('Account connected successfully');
     } catch (err) {
       setIntegrationStatus('Not Connected');
@@ -111,10 +114,18 @@ const IntegrationScreen = () => {
           <Form.Group className="my-2" controlId="password">
             <Form.Label>Field Nation Password</Form.Label>
             <Form.Control
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="Enter your field nation password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+            />
+            <Form.Check
+              type="checkbox"
+              label="Show Password"
+              className="mt-2"
+              checked={showPassword}
+              onChange={(e) => setShowPassword(e.target.checked)}
+              style={{ fontSize: '0.85rem' }}
             />
           </Form.Group>
 

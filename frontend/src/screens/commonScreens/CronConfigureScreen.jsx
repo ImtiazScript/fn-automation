@@ -35,7 +35,7 @@ const CronConfigureScreen = () => {
 
       fetchData();
     } catch (err) {
-      toast.error(err?.data?.errors[0]?.message || err);
+      toast.error(err?.data?.message || err);
       console.error('Error fetching crons:', err);
     }
   }, []);

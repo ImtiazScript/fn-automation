@@ -30,7 +30,7 @@ const UsersDataTable = () => {
       };
       fetchData();
     } catch (err) {
-      toast.error(err?.data?.errors[0]?.message || err);
+      toast.error(err?.data?.message || err);
       console.error('Error fetching users:', err);
     }
   }, [currentPage]);
@@ -51,7 +51,7 @@ const UsersDataTable = () => {
       setShowDeleteConfirmation(false);
       window.location.reload();
     } catch (err) {
-      toast.error(err?.data?.errors[0]?.message || err?.error);
+      toast.error(err?.data?.message || err?.error);
     }
   };
 
@@ -66,7 +66,7 @@ const UsersDataTable = () => {
       setShowBlockingConfirmation(false); // Close the blocking confirmation dialog
       window.location.reload();
     } catch (err) {
-      toast.error(err?.data?.errors[0]?.message || err?.error);
+      toast.error(err?.data?.message || err?.error);
     }
   };
 
@@ -83,7 +83,7 @@ const UsersDataTable = () => {
       setShowUnblockingConfirmation(false); // Close the unblocking confirmation dialog
       window.location.reload();
     } catch (err) {
-      toast.error(err?.data?.errors[0]?.message || err?.error);
+      toast.error(err?.data?.message || err?.error);
     }
   };
 
@@ -103,7 +103,7 @@ const UsersDataTable = () => {
       setShowActivateConfirmation(false);
       window.location.reload();
     } catch (err) {
-      toast.error(err?.data?.errors[0]?.message || err?.error);
+      toast.error(err?.data?.message || err?.error);
     }
   };
 
@@ -134,7 +134,7 @@ const UsersDataTable = () => {
       // Reload the page to reflect the updated data
       window.location.reload();
     } catch (err) {
-      toast.error(err?.data?.errors[0]?.message || err?.error);
+      toast.error(err?.data?.message || err?.error);
     }
   };
 
