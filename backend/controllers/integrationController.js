@@ -45,8 +45,16 @@ const connectAccount = asyncHandler(async (req, res) => {
                 integration.fnAccessToken = result.access_token;
                 integration.fnRefreshToken = result.refresh_token;
             }
-            await integration.save();
-            res.status(200).json(integration);
+            integration = await integration.save();
+            let lastTimeRefreshTokenGeneratedAt = '';
+            if (integration && integration.lastConnectedAt) {
+                const lastConnectedAt = integration.lastConnectedAt;
+                const currentDate = moment.utc();
+                
+                const differenceInDays = currentDate.diff(lastConnectedAt, 'days');
+                lastTimeRefreshTokenGeneratedAt = `${differenceInDays} ${differenceInDays > 1 ? 'days' : 'day'} ago`;
+            }
+            res.status(200).json({...integration.toObject(), lastTimeRefreshTokenGeneratedAt});
         } else {
             await integrationService.updateIntegrationStatus(false);
             res.status(400).json({ message: 'Failed to retrieve access token' });
@@ -57,23 +65,22 @@ const connectAccount = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Refresh access token by refresh_token
+// @desc    Integration info by userId
 // @route   GET /api/v1/integration/:id
 // @access  Private
 const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
     const integrationInfo = await Integration.findOne({userId: req.params.id});
     let lastTimeRefreshTokenGeneratedAt = '';
     if (integrationInfo && integrationInfo.lastConnectedAt) {
-        const lastConnectedAt = moment.utc(integrationInfo.lastConnectedAt).toDate();
-        const currentDate =  moment.utc().toDate().toLocaleString();
-
-        const differenceInTime = currentDate - lastConnectedAt;
-        let differenceInDays = Math.floor(differenceInTime / (1000 * 3600 * 24));
+        const lastConnectedAt = integrationInfo.lastConnectedAt;
+        const currentDate = moment.utc();
+        
+        const differenceInDays = currentDate.diff(lastConnectedAt, 'days');
         lastTimeRefreshTokenGeneratedAt = `${differenceInDays} ${differenceInDays > 1 ? 'days' : 'day'} ago`;
     }
     try {
         if (integrationInfo) {
-            res.json({ ...integrationInfo.toObject(), lastTimeRefreshTokenGeneratedAt });
+            res.status(200).json({ ...integrationInfo.toObject(), lastTimeRefreshTokenGeneratedAt });
           } else {
             res.status(404).json({ message: 'Integration information not found' });
           }

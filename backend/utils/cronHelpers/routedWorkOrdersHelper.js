@@ -1,4 +1,3 @@
-import cron from 'node-cron';
 import logger from "../../config/logger/winston-logger/loggerConfig.js";
 import CronService from '../../services/cronService.js';
 import { makeRequest } from "../makeRequest.js";

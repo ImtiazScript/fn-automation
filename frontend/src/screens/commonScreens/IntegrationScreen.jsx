@@ -63,6 +63,7 @@ const IntegrationScreen = () => {
 
       const result = await integrateUser(data).unwrap();
       setIntegrationStatus(result.integrationStatus || '');
+      setLastTimeRefreshTokenGeneratedAt(result.lastTimeRefreshTokenGeneratedAt || '');
       toast.success('Account connected successfully');
     } catch (err) {
       setIntegrationStatus('Not Connected');
