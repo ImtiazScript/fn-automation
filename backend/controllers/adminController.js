@@ -5,7 +5,6 @@ import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
 import generateAuthToken from "../utils/jwtHelpers/generateAuthToken.js";
 import destroyAuthToken from "../utils/jwtHelpers/destroyAuthToken.js";
-import winston, { Logger, format } from "winston";
 import CronService from '../services/cronService.js';
 import {
   fetchAllUsers,
@@ -17,6 +16,7 @@ import {
 } from "../utils/adminHelpers.js";
 import { sendUserActivatedEmail, sendUserBlockedEmail, sendUserUnblockedEmail } from '../utils/emailHelpers/SendMail.js';
 import { BadRequestError, UnauthorizedError, NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
+
 
 /*
    # Desc: Auth user/set token
@@ -52,9 +52,10 @@ const authAdmin = asyncHandler(async (req, res) => {
   }
 });
 
+
 /*
    # Desc: Register new user
-   # Route: POST /api/v1/admin/auth
+   # Route: POST /api/v1/admin/
    # Access: PUBLIC
   */
 const registerAdmin = asyncHandler(async (req, res) => {
@@ -105,6 +106,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
   }
 });
 
+
 /*
    # Desc: Logout user / clear cookie
    # Route: POST /api/v1/admin/logout
@@ -114,6 +116,7 @@ const logoutAdmin = asyncHandler(async (req, res) => {
   destroyAuthToken(res);
   res.status(200).json({ message: "Admin Logged Out" });
 });
+
 
 /*
    # Desc: Get user profile
@@ -127,6 +130,7 @@ const getAdminProfile = asyncHandler(async (req, res) => {
   };
   res.status(200).json({ user });
 });
+
 
 /*
    # Desc: Update Admin profile
@@ -162,6 +166,12 @@ const updateAdminProfile = asyncHandler(async (req, res) => {
   }
 });
 
+
+/*
+   # Desc: Get all users
+   # Route: POST /api/v1/admin/get-users/page/:page
+   # Access: PRIVATE
+  */
 const getAllUsers = asyncHandler(async (req, res) => {
   const { page } = req.params;
 
@@ -185,6 +195,12 @@ const getAllUsers = asyncHandler(async (req, res) => {
   }
 });
 
+
+/*
+   # Desc: Get all active users
+   # Route: GET /api/v1/admin/get-providers
+   # Access: PRIVATE
+  */
 const getAllActiveProviders = asyncHandler(async (req, res) => {
   const providers = await fetchAllActiveProviders();
   if (providers) {
@@ -194,6 +210,12 @@ const getAllActiveProviders = asyncHandler(async (req, res) => {
   }
 });
 
+
+/*
+   # Desc: Activate a user
+   # Route: PATCH /api/v1/admin/activate-user
+   # Access: PRIVATE
+  */
 const activateUser = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   if (!userId) {
@@ -210,6 +232,12 @@ const activateUser = asyncHandler(async (req, res) => {
   }
 });
 
+
+/*
+   # Desc: Block a user
+   # Route: PATCH /api/v1/admin/block-user
+   # Access: PRIVATE
+  */
 const blockUser = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   if (!userId) {
@@ -226,6 +254,12 @@ const blockUser = asyncHandler(async (req, res) => {
   }
 });
 
+
+/*
+   # Desc: Unblock a user
+   # Route: PATCH /api/v1/admin/unblock-user
+   # Access: PRIVATE
+  */
 const unBlockUser = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   if (!userId) {
@@ -242,6 +276,12 @@ const unBlockUser = asyncHandler(async (req, res) => {
   }
 });
 
+
+/*
+   # Desc: Update a user
+   # Route: PUT /api/v1/admin/update-user
+   # Access: PRIVATE
+  */
 const updateUserData = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   const name = req.body.name;
@@ -284,6 +324,12 @@ const updateFnServiceCompanyAdmin = asyncHandler(async (req, res) => {
   });
 });
 
+
+/*
+   # Desc: Delete a user
+   # Route: DELETE /api/v1/admin/delete-user/:userId
+   # Access: PRIVATE
+  */
 const deleteUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   if (!userId) {

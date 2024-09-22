@@ -1,10 +1,13 @@
 import asyncHandler from 'express-async-handler';
 import typesOfWorkOrder from '../models/typesOfWorkOrder.js';
-import { BadRequestError, UnauthorizedError, NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
+import { NotFoundError } from '@emtiaj/custom-errors';
 
-// @desc    Add a new work order type
-// @route   POST /api/v1/work-order-type/add
-// @access  Private
+
+/*
+   # Desc: Add a new work order type
+   # Route: POST /api/v1/work-order-type/add
+   # Access: PRIVATE
+  */
 export const addWorkOrderType = asyncHandler(async (req, res) => {
   const { fnTypeId, fnTypeName, level, parentIds, childrenIds, legacyTypeOfWork, serviceTypes } = req.body;
   const newWorkOrderType = new typesOfWorkOrder({
@@ -21,9 +24,11 @@ export const addWorkOrderType = asyncHandler(async (req, res) => {
 });
 
 
-// @desc    Get all work order types
-// @route   GET /api/v1/work-order-type/all
-// @access  Private
+/*
+   # Desc: Get all work order types
+   # Route: GET /api/v1/work-order-type/all
+   # Access: PRIVATE
+  */
 export const getAllWorkOrderTypes = asyncHandler(async (req, res) => {
   const workOrderTypes = await typesOfWorkOrder
     .find({ disabled: false })             // Filter for non-disabled types
@@ -34,9 +39,11 @@ export const getAllWorkOrderTypes = asyncHandler(async (req, res) => {
 });
 
 
-// @desc    Get a single work order type by ID
-// @route   GET /api/v1/work-order-type/:id
-// @access  Private
+/*
+   # Desc: Get a single work order type detail by id
+   # Route: GET /api/v1/work-order-type/:id
+   # Access: PRIVATE
+  */
 export const getWorkOrderTypeById = asyncHandler(async (req, res) => {
   const workOrderType = await typesOfWorkOrder.findById(req.params.id);
   if (workOrderType) {
@@ -47,9 +54,11 @@ export const getWorkOrderTypeById = asyncHandler(async (req, res) => {
 });
 
 
-// @desc    Update a work order type
-// @route   PUT /api/v1/work-order-type/update/:id
-// @access  Private
+/*
+   # Desc: Update a work order type
+   # Route: PUT /api/v1/work-order-type/update/:id
+   # Access: PRIVATE
+  */
 export const updateWorkOrderType = asyncHandler(async (req, res) => {
   const { fnTypeId, fnTypeName } = req.body;
   const workOrderType = await typesOfWorkOrder.findById(req.params.id);
@@ -64,9 +73,11 @@ export const updateWorkOrderType = asyncHandler(async (req, res) => {
 });
 
 
-// @desc    Disable a work order type (soft delete)
-// @route   PUT /api/v1/work-order-type/disable/:id
-// @access  Private
+/*
+   # Desc: Disable a work order type (soft delete)
+   # Route: PUT /api/v1/work-order-type/disable/:id
+   # Access: PRIVATE
+  */
 export const disableWorkOrderType = asyncHandler(async (req, res) => {
   const workOrderType = await typesOfWorkOrder.findById(req.params.id);
   if (workOrderType) {

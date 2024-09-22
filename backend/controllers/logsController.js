@@ -6,10 +6,12 @@ import mongoose from "mongoose";
 import moment from 'moment-timezone';
 import { NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
 
-/**
- * Desc: Get all crons
- * Route: /api/v1/admin/get-logs
- */
+
+/*
+   # Desc: Get all crons following pagination
+   # Route: GET /api/v1/logs/get-logs/from/:fromDate/until/:untilDate/page/:page
+   # Access: PRIVATE
+  */
 const getLogs = asyncHandler(async (req, res) => {
   try {
     const { fromDate, untilDate, page } = req.params;
@@ -36,10 +38,12 @@ const getLogs = asyncHandler(async (req, res) => {
   }
 });
 
-/**
- * Desc: Get single cron by cron id
- * Route: /api/v1/admin/get-log/:log-id
- */
+
+/*
+   # Desc: Get cron detail by id
+   # Route: GET /api/v1/logs/get-log/:id
+   # Access: PRIVATE
+  */
 const getLogById = asyncHandler(async (req, res) => {
   try {
     // Define the log model based on the MongoDB collection schema

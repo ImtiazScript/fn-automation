@@ -7,6 +7,12 @@ import IntegrationService from '../services/integrationService.js';
 import moment from 'moment-timezone';
 import { NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
 
+
+/*
+   # Desc: Connect an account with field nation
+   # Route: POST /api/v1/integration/connect-account
+   # Access: PRIVATE
+  */
 const connectAccount = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
     const integrationService = new IntegrationService(req.user.userId);
@@ -66,9 +72,12 @@ const connectAccount = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Integration info by userId
-// @route   GET /api/v1/integration/:id
-// @access  Private
+
+/*
+   # Desc: Get integration detail by userId
+   # Route: GET /api/v1/integration/:id
+   # Access: PRIVATE
+  */
 const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
     const integrationInfo = await Integration.findOne({ userId: req.params.id });
     let lastTimeRefreshTokenGeneratedAt = '';
@@ -90,6 +99,12 @@ const getIntegrationInfoByUserId = asyncHandler(async (req, res) => {
     }
 });
 
+
+/*
+   # Desc: Refresh/reconnect with Field Nation
+   # Route: POST /api/v1/integration/refresh-connection/:id
+   # Access: PRIVATE
+  */
 const refreshConnection = asyncHandler(async (req, res) => {
     const integrationInfo = await Integration.findOne({ userId: req.params.id });
     const integrationService = new IntegrationService(userId);

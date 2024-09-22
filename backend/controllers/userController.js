@@ -10,6 +10,7 @@ import generatePasswordResetToken from '../utils/jwtHelpers/generatePasswordRese
 import { sendResetPasswordEmail, sendUserSignedUpEmail, sendAdminNewUserNotificationEmail } from '../utils/emailHelpers/SendMail.js';
 import { BadRequestError, UnauthorizedError, NotFoundError } from '@emtiaj/custom-errors';
 
+
 /*
    # Desc: Auth user/set token
    # Route: POST /api/v1/user/auth
@@ -56,7 +57,7 @@ const authUser = asyncHandler(async (req, res) => {
 
 /*
    # Desc: Register new user
-   # Route: POST /api/v1/user/auth
+   # Route: POST /api/v1/user/
    # Access: PUBLIC
   */
 const registerUser = asyncHandler(async (req, res) => {
@@ -155,6 +156,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     throw new NotFoundError("User not found.");
   }
 });
+
 
 /*
   # Desc: Forgot password

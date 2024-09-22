@@ -6,9 +6,10 @@ import Cron from "../models/cronModel.js";
 import { BadRequestError, UnauthorizedError, NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
 import { localToUtc, utcToLocal, localTimeToUtcTime, utcTimeToLocalTime } from "../utils/timeZoneConverter.js";
 
+
 /*
   # Desc: Add a new cron
-  # Route: POST /api/v1/admin/add-cron
+  # Route: POST /api/v1/crons/add-cron
   # Access: PRIVATE
 */
 const addCron = asyncHandler(async (req, res) => {
@@ -55,7 +56,7 @@ const addCron = asyncHandler(async (req, res) => {
 
 /*
    # Desc: Update an existing cron
-   # Route: PUT /api/v1/admin/update-cron
+   # Route: PUT /api/v1/crons/update-cron
    # Access: PRIVATE
   */
 const updateCron = asyncHandler(async (req, res) => {
@@ -116,7 +117,7 @@ const updateCron = asyncHandler(async (req, res) => {
 
 /*
    # Desc: Get all crons
-   # Route: PUT /api/v1/admin/get-crons
+   # Route: GET /api/v1/crons/get-crons
    # Access: PRIVATE
   */
 const getAllCrons = asyncHandler(async (req, res) => {
@@ -181,9 +182,10 @@ const getAllCrons = asyncHandler(async (req, res) => {
   }
 })
 
+
 /*
-   # Desc: Get single cron
-   # Route: PUT /api/v1/admin/get-cron/:cronId
+   # Desc: Get a cron detail
+   # Route: GET /api/v1/crons/get-cron/:cronId
    # Access: PRIVATE
   */
 const getCron = asyncHandler(async (req, res) => {
