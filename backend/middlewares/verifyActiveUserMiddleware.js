@@ -3,6 +3,16 @@ import { BadRequestError, UnauthorizedError } from '@emtiaj/custom-errors';
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 
+/**
+ * Middleware to verify if the user is active.
+ *
+ * @async
+ * @function verifyActiveUser
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {function} next - The next middleware function.
+ * @returns {Promise<void>} - Calls the next middleware or sends a response.
+ */
 const verifyActiveUser = asyncHandler(async (req, res, next) => {
     const decodedJwtPayload = req.currentUser;
     // Search the Db with the userId obtained after decoding jwt payload to Verify the userId claimed by JWT Payload is valid.

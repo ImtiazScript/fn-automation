@@ -5,6 +5,19 @@ class CronService {
     this.userId = userId;
   }
 
+
+  /**
+   * Fetches all cron jobs associated with the user.
+   *
+   * @async
+   * @function fetchAllCrons
+   * @returns {Promise<Array<Object>>} A promise that resolves to an array of cron job objects for the user.
+   * @throws {Error} If there is an error during the fetching process.
+   *
+   * @example
+   * const crons = await fetchAllCrons();
+   * console.log(crons);
+   */
   async fetchAllCrons() {
     try {
       const crons = await Cron.find({ userId: this.userId });
@@ -14,7 +27,21 @@ class CronService {
     }
   };
 
-  // Function to update the total requested work orders and push the new work order ID to existing array
+
+  /**
+   * Updates the total requested work orders and adds a new work order ID to the existing array.
+   *
+   * @async
+   * @function updateRequestedWorkOrders
+   * @param {string} cronId - The ID of the cron job to update.
+   * @param {string} workOrderId - The ID of the work order to be added.
+   * @returns {Promise<Object>} A promise that resolves to the updated cron job object.
+   * @throws {Error} If the cron job is not found or there is an error during the update process.
+   *
+   * @example
+   * const updatedCron = await updateRequestedWorkOrders('cronId123', 'workOrderId456');
+   * console.log(updatedCron);
+   */
   async updateRequestedWorkOrders(cronId, workOrderId) {
     try {
       const cron = await Cron.findOne({ cronId, userId: this.userId });
@@ -31,6 +58,20 @@ class CronService {
     }
   }
 
+  
+  /**
+   * Marks a cron job as deleted by setting its `deleted` flag to true.
+   *
+   * @async
+   * @function deleteCron
+   * @param {string} cronId - The ID of the cron job to delete.
+   * @returns {Promise<Object>} A promise that resolves to an object indicating the success status and message.
+   * @throws {Error} If there is an error during the deletion process.
+   *
+   * @example
+   * const result = await deleteCron('cronId123');
+   * console.log(result); // { success: true, message: "Cron deleted successfully." }
+   */
   async deleteCron(cronId) {
     try {
       const cron = await Cron.findOne({ cronId });

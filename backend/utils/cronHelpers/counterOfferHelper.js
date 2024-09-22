@@ -2,7 +2,21 @@ import AssignedWorkOrder from '../../services/assignedWorkOrdersService.js';
 import { isInsideWorkingWindow, outSideOfPlannedTimeOff, outSideOfOffDays, checkOverlappingWithAssignedWorkOrders, adjustForOverlap } from '../cronHelpers/commonWorkOrdersHelper.js';
 import moment from 'moment-timezone';
 
-// Todo: fetch the note from cron
+
+/**
+ * Generates a counter offer note based on the validity of payment and schedule.
+ *
+ * @async
+ * @function getCounterOfferNote
+ * @param {boolean} isPaymentValid - Indicates if the payment is valid.
+ * @param {boolean} isScheduleValid - Indicates if the schedule is valid.
+ * @param {Object} cron - The cron object (not used in the current implementation but included for potential future use).
+ * @returns {Promise<string>} A promise that resolves to the generated counter offer note.
+ *
+ * @example
+ * const note = await getCounterOfferNote(false, true, cron);
+ * console.log(note); // "Payment counter offer note"
+ */
 export const getCounterOfferNote = async (isPaymentValid, isScheduleValid, cron) => {
     let note = '';
     if (!isPaymentValid && !isScheduleValid) {
@@ -16,6 +30,29 @@ export const getCounterOfferNote = async (isPaymentValid, isScheduleValid, cron)
     return note;
 }
 
+
+/**
+ * Generates a payment counter offer request payload based on the type of payment and cron details.
+ *
+ * @async
+ * @function getPaymentCounterOfferRequestPayload
+ * @param {Object} workOrderPayment - The payment details for the work order.
+ * @param {string} workOrderPayment.type - The type of payment (fixed, hourly, device, blended).
+ * @param {Object} workOrderPayment.base - The base payment details.
+ * @param {Object} workOrderPayment.base.units - The units for the base payment.
+ * @param {Object} workOrderPayment.additional - The additional payment details.
+ * @param {Object} cron - The cron object containing payment information.
+ * @param {number} cron.fixedPayment - The fixed payment amount.
+ * @param {number} cron.hourlyPayment - The hourly payment amount.
+ * @param {number} cron.perDevicePayment - The payment amount per device.
+ * @param {number} cron.firstHourlyPayment - The first hourly payment amount for blended rates.
+ * @param {number} cron.additionalHourlyPayment - The additional hourly payment amount for blended rates.
+ * @returns {Promise<Object>} A promise that resolves to the payment request payload.
+ *
+ * @example
+ * const payload = await getPaymentCounterOfferRequestPayload(workOrderPayment, cron);
+ * console.log(payload);
+ */
 export const getPaymentCounterOfferRequestPayload = async (workOrderPayment, cron) => {
     let paymentRequestPayload = {};
     if (workOrderPayment.type === 'fixed' && cron.isFixed) {
@@ -88,6 +125,23 @@ export const getPaymentCounterOfferRequestPayload = async (workOrderPayment, cro
 
 }
 
+
+/**
+ * Generates a schedule counter offer request payload based on the work order schedule and cron details.
+ *
+ * @async
+ * @function getScheduleCounterOfferRequestPayload
+ * @param {Object} workOrderSchedule - The schedule details for the work order.
+ * @param {Object} workOrderSchedule.time_zone - The time zone information for the work order.
+ * @param {Object} workOrderSchedule.service_window - The service window details.
+ * @param {string} workOrderSchedule.service_window.mode - The mode of the service window (exact, hours, between).
+ * @param {Object} cron - The cron object containing scheduling information.
+ * @returns {Promise<Object>} A promise that resolves to the schedule request payload.
+ *
+ * @example
+ * const payload = await getScheduleCounterOfferRequestPayload(workOrderSchedule, cron);
+ * console.log(payload);
+ */
 export const getScheduleCounterOfferRequestPayload = async (workOrderSchedule, cron) => {
     const { startTime, endTime } = await getNextAvailableTimeSchedule(workOrderSchedule, cron);
 
@@ -155,6 +209,24 @@ export const getScheduleCounterOfferRequestPayload = async (workOrderSchedule, c
     return scheduleRequestPayload;
 }
 
+
+/**
+ * Finds the next available time slot for a work order schedule that does not conflict with off days, planned time off, or already assigned schedules.
+ *
+ * @async
+ * @function getNextAvailableTimeSchedule
+ * @param {Object} workOrderSchedule - The schedule details for the work order.
+ * @param {string} workOrderSchedule.work_order_id - The ID of the work order.
+ * @param {Object} workOrderSchedule.service_window - The service window details.
+ * @param {Object} cron - The cron object containing scheduling information.
+ * @param {string} cron.workingWindowStartAt - The start time of the working window in HH:mm format.
+ * @param {string} cron.workingWindowEndAt - The end time of the working window in HH:mm format.
+ * @returns {Promise<Object>} A promise that resolves to an object containing the next available start and end times.
+ *
+ * @example
+ * const { startTime, endTime } = await getNextAvailableTimeSchedule(workOrderSchedule, cron);
+ * console.log(`Next available slot: ${startTime} to ${endTime}`);
+ */
 export const getNextAvailableTimeSchedule = async (workOrderSchedule, cron) => {
     const workOrderId = workOrderSchedule.work_order_id;
     const workingWindowStartTime = cron.workingWindowStartAt.split(':');

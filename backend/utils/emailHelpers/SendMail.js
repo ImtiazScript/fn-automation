@@ -1,5 +1,19 @@
 import nodemailer from 'nodemailer';
 
+
+/**
+ * Sends an email using the specified email service.
+ *
+ * @async
+ * @function sendEmail
+ * @param {string} email - The recipient's email address.
+ * @param {string} subject - The subject line of the email.
+ * @param {string} htmlBody - The HTML content of the email body.
+ * @returns {Promise<void>} A promise that resolves when the email is successfully sent.
+ *
+ * @example
+ * await sendEmail('recipient@example.com', 'Welcome!', '<h1>Hello!</h1><p>Welcome to our service!</p>');
+ */
 const sendEmail = async (email, subject, htmlBody) => {
     const transporter = nodemailer.createTransport({
         service: 'Gmail', // or another email service
@@ -20,7 +34,18 @@ const sendEmail = async (email, subject, htmlBody) => {
 };
 
 
-// Functions to send specific types of emails
+/**
+ * Sends a password reset email to the specified user.
+ *
+ * @async
+ * @function sendResetPasswordEmail
+ * @param {string} email - The recipient's email address.
+ * @param {string} resetUrl - The URL for resetting the password.
+ * @returns {Promise<void>} A promise that resolves when the email is successfully sent.
+ *
+ * @example
+ * await sendResetPasswordEmail('user@example.com', 'https://example.com/reset-password?token=abcd1234');
+ */
 export const sendResetPasswordEmail = async (email, resetUrl) => {
     const htmlBody = `
     <div style="font-family: Arial, sans-serif; color: #333;">
@@ -47,6 +72,21 @@ export const sendResetPasswordEmail = async (email, resetUrl) => {
     await sendEmail(email, `${process.env.COMPANY_NAME} - Password Reset Request`, htmlBody);
 };
 
+
+/**
+ * Sends a notification email to the admin about a new user sign-up.
+ *
+ * @async
+ * @function sendAdminNewUserNotificationEmail
+ * @param {string} userId - The ID of the new user.
+ * @param {string} name - The name of the new user.
+ * @param {string} email - The email address of the new user.
+ * @param {boolean} isAdmin - Indicates if the new user is an admin.
+ * @returns {Promise<void>} A promise that resolves when the email is successfully sent.
+ *
+ * @example
+ * await sendAdminNewUserNotificationEmail('12345', 'John Doe', 'john@example.com', false);
+ */
 export const sendAdminNewUserNotificationEmail = async (userId, name, email, isAdmin) => {
     const htmlBody = `
     <div style="font-family: Arial, sans-serif; color: #333;">
@@ -70,6 +110,20 @@ export const sendAdminNewUserNotificationEmail = async (userId, name, email, isA
 };
 
 
+/**
+ * Sends a welcome email to a new user after signing up.
+ *
+ * @async
+ * @function sendUserSignedUpEmail
+ * @param {string} userId - The ID of the new user.
+ * @param {string} name - The name of the new user.
+ * @param {string} email - The email address of the new user.
+ * @param {boolean} isAdmin - Indicates if the new user is an admin.
+ * @returns {Promise<void>} A promise that resolves when the email is successfully sent.
+ *
+ * @example
+ * await sendUserSignedUpEmail('12345', 'Jane Doe', 'jane@example.com', false);
+ */
 export const sendUserSignedUpEmail = async (userId, name, email, isAdmin) => {
     const htmlBody = `
     <div style="font-family: Arial, sans-serif; color: #333;">
@@ -91,6 +145,19 @@ export const sendUserSignedUpEmail = async (userId, name, email, isAdmin) => {
     await sendEmail(email, `Welcome to ${process.env.COMPANY_NAME}`, htmlBody);
 };
 
+
+/**
+ * Sends an email notification to the user informing them that their account has been activated.
+ *
+ * @async
+ * @function sendUserActivatedEmail
+ * @param {string} name - The name of the user whose account has been activated.
+ * @param {string} email - The email address of the user.
+ * @returns {Promise<void>} A promise that resolves when the email is successfully sent.
+ *
+ * @example
+ * await sendUserActivatedEmail('Jane Doe', 'jane@example.com');
+ */
 export const sendUserActivatedEmail = async (name, email) => {
     const htmlBody = `
     <div style="font-family: Arial, sans-serif; color: #333;">
@@ -113,6 +180,19 @@ export const sendUserActivatedEmail = async (name, email) => {
     await sendEmail(email, `${process.env.COMPANY_NAME} - Your Account Has Been Activated`, htmlBody);
 };
 
+
+/**
+ * Sends an email notification to the user informing them that their account has been blocked.
+ *
+ * @async
+ * @function sendUserBlockedEmail
+ * @param {string} name - The name of the user whose account has been blocked.
+ * @param {string} email - The email address of the user.
+ * @returns {Promise<void>} A promise that resolves when the email is successfully sent.
+ *
+ * @example
+ * await sendUserBlockedEmail('John Doe', 'john@example.com');
+ */
 export const sendUserBlockedEmail = async (name, email) => {
     const htmlBody = `
     <div style="font-family: Arial, sans-serif; color: #333;">
@@ -131,6 +211,18 @@ export const sendUserBlockedEmail = async (name, email) => {
 };
 
 
+/**
+ * Sends an email notification to the user informing them that their account has been unblocked.
+ *
+ * @async
+ * @function sendUserUnblockedEmail
+ * @param {string} name - The name of the user whose account has been unblocked.
+ * @param {string} email - The email address of the user.
+ * @returns {Promise<void>} A promise that resolves when the email is successfully sent.
+ *
+ * @example
+ * await sendUserUnblockedEmail('Jane Doe', 'jane@example.com');
+ */
 export const sendUserUnblockedEmail = async (name, email) => {
     const htmlBody = `
     <div style="font-family: Arial, sans-serif; color: #333;">

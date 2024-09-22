@@ -6,7 +6,19 @@ class IntegrationService {
     this.userId = userId;
   }
 
-  // Fetch integration details by userId
+  
+  /**
+   * Fetches the integration details associated with the current user.
+   *
+   * @async
+   * @function fetchIntegration
+   * @returns {Promise<Object|null>} A promise that resolves to the integration object if found, or null if not found.
+   * @throws {Error} If there is an error during the fetching process.
+   *
+   * @example
+   * const integrationDetails = await fetchIntegration();
+   * console.log(integrationDetails);
+   */
   async fetchIntegration() {
     try {
       const integration = await Integration.findOne({ userId: this.userId });
@@ -16,7 +28,19 @@ class IntegrationService {
     }
   }
 
-  // Refresh access token by userId
+
+  /**
+   * Refreshes the access token for the current user based on the stored refresh token.
+   *
+   * @async
+   * @function refreshAccessToken
+   * @returns {Promise<boolean>} A promise that resolves to true if the access token was refreshed successfully, or false if not.
+   * @throws {Error} If there is an error during the refresh process.
+   *
+   * @example
+   * const isRefreshed = await refreshAccessToken();
+   * console.log(isRefreshed); // true if refreshed, false otherwise
+   */
   async refreshAccessToken() {
     const integrationInfo = await Integration.findOne({ userId: this.userId });
     if (!integrationInfo || !integrationInfo.fnRefreshToken) {
@@ -56,7 +80,18 @@ class IntegrationService {
     }
   }
 
-  // Update integration status
+
+  /**
+   * Updates the integration status for the current user.
+   *
+   * @async
+   * @function updateIntegrationStatus
+   * @param {boolean} isConnected - Indicates whether the integration is connected or not.
+   * @returns {Promise<void>} A promise that resolves when the status is updated.
+   *
+   * @example
+   * await updateIntegrationStatus(true); // Marks the integration as connected
+   */
   async updateIntegrationStatus(isConnected) {
     const integration = await Integration.findOne({ userId: this.userId });
     if (integration) {

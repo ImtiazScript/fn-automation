@@ -2,7 +2,20 @@ import User from '../models/userModel.js';
 import IntegrationService from './integrationService.js';
 
 class UserService {
-  // Fetch all users and exclude the password field
+
+
+  /**
+   * Fetches all users from the database, excluding the password field.
+   *
+   * @async
+   * @function fetchAllUsers
+   * @returns {Promise<Array<Object>>} A promise that resolves to an array of user objects without the password field.
+   * @throws {Error} If there is an error while fetching users.
+   *
+   * @example
+   * const users = await fetchAllUsers();
+   * console.log(users); // Array of users without passwords
+   */
   async fetchAllUsers() {
     try {
       const users = await User.find({}).select('-password'); // Exclude the password field
@@ -12,7 +25,19 @@ class UserService {
     }
   }
 
-  // Fetch all users and exclude the password field
+
+  /**
+   * Fetches all admin users from the database, excluding the password field.
+   *
+   * @async
+   * @function fetchAllAdminUsers
+   * @returns {Promise<Array<Object>>} A promise that resolves to an array of admin user objects without the password field.
+   * @throws {Error} If there is an error while fetching admin users.
+   *
+   * @example
+   * const adminUsers = await fetchAllAdminUsers();
+   * console.log(adminUsers); // Array of admin users without passwords
+   */
   async fetchAllAdminUsers() {
     try {
       const admins = await User.find({ isAdmin: true }).select('-password'); // Exclude the password field
@@ -22,7 +47,19 @@ class UserService {
     }
   }
 
-  // Fetch field nation servie company admin access token
+  
+  /**
+   * Fetches the access token for the Field Nation service company admin user.
+   *
+   * @async
+   * @function getServiceCompanyAdminAccessToken
+   * @returns {Promise<string>} A promise that resolves to the admin access token, or an empty string if the token cannot be retrieved.
+   * @throws {Error} If there is an error while fetching the admin access token.
+   *
+   * @example
+   * const accessToken = await getServiceCompanyAdminAccessToken();
+   * console.log(accessToken); // Access token or an empty string
+   */
   async getServiceCompanyAdminAccessToken() {
     const adminUser = await User.findOne({ isFnServiceCompanyAdmin: true }).select('-password');
     if (!adminUser || !adminUser.userId) {
