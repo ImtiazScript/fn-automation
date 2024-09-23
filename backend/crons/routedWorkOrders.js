@@ -4,7 +4,7 @@ import UserService from '../services/userService.js';
 import IntegrationService from '../services/integrationService.js';
 import CronService from '../services/cronService.js';
 import moment from 'moment-timezone';
-import { getRoutedWorkOrders, acceptRoutedWorkOrder } from '../utils/cronHelpers/routedWorkOrdersHelper.js';
+import { getRoutedWorkOrders, acceptRoutedWorkOrder, getAcceptRoutedWorkOrderPayload } from '../utils/cronHelpers/routedWorkOrdersHelper.js';
 import { getCounterOfferNote } from '../utils/cronHelpers/counterOfferHelper.js';
 import { getWorkOrderRequestValidation, requestWorkOrders, counterOfferWorkOrders } from '../utils/cronHelpers/commonWorkOrdersHelper.js';
 import { getPaymentCounterOfferRequestPayload, getScheduleCounterOfferRequestPayload } from '../utils/cronHelpers/counterOfferHelper.js';
@@ -36,7 +36,7 @@ cron.schedule('*/30 * * * *', async () => {
         const integrationService = new IntegrationService(user.userId);
         const integration = await integrationService.fetchIntegration();
         if (!integration || !integration.fnUserId || integration.integrationStatus == 'Not Connected' || integration.disabled) {
-            // logger.info(`WORKORDER REQUEST:: User id: ${user.userId} is not integrated with Field Nation`);
+            // logger.info(`ROUTED WORKORDER REQUEST:: User id: ${user.userId} is not integrated with Field Nation`);
             return;
         }
 
@@ -44,7 +44,7 @@ cron.schedule('*/30 * * * *', async () => {
         const cronService = new CronService(user.userId);
         const crons = await cronService.fetchAllCrons();
         if (crons && !crons.length) {
-            // logger.info(`WORKORDER REQUEST:: User id: ${user.userId} has no cron configured`);
+            // logger.info(`ROUTED WORKORDER REQUEST:: User id: ${user.userId} has no cron configured`);
             return;
         }
 
@@ -77,9 +77,9 @@ cron.schedule('*/30 * * * *', async () => {
             if (workOrdersResponse && workOrdersResponse.results) {
                 workOrdersResponse.results.map(async (workOrder) => {
                     // TODO: Remove DEBUG Code
-                    // if (workOrder.id !== 65856){
-                    //     return;
-                    // }
+                    if (workOrder.id === 39913){
+                        return;
+                    }
                     const allowedPaymentType = (workOrder.pay.type === 'fixed' && cron.isFixed) || (workOrder.pay.type === 'hourly' && cron.isHourly) || (workOrder.pay.type === 'device' && cron.isPerDevice) || (workOrder.pay.type === 'blended' && cron.isBlended);
                     if (!allowedPaymentType) {
                         logger.info(`ROUTED WORKORDER REQUEST:: Payment type ${workOrder.pay.type} is not allowed, work order #${workOrder.id}, cron id: ${cron.cronId}`, workOrder);
@@ -115,9 +115,10 @@ cron.schedule('*/30 * * * *', async () => {
                                 types_of_work: workOrder.types_of_work,
                             }
                         );
+                        const acceptRoutedWorkOrderPayload = await getAcceptRoutedWorkOrderPayload(workOrder, integration.fnUserId);
                         // TODO: Enable when actually want to accept routed workorders
                         // Accept routed work order
-                        // acceptRoutedWorkOrder(workOrder.id, cron.cronId, user.userId, integration.fnUserId, adminAccessToken);
+                        // acceptRoutedWorkOrder(workOrder.id, cron.cronId, user.userId, integration.fnUserId, acceptRoutedWorkOrderPayload, adminAccessToken);
 
                     }
 

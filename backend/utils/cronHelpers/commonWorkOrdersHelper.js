@@ -2,6 +2,7 @@ import logger from "../../config/logger/winston-logger/loggerConfig.js";
 import AssignedWorkOrder from '../../services/assignedWorkOrdersService.js';
 import CronService from '../../services/cronService.js';
 import moment from 'moment-timezone';
+import { makeRequest } from "../makeRequest.js";
 
 
 /**

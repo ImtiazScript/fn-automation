@@ -35,7 +35,7 @@ const makeRequest = async (method, url, headers = {}, data = {}, params = {}, us
         const response = await axios(options);
         return response.data;
     } catch (error) {
-        logger.error(`Error making request, error: ${JSON.stringify(error?.response?.data)}, User Id: ${userId}`);
+        logger.error(`Error making request, error: ${JSON.stringify(error?.response?.data)}`, {userId: userId, url: url, payload: data});
         return false;
     }
 };

@@ -56,7 +56,7 @@ export const getRoutedWorkOrders = async (userId, fnUserId, centerZip, locationR
  * await acceptRoutedWorkOrder(workOrderId, cronId, userId, actingUserId, accessToken);
  * console.log(`Accepted work order ${workOrderId}.`);
  */
-export const acceptRoutedWorkOrder = async (workOrderId, cronId, userId, actingUserId, accessToken) => {
+export const acceptRoutedWorkOrder = async (workOrderId, cronId, userId, actingUserId, payload, accessToken) => {
     const requestUrl = `${process.env.FN_BASE_URL}/api/rest/v2/workorders/mass-accept?acting_user_id=${actingUserId}&clientPayTermsAccepted=true&access_token=${accessToken}`;
     const cronService = new CronService(userId);
 
@@ -71,4 +71,33 @@ export const acceptRoutedWorkOrder = async (workOrderId, cronId, userId, actingU
     } catch (error) {
         logger.error(`ACCEPT ROUTED WO:: Failed to accept routed work order ${workOrderId} for user id: ${userId}, field nation user id: ${actingUserId} : ${error.message}`);
     }
+}
+
+export const getAcceptRoutedWorkOrderPayload = async(workOrder, actingUserId) => {
+    const payload = {
+        eta: [
+            {
+                work_order_id: workOrder.id,
+                bundle_id: workOrder.bundle?.id,
+                user: {
+                    id: actingUserId
+                },
+                hour_estimate: workOrder.schedule?.est_labor_hours,
+                notes: "",
+                has_require_gps_action: true,
+                require_gps: workOrder.require_gps,
+                require_ontime: workOrder.require_ontime,
+                schedule: workOrder.schedule,
+                start: {
+                    local: {
+                        date: workOrder.schedule?.service_window?.start?.local?.date,
+                        time: workOrder.schedule?.service_window?.start?.local?.time
+                    },
+                    utc: null
+                }
+            }
+        ]
+    };
+
+    return payload;
 }
