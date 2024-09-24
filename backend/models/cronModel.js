@@ -108,6 +108,18 @@ const cronSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    scheduleChangeNote: {
+        type: String,
+        required: false,
+    },
+    paymentChangeNote: {
+        type: String,
+        required: false,
+    },
+    scheduleAndPayChangeNote: {
+        type: String,
+        required: false,
+    },
     deleted: {
         type: Boolean,
         default: false,

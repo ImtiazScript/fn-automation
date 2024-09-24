@@ -20,11 +20,11 @@ import moment from 'moment-timezone';
 export const getCounterOfferNote = async (isPaymentValid, isScheduleValid, cron) => {
     let note = '';
     if (!isPaymentValid && !isScheduleValid) {
-        note = 'Payment and schedule counter offer note'
+        note = cron.scheduleAndPayChangeNote;
     } else if (!isPaymentValid) {
-        note = 'Payment counter offer note';
-    } else {
-        note = 'Schedule counter offer note';
+        note = cron.paymentChangeNote;
+    } else if (!isScheduleValid) {
+        note = cron.scheduleChangeNote;
     }
 
     return note;

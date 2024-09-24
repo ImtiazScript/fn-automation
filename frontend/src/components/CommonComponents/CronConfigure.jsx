@@ -46,6 +46,9 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
     timeOffStartAt: '',
     timeOffEndAt: '',
     timeZone: '',
+    scheduleChangeNote: '',
+    paymentChangeNote: '',
+    scheduleAndPayChangeNote: '',
   });
 
   useEffect(() => {
@@ -74,6 +77,9 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
         timeOffStartAt: cron.timeOffStartAt,
         timeOffEndAt: cron.timeOffEndAt,
         timeZone: cron.timeZone,
+        scheduleChangeNote: cron.scheduleChangeNote,
+        paymentChangeNote: cron.paymentChangeNote,
+        scheduleAndPayChangeNote: cron.scheduleAndPayChangeNote,
       });
     }
   }, [cron]);
@@ -215,6 +221,9 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
         timeOffStartAt: formData.timeOffStartAt,
         timeOffEndAt: formData.timeOffEndAt,
         timeZone: formData.timeZone,
+        scheduleChangeNote: formData.scheduleChangeNote,
+        paymentChangeNote: formData.paymentChangeNote,
+        scheduleAndPayChangeNote: formData.scheduleAndPayChangeNote,
       };
 
       // Call the mutation function
@@ -278,34 +287,36 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
 
           <Row style={{ marginBottom: '20px' }}>
             <Col md={8}>
-            <strong>Payment Types:</strong>{' '}
+              <strong>Payment Types:</strong>{' '}
               <ListGroup variant="flush">
-              {cron.isFixed && (
-                    <ListGroup.Item>
-                      <strong>Fixed Payment:</strong> ${cron.fixedPayment}
-                    </ListGroup.Item>
-                  )}
-                  {cron.isHourly && (
-                    <ListGroup.Item>
-                      <strong>Hourly Payment:</strong> ${cron.hourlyPayment}/hour
-                    </ListGroup.Item>
-                  )}
-                  {cron.isPerDevice && (
-                    <ListGroup.Item>
-                      <strong>Per Device Payment:</strong> ${cron.perDevicePayment}/device
-                    </ListGroup.Item>
-                  )}
-                  {cron.isBlended && (
-                    <ListGroup.Item>
-                      <strong>Blended Payment:</strong> ${cron.firstHourlyPayment}/hour (first hours),
-                      ${cron.additionalHourlyPayment}/hour (additional hours)
-                    </ListGroup.Item>
-                  )}
+                {cron.isFixed && (
+                  <ListGroup.Item>
+                    <strong>Fixed Payment:</strong> ${cron.fixedPayment}
+                  </ListGroup.Item>
+                )}
+                {cron.isHourly && (
+                  <ListGroup.Item>
+                    <strong>Hourly Payment:</strong> ${cron.hourlyPayment}/hour
+                  </ListGroup.Item>
+                )}
+                {cron.isPerDevice && (
+                  <ListGroup.Item>
+                    <strong>Per Device Payment:</strong> $
+                    {cron.perDevicePayment}/device
+                  </ListGroup.Item>
+                )}
+                {cron.isBlended && (
+                  <ListGroup.Item>
+                    <strong>Blended Payment:</strong> ${cron.firstHourlyPayment}
+                    /hour (first hours), ${cron.additionalHourlyPayment}/hour
+                    (additional hours)
+                  </ListGroup.Item>
+                )}
               </ListGroup>
             </Col>
 
             <Col md={4}>
-            <strong>Schedule:</strong>{' '}
+              <strong>Schedule:</strong>{' '}
               <ListGroup variant="flush">
                 <ListGroup.Item>
                   <strong>Daily Working Schedule:</strong>{' '}
@@ -333,7 +344,8 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
           </Row>
 
           <Row style={{ marginBottom: '20px' }}>
-            <Col md={8}>
+            <strong>Counter-offer:</strong>{' '}
+            <Col md={12}>
               <ListGroup variant="flush">
                 <ListGroup.Item>
                   <strong>Counter Offer:</strong>{' '}
@@ -341,14 +353,34 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
                 </ListGroup.Item>
               </ListGroup>
             </Col>
-            {/* <Col md={4}>
-              <ListGroup variant="flush">
-                <ListGroup.Item>
-                  <strong>Counter Offer:</strong>
-                  {cron.isEnabledCounterOffer ? 'Enabled' : 'Disabled'}
-                </ListGroup.Item>
-              </ListGroup>
-            </Col> */}
+            {formData.isEnabledCounterOffer && (
+              <>
+                <Col md={6}>
+                  <ListGroup variant="flush">
+                    <ListGroup.Item>
+                      <strong>Payment Change Note:</strong>{' '}
+                      {cron.paymentChangeNote}
+                    </ListGroup.Item>
+                  </ListGroup>
+                </Col>
+                <Col md={6}>
+                  <ListGroup variant="flush">
+                    <ListGroup.Item>
+                      <strong>Schedule Change Note:</strong>{' '}
+                      {cron.scheduleChangeNote}
+                    </ListGroup.Item>
+                  </ListGroup>
+                </Col>
+                <Col md={12}>
+                  <ListGroup variant="flush">
+                    <ListGroup.Item>
+                      <strong>Schedule & Payment Change Note:</strong>{' '}
+                      {cron.scheduleAndPayChangeNote}
+                    </ListGroup.Item>
+                  </ListGroup>
+                </Col>
+              </>
+            )}
           </Row>
 
           <Row className="mt-4">
@@ -363,7 +395,9 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
                     ? cron.requestedWoIds.map((woId, index) => (
                         <span key={woId}>
                           <a
-                            href={`${import.meta.env.VITE_FN_FRONT_END_BASE_URL}/workorders/${woId}`}
+                            href={`${
+                              import.meta.env.VITE_FN_FRONT_END_BASE_URL
+                            }/workorders/${woId}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{ textDecoration: 'none' }}
@@ -651,10 +685,12 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
             </div>
             <Row style={{ marginBottom: '20px' }}>
               <Col>
-              <TimeZoneSelect
-                onChange={(value) => setFormData({ ...formData, timeZone: value })}
-                selectedTimeZone={formData.timeZone}
-            />
+                <TimeZoneSelect
+                  onChange={(value) =>
+                    setFormData({ ...formData, timeZone: value })
+                  }
+                  selectedTimeZone={formData.timeZone}
+                />
               </Col>
             </Row>
             <Row style={{ marginBottom: '20px' }}>
@@ -777,6 +813,62 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
                 </BootstrapForm.Group>
               </Col>
             </Row>
+
+            {formData.isEnabledCounterOffer && (
+              <Row style={{ marginBottom: '20px' }}>
+                <Col md={6}>
+                  <BootstrapForm.Group controlId="paymentChangeNote">
+                    <BootstrapForm.Label>
+                      Payment Change Note
+                    </BootstrapForm.Label>
+                    <BootstrapForm.Control
+                      as="textarea"
+                      name="paymentChangeNote"
+                      value={formData.paymentChangeNote || ''}
+                      onChange={handleChange}
+                      rows={3}
+                    />
+                  </BootstrapForm.Group>
+                </Col>
+                <Col md={6}>
+                  <BootstrapForm.Group controlId="scheduleChangeNote">
+                    <BootstrapForm.Label>
+                      Schedule Change Note
+                    </BootstrapForm.Label>
+                    <BootstrapForm.Control
+                      as="textarea"
+                      name="scheduleChangeNote"
+                      value={formData.scheduleChangeNote || ''}
+                      onChange={handleChange}
+                      rows={3}
+                    />
+                  </BootstrapForm.Group>
+                </Col>
+                <Col md={12} className="mt-3">
+                  <BootstrapForm.Group controlId="scheduleAndPayChangeNote">
+                    <BootstrapForm.Label>
+                      Schedule & Payment Change Note
+                    </BootstrapForm.Label>
+                    <BootstrapForm.Control
+                      as="textarea"
+                      name="scheduleAndPayChangeNote"
+                      value={formData.scheduleAndPayChangeNote || ''}
+                      onChange={handleChange}
+                      rows={3}
+                    />
+                  </BootstrapForm.Group>
+                </Col>
+                <div style={{ marginTop: '10px' }}>
+                  <Alert variant="info">
+                    Please use generic notes for changes (payment, schedule, or
+                    both) that clearly convey the reason for the adjustment to
+                    the buyer, such as: "Due to unforeseen circumstances, we
+                    have updated the payment & schedule to ensure timely
+                    processing."
+                  </Alert>
+                </div>
+              </Row>
+            )}
 
             <Row style={{ marginBottom: '20px' }}>
               <Col>

@@ -16,7 +16,7 @@ const addCron = asyncHandler(async (req, res) => {
   try {
     const { userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, typesOfWorkOrder, status,
       isFixed, fixedPayment, isHourly, hourlyPayment, isPerDevice, perDevicePayment, isBlended, firstHourlyPayment, additionalHourlyPayment,
-      isEnabledCounterOffer, offDays, timeOffStartAt, timeOffEndAt, timeZone } = req.body;
+      isEnabledCounterOffer, offDays, timeOffStartAt, timeOffEndAt, timeZone, scheduleChangeNote, paymentChangeNote, scheduleAndPayChangeNote } = req.body;
     const cron = await Cron.create({
       userId: req.user.isAdmin ? userId : req.user.userId,
       centerZip: centerZip,
@@ -43,6 +43,9 @@ const addCron = asyncHandler(async (req, res) => {
       timeOffStartAt: localToUtc(timeOffStartAt, timeZone),
       timeOffEndAt: localToUtc(timeOffEndAt, timeZone),
       timeZone: timeZone,
+      scheduleChangeNote: scheduleChangeNote,
+      paymentChangeNote: paymentChangeNote,
+      scheduleAndPayChangeNote: scheduleAndPayChangeNote,
       deleted: false,
     });
     if (cron) {
@@ -62,7 +65,7 @@ const addCron = asyncHandler(async (req, res) => {
 const updateCron = asyncHandler(async (req, res) => {
   const { cronId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, typesOfWorkOrder, status,
     isFixed, fixedPayment, isHourly, hourlyPayment, isPerDevice, perDevicePayment, isBlended, firstHourlyPayment, additionalHourlyPayment, isEnabledCounterOffer, offDays,
-    timeOffStartAt, timeOffEndAt, timeZone, deleted } = req.body;
+    timeOffStartAt, timeOffEndAt, timeZone, scheduleChangeNote, paymentChangeNote, scheduleAndPayChangeNote, deleted } = req.body;
   if (!cronId) {
     throw new BadRequestError("Cron id is missing in the request - cron updating failed.");
   }
@@ -101,6 +104,9 @@ const updateCron = asyncHandler(async (req, res) => {
       if (timeOffStartAt !== undefined) updatedFields.timeOffStartAt = localToUtc(timeOffStartAt, timeZone);
       if (timeOffEndAt !== undefined) updatedFields.timeOffEndAt = localToUtc(timeOffEndAt, timeZone);
       if (timeZone !== undefined) updatedFields.timeZone = timeZone;
+      if (scheduleChangeNote !== undefined) updatedFields.scheduleChangeNote = scheduleChangeNote;
+      if (paymentChangeNote !== undefined) updatedFields.paymentChangeNote = paymentChangeNote;
+      if (scheduleAndPayChangeNote !== undefined) updatedFields.scheduleAndPayChangeNote = scheduleAndPayChangeNote;
       if (deleted !== undefined) updatedFields.deleted = deleted;
 
       // Perform the update
@@ -238,6 +244,13 @@ const getCron = asyncHandler(async (req, res) => {
     }
     if (cronData.workingWindowEndAt) {
       cronData.workingWindowEndAt = utcTimeToLocalTime(cronData.workingWindowEndAt, cronData.timeZone);
+    }
+
+    if (cronData.createdAt) {
+      cronData.createdAt = utcToLocal(cronData.createdAt, cronData.timeZone);
+    }
+    if (cronData.updatedAt) {
+      cronData.updatedAt = utcToLocal(cronData.updatedAt, cronData.timeZone);
     }
 
     res.status(200).json({ cronData });
