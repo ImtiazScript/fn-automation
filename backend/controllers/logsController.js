@@ -27,7 +27,7 @@ const getLogs = asyncHandler(async (req, res) => {
     const totalLogs = await Log.countDocuments({ timestamp: { $gte: from, $lte: until } });
     // Query the logs from MongoDB
     const logs = await Log.find({ timestamp: { $gte: from, $lte: until } })
-      .select('message timestamp level')
+      .select('message timestamp level meta')
       .skip(start)
       .limit(limit)
       .sort(sort)

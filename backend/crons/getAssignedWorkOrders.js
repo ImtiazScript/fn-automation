@@ -5,22 +5,20 @@ import IntegrationService from '../services/integrationService.js';
 import AssignedWorkOrder from '../services/assignedWorkOrdersService.js';
 import CronService from '../services/cronService.js';
 import { getAssignedWorkOrders } from '../utils/cronHelpers/assignedWorkOrdersHelper.js';
-import moment from 'moment-timezone';
 
 // Will run every 30 minutes
 cron.schedule('*/57 * * * *', async () => {
     if(process.env.DISABLED_CRONS === 'true') {
         return;
     }
-    // cron.schedule('* * * * *', async () => {
-    const currentDateTime = moment.utc().toDate().toLocaleString();
-    logger.info(`GET ASSIGNED WORKORDERS:: cron running at: ${currentDateTime}`);
+    const cronName = 'getAssignedWorkOrders';
+    logger.info(`Cron job '${cronName}' started: updating assigned work orders`, { cron: cronName });
     const userService = new UserService();
     const users = await userService.fetchAllUsers();
 
     const adminAccessToken = await userService.getServiceCompanyAdminAccessToken();
     if (!adminAccessToken) {
-        logger.error(`GET ASSIGNED WORKORDERS:: Service company admin is not integrated with FIELD NATION, work order request cron running failed`);
+        logger.error(`Service company admin is not integrated with Field Nation, could not update assigned work orders`, { cron: cronName });
         return;
     }
 
@@ -35,7 +33,7 @@ cron.schedule('*/57 * * * *', async () => {
         const integration = await integrationService.fetchIntegration();
         // silently avoid, not integrated user
         if (!integration || !integration.fnUserId || integration.integrationStatus == 'Not Connected' || integration.disabled) {
-            // logger.info(`GET ASSIGNED WORKORDERS:: User id: ${user.userId} is not integrated with Field Nation`);
+            // logger.info(`User id: ${user.userId} is not integrated with Field Nation`, { cron: cronName });
             return;
         }
 
@@ -43,7 +41,7 @@ cron.schedule('*/57 * * * *', async () => {
         const cronService = new CronService(user.userId);
         const crons = await cronService.fetchAllCrons();
         if (crons && !crons.length) {
-            // logger.info(`GET ASSIGNED WORKORDERS:: User id: ${user.userId} has no cron configured, not looking for assigned work orders`);
+            // logger.info(`User id: ${user.userId} has no cron configured, not looking for assigned work orders`, { cron: cronName });
             return;
         }
 

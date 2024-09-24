@@ -90,6 +90,29 @@ const LogsDataTable = () => {
     }
   };
 
+  const getCronColor = (level) => {
+    switch (level) {
+      case 'availableWorkOrders':
+        return 'purple';
+      case 'cleanOlderLogs':
+        return 'orange';
+      case 'getAssignedWorkOrders':
+        return 'yellow';
+      case 'routedWorkOrders':
+        return 'brown';
+      case 'updateAccessTokens':
+        return 'pink';
+      default:
+        return 'gray';
+    }
+  };  
+
+  const parseMetaData = (meta) => {
+    return typeof meta.metadata === 'string'
+    ? JSON.parse(meta.metadata)
+    : meta.metadata;
+  };
+
   return (
     <>
       <Row className="mb-3">
@@ -125,9 +148,10 @@ const LogsDataTable = () => {
               <th className="text-center align-middle d-none d-md-table-cell">
                 Index
               </th>
-              <th>Time</th>
-              <th>Level</th>
-              <th>Message</th>
+              <th className="text-center align-middle d-none d-md-table-cell">Time</th>
+              <th className="text-center align-middle d-none d-md-table-cell">Level</th>
+              <th className="text-center align-middle d-none d-md-table-cell">Cron</th>
+              <th className="text-center align-middle d-none d-md-table-cell">Message</th>
             </tr>
           </thead>
           <tbody>
@@ -139,6 +163,9 @@ const LogsDataTable = () => {
                 </td>
                 <td style={{ color: getLogLevelColor(log.level) }}>
                   {log.level}
+                </td>
+                <td style={{ color: getCronColor(parseMetaData(log.meta)?.cron) }}>
+                  {parseMetaData(log.meta)?.cron}
                 </td>
                 <td
                   onClick={() => handleLogDetailClick(log._id)}
@@ -212,10 +239,7 @@ const LogsDataTable = () => {
               <div>
               <strong>Meta:</strong>{' '}
               <JSONTree 
-                data={typeof selectedLog.meta.metadata === 'string'
-                  ? JSON.parse(selectedLog.meta.metadata)
-                  : selectedLog.meta.metadata
-                }
+                data={parseMetaData(selectedLog.meta)}
                 theme={{
                   scheme: 'monokai',
                   base00: '#272822', base01: '#383830', base02: '#49483e', base03: '#75715e',

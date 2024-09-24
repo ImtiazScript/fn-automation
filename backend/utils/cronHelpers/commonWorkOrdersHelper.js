@@ -518,3 +518,23 @@ export const counterOfferWorkOrders = async (workOrderId, cronId, userId, acting
         logger.error(`WORKORDER COUNTER-OFFER:: Failed to counter-offer work order ${workOrderId} for user id: ${userId}, field nation user id: ${actingUserId} : ${error.message}`);
     }
 }
+
+
+export const logWorkOrderOperation = async (message, workOrder, payload = {}, cron = '') => {
+    const logMetaData = {
+        workorder_id: workOrder.id,
+        title: workOrder.title,
+        schedule: workOrder.schedule,
+        pay: workOrder.pay,
+        location: workOrder.location,
+        types_of_work: workOrder.types_of_work,
+    };
+    if (payload) {
+        logMetaData.payload = payload;
+    }
+    if (cron) {
+        logMetaData.cron = cron;
+    }
+
+    logger.info(message, logMetaData);
+}
