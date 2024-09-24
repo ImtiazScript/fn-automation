@@ -93,17 +93,17 @@ const LogsDataTable = () => {
   const getCronColor = (level) => {
     switch (level) {
       case 'availableWorkOrders':
-        return 'purple';
+        return '#6A5ACD'; // SlateBlue (distinct shade of purple)
       case 'cleanOlderLogs':
-        return 'orange';
+        return '#FF8C00'; // Dark Orange
       case 'getAssignedWorkOrders':
-        return 'yellow';
+        return '#DAA520'; // Goldenrod
       case 'routedWorkOrders':
-        return 'brown';
+        return '#A52A2A'; // Brown (distinct from purple)
       case 'updateAccessTokens':
-        return 'pink';
+        return '#8B008B'; // Dark Magenta
       default:
-        return 'gray';
+        return '#A9A9A9'; // Dark Gray
     }
   };  
 
@@ -165,7 +165,7 @@ const LogsDataTable = () => {
                   {log.level}
                 </td>
                 <td style={{ color: getCronColor(parseMetaData(log.meta)?.cron) }}>
-                  {parseMetaData(log.meta)?.cron}
+                  {parseMetaData(log.meta)?.cron ? parseMetaData(log.meta)?.cron : 'n/a'}
                 </td>
                 <td
                   onClick={() => handleLogDetailClick(log._id)}

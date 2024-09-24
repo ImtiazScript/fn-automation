@@ -25,13 +25,13 @@ export const getAvailableWorkOrders = async (userId, fnUserId, centerZip, locati
     try {
         const response = await makeRequest('GET', availableWorkOrdersUrl, {}, {}, {}, userId);
         if (response && response.metadata && response.metadata.total > 0) {
-            logger.info(`WORKORDER REQUEST:: ${response.metadata.total} available work orders found for user id: ${userId}, field nation user id: ${fnUserId}`);
+            logger.info(`${response.metadata.total} available work orders found for user id: ${userId}, field nation user id: ${fnUserId}`, {cron: 'availableWorkOrders'});
         } else {
-            logger.info(`WORKORDER REQUEST:: No available work orders found for user id: ${userId}, field nation user id: ${fnUserId}`);
+            logger.info(`No available work orders found for user id: ${userId}, field nation user id: ${fnUserId}`, {cron: 'availableWorkOrders'});
         }
         return response;
     } catch (error) {
-        logger.error(`WORKORDER REQUEST:: Failed to get available work orders for user ${userId}, field nation user id: ${fnUserId} : ${error.message}`);
+        logger.error(`Failed to get available work orders for user ${userId}, field nation user id: ${fnUserId} : ${error.message}`, {cron: 'availableWorkOrders'});
         return null;
     }
 }

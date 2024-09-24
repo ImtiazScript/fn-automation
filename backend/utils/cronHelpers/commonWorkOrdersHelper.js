@@ -466,22 +466,22 @@ export const adjustForOverlap = async (potentialStartTime, potentialEndTime, ove
  * @returns {Promise<void>} A promise that resolves when the request is completed.
  *
  * @example
- * await requestWorkOrders('workOrder123', 'cron456', 'user789', 'actingUser321', 'accessTokenXYZ');
+ * await requestWorkOrders('workOrder123', 'cron456', 'user789', 'actingUser321', 'accessTokenXYZ', 'availableWorkOrders');
  */
-export const requestWorkOrders = async (workOrderId, cronId, userId, actingUserId, accessToken) => {
+export const requestWorkOrders = async (workOrderId, cronId, userId, actingUserId, accessToken, cronName) => {
     const requestUrl = `${process.env.FN_BASE_URL}/api/rest/v2/workorders/${workOrderId}/requests?acting_user_id=${actingUserId}&access_token=${accessToken}`;
     const cronService = new CronService(userId);
 
     try {
         const response = await makeRequest('POST', requestUrl, {}, {}, {}, userId);
         if (response) {
-            logger.info(`WORKORDER REQUEST:: Work order ${workOrderId} successfully requested by user id: ${userId}, field nation user id: ${actingUserId}`);
+            logger.info(`successfully requested work order #${workOrderId} by user id: ${userId}, field nation user id: ${actingUserId}`, {cron: cronName});
 
             // Update the cron's total requested and requested work order IDs
             await cronService.updateRequestedWorkOrders(cronId, workOrderId);
         }
     } catch (error) {
-        logger.error(`WORKORDER REQUEST:: Failed to request work order ${workOrderId} for user id: ${userId}, field nation user id: ${actingUserId} : ${error.message}`);
+        logger.error(`Failed to request work order #${workOrderId} for user id: ${userId}, field nation user id: ${actingUserId} : ${error.message}`, {cron: cronName});
     }
 }
 
@@ -500,22 +500,22 @@ export const requestWorkOrders = async (workOrderId, cronId, userId, actingUserI
  * @returns {Promise<void>} A promise that resolves when the counter-offer request is completed.
  *
  * @example
- * await counterOfferWorkOrders('workOrder123', 'cron456', 'user789', 'actingUser321', 'accessTokenXYZ', { offerDetails: '...'} );
+ * await counterOfferWorkOrders('workOrder123', 'cron456', 'user789', 'actingUser321', 'accessTokenXYZ', payload, cronName );
  */
-export const counterOfferWorkOrders = async (workOrderId, cronId, userId, actingUserId, accessToken, payload) => {
+export const counterOfferWorkOrders = async (workOrderId, cronId, userId, actingUserId, accessToken, payload, cronName) => {
     const requestUrl = `${process.env.FN_BASE_URL}/api/rest/v2/workorders/${workOrderId}/requests?acting_user_id=${actingUserId}&access_token=${accessToken}`;
     const cronService = new CronService(userId);
 
     try {
         const response = await makeRequest('POST', requestUrl, {}, payload, {}, userId);
         if (response) {
-            logger.info(`WORKORDER COUNTER-OFFER:: Work order ${workOrderId} successfully counter-offerred by user id: ${userId}, field nation user id: ${actingUserId}`);
+            logger.info(`Successfully counter-offerred work order #${workOrderId}  by user id: ${userId}, field nation user id: ${actingUserId}`, {cron: cronName});
 
             // Update the cron's total requested and requested work order IDs
             await cronService.updateRequestedWorkOrders(cronId, workOrderId);
         }
     } catch (error) {
-        logger.error(`WORKORDER COUNTER-OFFER:: Failed to counter-offer work order ${workOrderId} for user id: ${userId}, field nation user id: ${actingUserId} : ${error.message}`);
+        logger.error(`Failed to counter-offer work order #${workOrderId} for user id: ${userId}, field nation user id: ${actingUserId} : ${error.message}`, {cron: cronName});
     }
 }
 

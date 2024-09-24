@@ -12,7 +12,7 @@ cron.schedule('*/57 * * * *', async () => {
         return;
     }
     const cronName = 'getAssignedWorkOrders';
-    logger.info(`Cron job '${cronName}' started: updating assigned work orders`, { cron: cronName });
+    logger.info(`Cron job '${cronName}' started.`, { cron: cronName });
     const userService = new UserService();
     const users = await userService.fetchAllUsers();
 
@@ -22,7 +22,7 @@ cron.schedule('*/57 * * * *', async () => {
         return;
     }
 
-    users.map(async (user) => {
+    const cronPromises = users.map(async (user) => {
         // silently avoid, blocked and inactive users
         if (user.blocked || !user.isActive) {
             return;
@@ -64,6 +64,8 @@ cron.schedule('*/57 * * * *', async () => {
 
 
     });
+    await Promise.all(cronPromises);
+    logger.info(`Cron job '${cronName}' ended.`, { cron: cronName });
 });
 
 export default cron;

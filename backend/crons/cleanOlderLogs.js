@@ -10,7 +10,7 @@ cron.schedule('55 */23 * * *', async () => {
     }
     const cronName = 'cleanOlderLogs';
     const logRetentionDays = process.env.LOG_RETENTION_DAYS ? parseInt(process.env.LOG_RETENTION_DAYS) : 7;
-    logger.info(`Cron job '${cronName}' started: deleting logs older than ${logRetentionDays} days.`, { cron: cronName });
+    logger.info(`Cron job '${cronName}' started.`, { cron: cronName });
 
     try {
         // Calculate the date 7 days ago
@@ -29,6 +29,8 @@ cron.schedule('55 */23 * * *', async () => {
         }
     } catch (error) {
         logger.error(`Failed to delete logs, error: ${error.message}`, { error: error, cron: cronName });
+    } finally {
+        logger.info(`Cron job '${cronName}' ended.`, { cron: cronName });
     }
 });
 

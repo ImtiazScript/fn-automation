@@ -14,7 +14,7 @@ cron.schedule('*/30 * * * *', async () => {
         return;
     }
     const cronName = 'availableWorkOrders';
-    logger.info(`Cron job '${cronName}' started: Finding and requesting work orders.`, { cron: cronName });
+    logger.info(`Cron job '${cronName}' started.`, { cron: cronName });
     const userService = new UserService();
     const users = await userService.fetchAllUsers();
 
@@ -24,7 +24,7 @@ cron.schedule('*/30 * * * *', async () => {
         return;
     }
 
-    users.map(async (user) => {
+    const userPromises = users.map(async (user) => {
         // silently avoid, blocked and inactive users
         if (user.blocked || !user.isActive) {
             return;
@@ -46,7 +46,7 @@ cron.schedule('*/30 * * * *', async () => {
             return;
         }
 
-        crons.map(async (cron) => {
+        const cronPromises = crons.map(async (cron) => {
             const locationRadius = cron.drivingRadius > 1 ? cron.drivingRadius : 50;
             const currentDateTime = moment.utc().toDate();
             const cronStartAt = moment.utc(cron.cronStartAt).toDate();
@@ -73,7 +73,8 @@ cron.schedule('*/30 * * * *', async () => {
             const workOrdersResponse = await getAvailableWorkOrders(user.userId, integration.fnUserId, cronCenterZip, locationRadius, typeOfWorkQueryParams, adminAccessToken);
 
             if (workOrdersResponse && workOrdersResponse.results) {
-                workOrdersResponse.results.map(async (workOrder) => {
+                await workOrdersResponse.results.reduce(async (previousPromise, workOrder) => {
+                    await previousPromise;
                     // TODO: Remove DEBUG Code
                     // if (workOrder.id !== 16768){
                     //     return;
@@ -83,7 +84,7 @@ cron.schedule('*/30 * * * *', async () => {
                         logger.info(`Payment type ${workOrder.pay.type} is not allowed, work order #${workOrder.id}, cron id: ${cron.cronId}`, workOrder, cronName);
                         return;
                     }
-                    logWorkOrderOperation(`Found work order #${workOrder.id}, Title: ${workOrder.title}`, workOrder, {}, cronName);
+                    await logWorkOrderOperation(`Found work order #${workOrder.id}, Title: ${workOrder.title}`, workOrder, {}, cronName);
 
                     const workOrderRequestValidation = await getWorkOrderRequestValidation(workOrder, cron);
                     logger.info(
@@ -91,10 +92,10 @@ cron.schedule('*/30 * * * *', async () => {
                         {...workOrderRequestValidation, cron: cronName},
                     );
                     if (workOrderRequestValidation.isValid) {
-                        logWorkOrderOperation(`Initiating request process for work order #${workOrder.id}`, workOrder, {}, cronName);
+                        await logWorkOrderOperation(`Initiating request process for work order #${workOrder.id}`, workOrder, {}, cronName);
                         // TODO: Enable when actually want to request workorders
                         // Request work order
-                        // requestWorkOrders(workOrder.id, cron.cronId, user.userId, integration.fnUserId, adminAccessToken);
+                        // requestWorkOrders(workOrder.id, cron.cronId, user.userId, integration.fnUserId, adminAccessToken, cronName);
                     } else if (cron.isEnabledCounterOffer) {
                         const counterOfferNote = await getCounterOfferNote(workOrderRequestValidation.isPaymentValid, workOrderRequestValidation.isScheduleValid, cron);
                         const counterOfferRequestPayload = {
@@ -119,16 +120,22 @@ cron.schedule('*/30 * * * *', async () => {
                             }
                         }
                         if (counterOfferRequestPayload.pay || counterOfferRequestPayload.schedule) {
-                            logWorkOrderOperation(`Initiating counter-offer process for work order #${workOrder.id}`, workOrder, counterOfferRequestPayload, cronName);
+                            await logWorkOrderOperation(`Initiating counter-offer process for work order #${workOrder.id}`, workOrder, counterOfferRequestPayload, cronName);
                             // TODO: Enable when actually want to counter-offer workorders
                             // Counter-offer work order
-                            // counterOfferWorkOrders(workOrder.id, cron.cronId, user.userId, integration.fnUserId, adminAccessToken, counterOfferRequestPayload);
+                            // counterOfferWorkOrders(workOrder.id, cron.cronId, user.userId, integration.fnUserId, adminAccessToken, counterOfferRequestPayload, cronName);
                         }
                     }
-                })
+                    // Returning resolved promise to ensure the chain continues
+                    return Promise.resolve();
+                }, Promise.resolve());
             }
         });
+        // Await all cron processing promises
+        await Promise.all(cronPromises);
     });
+    await Promise.all(userPromises);
+    logger.info(`Cron job '${cronName}' ended.`, { cron: cronName });
 });
 
 export default cron;

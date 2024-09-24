@@ -22,13 +22,13 @@ export const getAssignedWorkOrders = async (userId, fnUserId, adminAccessToken) 
     try {
         const response = await makeRequest('GET', assignedWorkOrdersUrl, {}, {}, {}, userId);
         if (response && response.metadata && response.metadata.total > 0) {
-            logger.info(`GET ASSIGNED WORKORDERS:: ${response.metadata.total} assigned work orders found for user id: ${userId}, field nation user id: ${fnUserId}`);
+            logger.info(`${response.metadata.total} assigned work orders found for user id: ${userId}, field nation user id: ${fnUserId}`, {cron: 'getAssignedWorkOrders'});
         } else {
-            logger.info(`GET ASSIGNED WORKORDERS:: No assigned work orders found for user id: ${userId}, field nation user id: ${fnUserId}`);
+            logger.info(`No assigned work orders found for user id: ${userId}, field nation user id: ${fnUserId}`, {cron: 'getAssignedWorkOrders'});
         }
         return response;
     } catch (error) {
-        logger.error(`GET ASSIGNED WORKORDERS:: Failed to get assigned work orders for user ${userId}, field nation user id: ${fnUserId} : ${error.message}`);
+        logger.error(`Failed to get assigned work orders for user ${userId}, field nation user id: ${fnUserId} : ${error.message}`, {cron: 'getAssignedWorkOrders'});
         return null;
     }
 }

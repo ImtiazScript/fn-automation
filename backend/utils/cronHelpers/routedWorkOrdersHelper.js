@@ -28,13 +28,13 @@ export const getRoutedWorkOrders = async (userId, fnUserId, centerZip, locationR
     try {
         const response = await makeRequest('GET', routedWorkOrdersUrl, {}, {}, {}, userId);
         if (response && response.metadata && response.metadata.total > 0) {
-            logger.info(`ROUTED WORKORDER REQUEST:: ${response.metadata.total} routed work orders found for user id: ${userId}, field nation user id: ${fnUserId}`);
+            logger.info(`${response.metadata.total} routed work orders found for user id: ${userId}, field nation user id: ${fnUserId}`, {cron: 'routedWorkOrders'});
         } else {
-            logger.info(`ROUTED WORKORDER REQUEST:: No routed work orders found for user id: ${userId}, field nation user id: ${fnUserId}`);
+            logger.info(`No routed work orders found for user id: ${userId}, field nation user id: ${fnUserId}`, {cron: 'routedWorkOrders'});
         }
         return response;
     } catch (error) {
-        logger.error(`ROUTED WORKORDER REQUEST:: Failed to get routed work orders for user ${userId}, field nation user id: ${fnUserId} : ${error.message}`);
+        logger.error(`Failed to get routed work orders for user ${userId}, field nation user id: ${fnUserId} : ${error.message}`, {cron: 'routedWorkOrders'});
         return null;
     }
 }
@@ -63,13 +63,13 @@ export const acceptRoutedWorkOrder = async (workOrderId, cronId, userId, actingU
     try {
         const response = await makeRequest('POST', requestUrl, {}, payload, {}, userId);
         if (response) {
-            logger.info(`ACCEPT ROUTED WO:: Routed work order ${workOrderId} successfully accepted by user id: ${userId}, field nation user id: ${actingUserId}`);
+            logger.info(`Successfully accepted work order #{workOrderId} by user id: ${userId}, field nation user id: ${actingUserId}`, {cron: 'routedWorkOrders'});
 
             // Update the cron's total requested and requested work order IDs
             await cronService.updateRequestedWorkOrders(cronId, workOrderId);
         }
     } catch (error) {
-        logger.error(`ACCEPT ROUTED WO:: Failed to accept routed work order ${workOrderId} for user id: ${userId}, field nation user id: ${actingUserId} : ${error.message}`);
+        logger.error(`Failed to accept routed work order ${workOrderId} for user id: ${userId}, field nation user id: ${actingUserId} : ${error.message}`, {cron: 'routedWorkOrders'});
     }
 }
 

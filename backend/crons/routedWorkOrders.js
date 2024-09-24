@@ -13,18 +13,18 @@ cron.schedule('*/30 * * * *', async () => {
     if (process.env.DISABLED_CRONS === 'true') {
         return;
     }
-    const cronName = 'availableWorkOrders';
-    logger.info(`Cron job '${cronName}' started: Processing routed work orders for acceptance and counter-offer.`, {cron: cronName});
+    const cronName = 'routedWorkOrders';
+    logger.info(`Cron job '${cronName}' started.`, {cron: cronName});
     const userService = new UserService();
     const users = await userService.fetchAllUsers();
 
     const adminAccessToken = await userService.getServiceCompanyAdminAccessToken();
     if (!adminAccessToken) {
-        logger.error(`Service company admin is not integrated with FIELD NATION, routed work order request cron running failed`, {cron: cronName});
+        logger.error(`Service company admin is not integrated with Field Nation, routed work order request cron running failed`, {cron: cronName});
         return;
     }
 
-    users.map(async (user) => {
+    const userPromises = users.map(async (user) => {
         // silently avoid, blocked and inactive users
         if (user.blocked || !user.isActive) {
             return;
@@ -46,7 +46,7 @@ cron.schedule('*/30 * * * *', async () => {
             return;
         }
 
-        crons.map(async (cron) => {
+        const cronPromises = crons.map(async (cron) => {
             const locationRadius = cron.drivingRadius > 1 ? cron.drivingRadius : 50;
             const currentDateTime = moment.utc().toDate();
             const cronStartAt = moment.utc(cron.cronStartAt).toDate();
@@ -61,7 +61,7 @@ cron.schedule('*/30 * * * *', async () => {
 
             // check if cron has configured types of work orders
             if (!cron.typesOfWorkOrder.length) {
-                // logger.info(`ROUTED:: Cron id: ${cron.cronId} has no configured types of work order`, {cron: cronName});
+                // logger.info(`Cron id: ${cron.cronId} has no configured types of work order`, {cron: cronName});
                 return;
             }
 
@@ -73,31 +73,31 @@ cron.schedule('*/30 * * * *', async () => {
             const workOrdersResponse = await getRoutedWorkOrders(user.userId, integration.fnUserId, cronCenterZip, locationRadius, typeOfWorkQueryParams, adminAccessToken);
 
             if (workOrdersResponse && workOrdersResponse.results) {
-                workOrdersResponse.results.map(async (workOrder) => {
+                await workOrdersResponse.results.reduce(async (previousPromise, workOrder) => {
+                    await previousPromise;
+                
                     // TODO: Remove DEBUG Code
-                    if (workOrder.id === 39913){
-                        return;
-                    }
+                    // if (workOrder.id === 39913) {
+                    //     return;
+                    // }
                     const allowedPaymentType = (workOrder.pay.type === 'fixed' && cron.isFixed) || (workOrder.pay.type === 'hourly' && cron.isHourly) || (workOrder.pay.type === 'device' && cron.isPerDevice) || (workOrder.pay.type === 'blended' && cron.isBlended);
                     if (!allowedPaymentType) {
-                        logger.info(`Payment type ${workOrder.pay.type} is not allowed, work order #${workOrder.id}, cron id: ${cron.cronId}`, {cron: cronName});
+                        logger.info(`Payment type ${workOrder.pay.type} is not allowed, work order #${workOrder.id}, cron id: ${cron.cronId}`, { cron: cronName });
                         return;
                     }
-                    logWorkOrderOperation(`Found work order #${workOrder.id}, Title: ${workOrder.title}`, workOrder, {}, cronName);
+                    await logWorkOrderOperation(`Found work order #${workOrder.id}, Title: ${workOrder.title}`, workOrder, {}, cronName);
 
                     const workOrderRequestValidation = await getWorkOrderRequestValidation(workOrder, cron);
                     logger.info(
                         `Payment & schedule validation for work order #${workOrder.id} - Payment valid: ${workOrderRequestValidation.isPaymentValid}, Schedule valid: ${workOrderRequestValidation.isScheduleValid}`,
-                        {...workOrderRequestValidation, cron: cronName},
+                        { ...workOrderRequestValidation, cron: cronName }
                     );
 
                     if (workOrderRequestValidation.isValid && workOrder.status.name === 'Routed') {
-                        logWorkOrderOperation(`Initiating acceptance process for work order #${workOrder.id}`, workOrder, {}, cronName);
+                        await logWorkOrderOperation(`Initiating acceptance process for work order #${workOrder.id}`, workOrder, {}, cronName);
                         const acceptRoutedWorkOrderPayload = await getAcceptRoutedWorkOrderPayload(workOrder, integration.fnUserId);
                         // TODO: Enable when actually want to accept routed workorders
-                        // Accept routed work order
-                        // acceptRoutedWorkOrder(workOrder.id, cron.cronId, user.userId, integration.fnUserId, acceptRoutedWorkOrderPayload, adminAccessToken);
-
+                        // await acceptRoutedWorkOrder(workOrder.id, cron.cronId, user.userId, integration.fnUserId, acceptRoutedWorkOrderPayload, adminAccessToken);
                     }
 
                     if (!workOrderRequestValidation.isValid && cron.isEnabledCounterOffer) {
@@ -124,14 +124,22 @@ cron.schedule('*/30 * * * *', async () => {
                             }
                         }
                         if (counterOfferRequestPayload.pay || counterOfferRequestPayload.schedule) {
-                            logWorkOrderOperation(`Initiating counter-offer process for work order #${workOrder.id}`, workOrder, counterOfferRequestPayload, cronName);
+                            await logWorkOrderOperation(`Initiating counter-offer process for work order #${workOrder.id}`, workOrder, counterOfferRequestPayload, cronName);
                             // TODO: Enable when actually want to counter-offer routed workorders
-                            // Counter-offer work order
-                            // counterOfferWorkOrders(workOrder.id, cron.cronId, user.userId, integration.fnUserId, adminAccessToken, counterOfferRequestPayload);
+                            // await counterOfferWorkOrders(workOrder.id, cron.cronId, user.userId, integration.fnUserId, adminAccessToken, counterOfferRequestPayload, cronName);
                         }
                     }
-                })
+                
+                    // Returning resolved promise to ensure the chain continues
+                    return Promise.resolve();
+                }, Promise.resolve());
+                
             }
         });
+        // Await all cron processing promises
+        await Promise.all(cronPromises);
     });
+
+    await Promise.all(userPromises);
+    logger.info(`Cron job '${cronName}' ended.`, { cron: cronName });
 });

@@ -9,10 +9,10 @@ cron.schedule('55 */23 * * *', async () => {
         return;
     }
     const cronName = 'updateAccessTokens';
-    logger.info(`Cron job '${cronName}' started: updating access token using refresh token.`, {cron: cronName});
+    logger.info(`Cron job '${cronName}' started.`, {cron: cronName});
     const userService = new UserService();
     const adminUsers = await userService.fetchAllAdminUsers();
-    adminUsers.map(async (user) => {
+    const cronPromises = adminUsers.map(async (user) => {
         const integrationService = new IntegrationService(user.userId);
         if (user.blocked || !user.isActive || !user.isFnServiceCompanyAdmin) {
             // Ignore silently since this is not an appropriate service company admin of Field Nation
@@ -33,7 +33,8 @@ cron.schedule('55 */23 * * *', async () => {
             logger.error(`Failed to refresh access-token for userId: ${user.userId}`, {cron: cronName});
         }
     });
-
+    await Promise.all(cronPromises);
+    logger.info(`Cron job '${cronName}' ended.`, { cron: cronName });
 });
 
 export default cron;

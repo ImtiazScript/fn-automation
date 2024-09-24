@@ -210,7 +210,7 @@ class AssignedWorkOrder {
             updatedAt: moment.utc().toDate(),
           }
         );
-        logger.info(`GET ASSIGNED WORKORDERS:: Updated Assigned Work Order, #ID: ${workOrder.id}, Title: ${workOrder.title}`);
+        logger.info(`Updated Assigned Work Order, #ID: ${workOrder.id}, Title: ${workOrder.title}`, {cron: 'getAssignedWorkOrders'});
       } else {
         // Insert new work order
         await AssignedWorkOrders.create({
@@ -221,17 +221,18 @@ class AssignedWorkOrder {
           eta: workOrder.eta,
           assignee: workOrder.eta,
         });
-        logger.info(`GET ASSIGNED WORKORDERS:: Inserted new Assigned Work Order, #ID: ${workOrder.id}, Title: ${workOrder.title}`, {
+        logger.info(`Inserted new Assigned Work Order, #ID: ${workOrder.id}, Title: ${workOrder.title}`, {
           userId: userId,
           workOrderId: workOrder.id,
           schedule: workOrder.schedule,
           pay: workOrder.pay,
           eta: workOrder.eta,
           assignee: workOrder.eta,
+          cron: 'getAssignedWorkOrders',
         });
       }
     } catch (error) {
-      logger.error(`GET ASSIGNED WORKORDERS:: Failed to process work order #ID: ${workOrder.id} for user ${userId}: ${error.message}`);
+      logger.error(`Failed to process work order #ID: ${workOrder.id} for user ${userId}: ${error.message}`, {cron: 'getAssignedWorkOrders'});
     }
   }
 
@@ -260,10 +261,10 @@ class AssignedWorkOrder {
 
       // Log only if any documents were deleted
       if (deleteResult.deletedCount > 0) {
-        logger.info(`GET ASSIGNED WORKORDERS:: Deleted ${deleteResult.deletedCount} work orders not present in the API response for user id: ${userId}`);
+        logger.info(`Deleted ${deleteResult.deletedCount} work orders not present in the API response for user id: ${userId}`, {cron: 'getAssignedWorkOrders'});
       }
     } catch (error) {
-      logger.error(`GET ASSIGNED WORKORDERS:: Failed to delete outdated work orders for user ${userId}: ${error.message}`);
+      logger.error(`Failed to delete outdated work orders for user ${userId}: ${error.message}`, {cron: 'getAssignedWorkOrders'});
     }
   }
 
