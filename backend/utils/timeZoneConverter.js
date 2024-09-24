@@ -14,7 +14,7 @@ import moment from 'moment-timezone';
  * const utcTime = localToUtc('2024-09-23T12:00:00', 'America/New_York');
  * console.log(utcTime); // Outputs the corresponding UTC time
  */
-export const localToUtc = (localTime, timeZone) => {
+export const localToUtc = (localTime, timeZone = 'America/Chicago') => {
     const localDate = moment.tz(localTime, timeZone);
     return localDate.utc().format();
 }
@@ -33,7 +33,7 @@ export const localToUtc = (localTime, timeZone) => {
  * const localTime = utcToLocal('2024-09-23T16:00:00Z', 'America/New_York');
  * console.log(localTime); // Outputs the corresponding local time
  */
-export const utcToLocal = (utcTime, timeZone) => {
+export const utcToLocal = (utcTime, timeZone = 'America/Chicago') => {
     const utcDate = moment.utc(utcTime);
     return utcDate.tz(timeZone).format();
 }
@@ -52,7 +52,7 @@ export const utcToLocal = (utcTime, timeZone) => {
  * const utcTime = localTimeToUtcTime('14:30', 'America/New_York');
  * console.log(utcTime); // Outputs the corresponding UTC time
  */
-export const localTimeToUtcTime = (localTime, timeZone) => {
+export const localTimeToUtcTime = (localTime, timeZone = 'America/Chicago') => {
     const [hours, minutes] = localTime.split(':');
     const localDateTime = moment.tz({ hour: hours, minute: minutes }, timeZone);
     return localDateTime.utc().format('HH:mm');
@@ -72,7 +72,7 @@ export const localTimeToUtcTime = (localTime, timeZone) => {
  * const localTime = utcTimeToLocalTime('18:30', 'America/New_York');
  * console.log(localTime); // Outputs the corresponding local time
  */
-export const utcTimeToLocalTime = (utcTime, timeZone) => {
+export const utcTimeToLocalTime = (utcTime, timeZone = 'America/Chicago') => {
     const [hours, minutes] = utcTime.split(':');
     const utcDateTime = moment.utc({ hour: hours, minute: minutes });
     return utcDateTime.tz(timeZone).format('HH:mm');
