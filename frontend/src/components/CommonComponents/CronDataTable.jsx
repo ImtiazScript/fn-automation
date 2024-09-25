@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
 import {
   Button,
   Table,
@@ -8,7 +7,6 @@ import {
   Row,
   Col,
   Dropdown,
-  Alert,
   Form as BootstrapForm,
 } from 'react-bootstrap';
 import {
@@ -20,9 +18,8 @@ import {
 import { useGetProvidersMutation } from '../../slices/adminApiSlice';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import Select from 'react-select';
 import { useSelector } from 'react-redux';
-import TimeZoneSelect from '../utils/TimeZoneSelect';
+import CronConfigModal from './CronConfigModal';
 
 const CronsDataTable = () => {
   const [crons, setCrons] = useState([]);
@@ -32,9 +29,6 @@ const CronsDataTable = () => {
     useGetTypesOfWorkOrderMutation();
 
   const { userInfo } = useSelector((state) => state.auth);
-  const [activeProvidersFromAPI, { isLoadingActiveProviders }] =
-    useGetProvidersMutation();
-  const [activeProviders, setActiveProviders] = useState([]);
 
   const [totalCrons, setTotalCrons] = useState(0);
   const limit = 10;
@@ -57,14 +51,6 @@ const CronsDataTable = () => {
           const typesOfWorkOrderFromApiCall = await typesOfWorkOrderFromAPI();
           const typesOfWorkOrderArray = typesOfWorkOrderFromApiCall.data;
           setTypesOfWorkOrder(typesOfWorkOrderArray);
-        }
-
-        if (activeProviders && !activeProviders.length) {
-          // Getting activeProviders
-          const activeProvidersFromAPICall = await activeProvidersFromAPI();
-          const activeProvidersArray =
-            activeProvidersFromAPICall.data.providers;
-          setActiveProviders(activeProvidersArray);
         }
       };
       fetchData();
@@ -111,32 +97,6 @@ const CronsDataTable = () => {
     setSearchQuery(event.target.value);
   };
   const handleAddClick = () => setShowAddModal(true);
-  const handleClose = () => setShowAddModal(false);
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const allWorkOrderTypeOptions = typesOfWorkOrder.map((type) => ({
-    value: type.fnTypeId.toString(), // Convert to string if necessary
-    label: type.fnTypeName,
-  }));
-
-  const handleWorkOrderTypeChange = (selectedOptions) => {
-    setWorkOrderTypeOptions(selectedOptions);
-  };
-
-  const allActiveProvidersOptions =
-    activeProviders && activeProviders.length
-      ? activeProviders.map((provider) => ({
-          value: provider.userId,
-          label: provider.name,
-        }))
-      : [];
-
-  const handleProviderChange = (selectedUser) => {
-    setFormData({ ...formData, user: selectedUser });
-  };
 
   useEffect(() => {
     let isValid =
@@ -155,66 +115,6 @@ const CronsDataTable = () => {
     }
     setIsFormValid(isValid);
   }, [formData, workOrderTypeOptions]);
-
-  const formatDateForInput = (dateTime) => {
-    return dateTime ? format(new Date(dateTime), "yyyy-MM-dd'T'HH:mm") : '';
-  };
-
-  const handleOffDayChange = (e) => {
-    const value = e.target.value;
-    setFormData((prevData) => ({
-      ...prevData,
-      offDays: prevData.offDays.includes(value)
-        ? prevData.offDays.filter((day) => day !== value)
-        : [...prevData.offDays, value],
-    }));
-  };
-
-  const handleSaveChanges = async () => {
-    const selectedFnTypeIds = workOrderTypeOptions.map(
-      (workOrderType) => workOrderType.value,
-    );
-    try {
-      // Prepare the data to be sent
-      const data = {
-        userId: userInfo.isAdmin && formData.user ? formData.user?.value : 0,
-        centerZip: formData.centerZip,
-        cronStartAt: formData.cronStartAt,
-        cronEndAt: formData.cronEndAt,
-        workingWindowStartAt: formData.workingWindowStartAt,
-        workingWindowEndAt: formData.workingWindowEndAt,
-        drivingRadius: formData.drivingRadius,
-        status: formData.status,
-        typesOfWorkOrder: selectedFnTypeIds,
-        isFixed: formData.isFixed,
-        fixedPayment: formData.fixedPayment ? parseInt(formData.fixedPayment) : 0,
-        isHourly: formData.isHourly,
-        hourlyPayment: formData.hourlyPayment ? parseInt(formData.hourlyPayment) : 0,
-        isPerDevice: formData.isPerDevice,
-        perDevicePayment: formData.perDevicePayment ? parseInt(formData.perDevicePayment) : 0,
-        isBlended: formData.isBlended,
-        firstHourlyPayment: formData.firstHourlyPayment ? parseInt(formData.firstHourlyPayment) : 0,
-        additionalHourlyPayment: formData.additionalHourlyPayment ? parseInt(formData.additionalHourlyPayment) : 0,
-        isEnabledCounterOffer: formData.isEnabledCounterOffer,
-        offDays: formData.offDays,
-        timeOffStartAt: formData.timeOffStartAt,
-        timeOffEndAt: formData.timeOffEndAt,
-        timeZone: formData.timeZone,
-      };
-
-      const response = await addCron(data).unwrap();
-
-      // Handle success (e.g., show a toast message or refresh the data)
-      toast.success('Cron added successfully');
-
-      // Close the modal
-      // setShowEditModal(false);
-      window.location.reload();
-    } catch (error) {
-      // Handle error (e.g., show an error message)
-      toast.error('Failed to add cron.');
-    }
-  };
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [cronIdToDelete, setCronIdToDelete] = useState(null); // Track the user ID to delete
@@ -397,7 +297,7 @@ const CronsDataTable = () => {
         </Col>
       </Row>
 
-      {/* Add cron modal */}
+      {/* Add cron modal
       <Modal show={showAddModal} onHide={handleClose} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Add Cron Details</Modal.Title>
@@ -496,7 +396,6 @@ const CronsDataTable = () => {
               <h5>Payments</h5>
             </div>
 
-            {/* Fixed checkbox and conditional field */}
             <Row style={{ marginBottom: '10px' }}>
               <Col>
                 <BootstrapForm.Group controlId="fixedPayment">
@@ -526,7 +425,6 @@ const CronsDataTable = () => {
                 </BootstrapForm.Group>
               </Col>
 
-              {/* Hourly checkbox and conditional field */}
               <Col>
                 <BootstrapForm.Group controlId="hourlyPayment">
                   <BootstrapForm.Check
@@ -556,7 +454,6 @@ const CronsDataTable = () => {
               </Col>
             </Row>
 
-            {/* Per Device checkbox and conditional field */}
             <Row style={{ marginBottom: '20px' }}>
               <Col>
                 <BootstrapForm.Group controlId="perDevicePayment">
@@ -589,7 +486,6 @@ const CronsDataTable = () => {
                 </BootstrapForm.Group>
               </Col>
 
-              {/* Blended checkbox and conditional fields */}
               <Col>
                 <BootstrapForm.Group controlId="blendedPayment">
                   <BootstrapForm.Check
@@ -744,7 +640,6 @@ const CronsDataTable = () => {
 
             <Row style={{ marginBottom: '20px' }}>
               <Col>
-                {/* Counter-offer checkbox and conditional field */}
                 <BootstrapForm.Group controlId="counterOffer">
                   <BootstrapForm.Check
                     type="checkbox"
@@ -802,7 +697,18 @@ const CronsDataTable = () => {
             Save
           </Button>
         </Modal.Footer>
-      </Modal>
+      </Modal> */}
+
+      <CronConfigModal
+        cron
+        showEditModal={showAddModal}
+        setShowEditModal= {setShowAddModal}
+        formData={formData}
+        setFormData={setFormData}
+        typesOfWorkOrder={typesOfWorkOrder}
+        workOrderTypeOptions = {workOrderTypeOptions}
+        setWorkOrderTypeOptions={setWorkOrderTypeOptions}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Modal
