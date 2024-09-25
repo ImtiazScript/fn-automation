@@ -29,10 +29,9 @@ const CronConfigModal = ({
   const [activeProviders, setActiveProviders] = useState([]);
   const [addCron] = useAddCronMutation();
   const [workOrderTypeOptions, setWorkOrderTypeOptions] = useState([]);
-  const [isFormValid, setIsFormValid] = useState(false);
 
   const [formData, setFormData] = useState({
-    user: 0,
+    userId: 0,
     cronStartAt: '',
     cronEndAt: '',
     workingWindowStartAt: '',
@@ -62,6 +61,7 @@ const CronConfigModal = ({
   useEffect(() => {
     if (cron) {
       setFormData({
+        userId: cron.userId,
         cronStartAt: cron.cronStartAt,
         cronEndAt: cron.cronEndAt,
         workingWindowStartAt: cron.workingWindowStartAt,
@@ -109,7 +109,7 @@ const CronConfigModal = ({
   };
 
   const handleProviderChange = (selectedUser) => {
-    setFormData({ ...formData, user: selectedUser });
+    setFormData({ ...formData, userId: selectedUser.value });
   };
 
   const handleChange = (e) => {
@@ -181,32 +181,123 @@ const CronConfigModal = ({
         }))
       : [];
 
-  useEffect(() => {
-    let isValid =
-      formData.cronStartAt &&
-      formData.cronEndAt &&
-      formData.workingWindowStartAt &&
-      formData.workingWindowEndAt &&
-      formData.drivingRadius &&
-      formData.status &&
-      formData.centerZip &&
-      formData.timeZone &&
-      workOrderTypeOptions.length > 0;
-    if (userInfo.isAdmin) {
-      // making sure, provider is also selected
-      isValid = isValid && formData.user;
-    }
-    setIsFormValid(isValid);
-  }, [formData, workOrderTypeOptions]);
+      const isValidFormData = async (formData, selectedFnTypeIds, userInfo) => {
+        console.log(formData);
+
+        const errors = [];
+      
+        // Cron configure
+        if (userInfo.isAdmin && !formData.userId) {
+          errors.push('User selection is required for admin.');
+        }
+      
+        if (!formData.cronStartAt || !formData.cronEndAt) {
+          errors.push('Both cron start-time and end-time are required.');
+        } else if (formData.cronEndAt <= formData.cronStartAt) {
+          errors.push('Cron end-time must be after start-time.');
+        }
+      
+        if (!formData.centerZip) {
+          errors.push('Provider center zip code is required.');
+        }
+      
+        if (!formData.drivingRadius) {
+          errors.push('Driving radius is required.');
+        }
+      
+        if (!selectedFnTypeIds.length) {
+          errors.push('At least one work order type must be selected.');
+        }
+      
+        // Payment validation
+        if (!formData.isFixed && !formData.hourlyPayment && !formData.isPerDevice && !formData.isBlended) {
+          errors.push('At least one payment type must be selected.');
+        }
+      
+        if (formData.isFixed && !formData.fixedPayment) {
+          errors.push('Fixed payment amount is required.');
+        }
+      
+        if (formData.isHourly && !formData.hourlyPayment) {
+          errors.push('Hourly payment amount is required.');
+        }
+      
+        if (formData.isPerDevice && !formData.perDevicePayment) {
+          errors.push('Per-device payment amount is required.');
+        }
+      
+        if (formData.isBlended && (!formData.firstHourlyPayment || !formData.additionalHourlyPayment)) {
+          errors.push('Blended payment requires both first and additional hourly payment amounts.');
+        }
+      
+        // Schedule validation
+        if (!formData.timeZone) {
+          errors.push('Time zone selection is required.');
+        }
+      
+        if (!formData.workingWindowStartAt || !formData.workingWindowEndAt) {
+          errors.push('Daily working schedule start and end times are required.');
+        }
+      
+        if (formData.offDays.length === 7) {
+          errors.push('All days of the week cannot be off-days.');
+        }
+      
+        if ((formData.timeOffStartAt && !formData.timeOffEndAt) || (!formData.timeOffStartAt && formData.timeOffEndAt)) {
+          errors.push('Both start and end dates for planned time-off are required.');
+        } else if (formData.timeOffStartAt && formData.timeOffEndAt && formData.timeOffEndAt <= formData.timeOffStartAt) {
+          errors.push('Planned time-off end date must be after start date.');
+        }
+      
+        // Counter-offer validation
+        if (formData.isEnabledCounterOffer) {
+          if (!formData.paymentChangeNote) {
+            errors.push('Payment change reason is required when counter-offer is enabled.');
+          }
+          if (!formData.scheduleChangeNote) {
+            errors.push('Schedule change reason is required when counter-offer is enabled.');
+          }
+          if (!formData.scheduleAndPayChangeNote) {
+            errors.push('Combined payment and schedule change reason is required when counter-offer is enabled.');
+          }
+        }
+      
+        // Status validation
+        if (!formData.status) {
+          errors.push('Cron status is required.');
+        }
+      
+        // Return result
+        if (errors.length > 0) {
+          return {
+            isValid: false,
+            error: errors.join('<br /><br />'), // Combine all errors into a single string
+          };
+        }
+      
+        return {
+          isValid: true,
+          error: '',
+        };
+      };
+      
 
   const handleSaveChanges = async () => {
     const selectedFnTypeIds = workOrderTypeOptions.map(
       (workOrderType) => workOrderType.value,
     );
+
+    // form data validation
+    const formValidation = await isValidFormData(formData, selectedFnTypeIds, userInfo);
+    if(!formValidation.isValid) {
+      toast.error(<div dangerouslySetInnerHTML={{ __html: formValidation.error }} />);
+      return;
+    }
+
     try {
       // Prepare the data to be sent
       const data = {
-        userId: userInfo.isAdmin && formData.user ? formData.user?.value : 0,
+        userId: userInfo.isAdmin && formData.userId ? formData.userId : 0,
         cronId: cron.cronId,
         centerZip: formData.centerZip,
         cronStartAt: formData.cronStartAt,
@@ -257,9 +348,6 @@ const CronConfigModal = ({
       // Close the modal
       // setShowEditModal(false);
       window.location.reload();
-
-      // Handle success (e.g., show a toast message or refresh the data)
-      toast.success('Cron updated successfully!');
     } catch (error) {
       // Handle error (e.g., show an error message)
       toast.error('Failed to update cron.');
@@ -273,13 +361,13 @@ const CronConfigModal = ({
       title: 'Step 1: Cron Configuration',
       content: (
         <>
-          {userInfo.isAdmin && !cron.cronId && (
+          {userInfo.isAdmin && (
             <Row style={{ marginBottom: '20px' }}>
               <Col>
                 <BootstrapForm.Group controlId="providerName">
                   <BootstrapForm.Label>Provider</BootstrapForm.Label>
                   <Select
-                    value={formData.user}
+                    value={allActiveProvidersOptions.find(option => option.value === formData.userId) || null}
                     name="userId"
                     options={allActiveProvidersOptions}
                     onChange={(selectedOption) =>
@@ -287,6 +375,7 @@ const CronConfigModal = ({
                     }
                     classNamePrefix="select"
                     required
+                    isDisabled={!!cron.cronId}
                   />
                 </BootstrapForm.Group>
               </Col>

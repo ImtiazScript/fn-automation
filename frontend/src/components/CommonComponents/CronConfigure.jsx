@@ -69,8 +69,6 @@ const CronConfigure = ({ cron, typesOfWorkOrder }) => {
 
   const handleEditClick = () => setShowEditModal(true);
 
-  console.log('rendering cron configure');
-
   return (
     <Container>
       <Card className="my-4">

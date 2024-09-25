@@ -81,8 +81,6 @@ const CronsDataTable = () => {
     cron.userDetails.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  console.log('rendering cronDataTable');
-
   return (
     <>
       <div className="d-flex justify-content-between align-items-center mt-3">
