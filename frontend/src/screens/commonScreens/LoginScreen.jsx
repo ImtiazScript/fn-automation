@@ -11,6 +11,10 @@ import {
   useIntegrationInfoByUserIdMutation,
 } from '../../slices/userApiSlice';
 import { setIntegrationInfo } from '../../slices/integrationSlice';
+import {
+  useGetCronsDataMutation,
+} from '../../slices/commonApiSlice';
+import { setCrons } from '../../slices/cronsSlice';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -32,19 +36,27 @@ const LoginScreen = () => {
     getIntegrationInfoByUserId,
     { data: integrateUserInfo, isLoading: isLoadingIntegrationInfo },
   ] = useIntegrationInfoByUserIdMutation();
+  const [cronsDataFromAPI, { isCronsLoading }] = useGetCronsDataMutation();
 
   const submitHandler = async (e) => {
     e.preventDefault();
     try {
-      const responseFromApiCall = await login({ email, password }).unwrap();
-      dispatch(setCredentials({ ...responseFromApiCall }));
+      const loginResponse = await login({ email, password }).unwrap();
+      dispatch(setCredentials({ ...loginResponse }));
 
-      if (responseFromApiCall?.userId && responseFromApiCall?.isActive) {
+      if (loginResponse?.userId && loginResponse?.isActive) {
         try {
-        const integrationResponse = await getIntegrationInfoByUserId(responseFromApiCall.userId).unwrap();
+        const integrationResponse = await getIntegrationInfoByUserId(loginResponse.userId).unwrap();
         dispatch(setIntegrationInfo(integrationResponse));
-        } catch (integrationErr) {
-          // console.error('Integration error:', integrationErr);
+
+        // if integrated with fn and not an admin, pull users crons
+        if (!loginResponse.isAdmin && integrationResponse) {
+          const cronsResponse = await cronsDataFromAPI({ currentPage: 1 });
+          const cronsData = cronsResponse.data.cronsData;
+          dispatch(setCrons(cronsData));
+        }
+        } catch (err) {
+          // console.error('Integration error:', err);
         }
       }
       navigate('/');
