@@ -7,6 +7,10 @@ import { setCredentials } from '../../slices/authSlice';
 import FormContainer from '../../components/FormContainer';
 import { toast } from 'react-toastify';
 import Loader from '../../components/Loader';
+import {
+  useIntegrationInfoByUserIdMutation,
+} from '../../slices/userApiSlice';
+import { setIntegrationInfo } from '../../slices/integrationSlice';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -24,11 +28,25 @@ const LoginScreen = () => {
     }
   }, [navigate, userInfo]);
 
+  const [
+    getIntegrationInfoByUserId,
+    { data: integrateUserInfo, isLoading: isLoadingIntegrationInfo },
+  ] = useIntegrationInfoByUserIdMutation();
+
   const submitHandler = async (e) => {
     e.preventDefault();
     try {
       const responseFromApiCall = await login({ email, password }).unwrap();
       dispatch(setCredentials({ ...responseFromApiCall }));
+
+      if (responseFromApiCall?.userId && responseFromApiCall?.isActive) {
+        try {
+        const integrationResponse = await getIntegrationInfoByUserId(responseFromApiCall.userId).unwrap();
+        dispatch(setIntegrationInfo(integrationResponse));
+        } catch (integrationErr) {
+          // console.error('Integration error:', integrationErr);
+        }
+      }
       navigate('/');
     } catch (err) {
       toast.error(err?.data?.message || err?.error);

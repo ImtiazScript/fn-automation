@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useLogoutMutation } from '../../slices/userApiSlice.js';
 import { logout } from '../../slices/authSlice.js';
+import { clearIntegrationInfo } from '../../slices/integrationSlice.js';
 
 const Header = () => {
   const { userInfo } = useSelector((state) => state.auth);
@@ -16,6 +17,7 @@ const Header = () => {
     try {
       await logoutApiCall().unwrap();
       dispatch(logout());
+      dispatch(clearIntegrationInfo());
       navigate('/');
     } catch (err) {
       console.log(err);

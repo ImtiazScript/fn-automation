@@ -6,7 +6,8 @@ import {
   Route,
   RouterProvider,
 } from "react-router-dom";
-import store from "./store.js";
+import { PersistGate } from 'redux-persist/integration/react';
+import store, { persistor } from './store';
 import { Provider } from "react-redux";
 import App from "./App.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -74,10 +75,12 @@ const router = createBrowserRouter(
   )
 );
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+ReactDOM.createRoot(document.getElementById('root')).render(
   <Provider store={store}>
-    <React.StrictMode>
-      <RouterProvider router={router} />
-    </React.StrictMode>
-  </Provider>
+    <PersistGate loading={null} persistor={persistor}>
+      <React.StrictMode>
+        <RouterProvider router={router} />
+      </React.StrictMode>
+    </PersistGate>
+  </Provider>,
 );
