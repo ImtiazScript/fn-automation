@@ -11,6 +11,7 @@ import Loader from '../../components/Loader';
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -30,7 +31,7 @@ const LoginScreen = () => {
       dispatch(setCredentials({ ...responseFromApiCall }));
       navigate('/');
     } catch (err) {
-      toast.error(err?.data?.errors[0]?.message || err?.error);
+      toast.error(err?.data?.message || err?.error);
     }
   };
 
@@ -50,11 +51,18 @@ const LoginScreen = () => {
         <Form.Group className="my-2" controlId="password">
           <Form.Label>Password</Form.Label>
           <Form.Control
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             placeholder="Enter password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-          ></Form.Control>
+          />
+          <Form.Check 
+            type="checkbox" 
+            label="Show Password" 
+            className="mt-2"
+            checked={showPassword}
+            onChange={(e) => setShowPassword(e.target.checked)} 
+          />
         </Form.Group>
         <div className="d-flex justify-content-end">
           <Button type="submit" variant="primary" className="mt-3">

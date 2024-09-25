@@ -7,6 +7,7 @@ import { useResetPasswordMutation } from '../../slices/userApiSlice';
 const PasswordResetScreen = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [resetPassword] = useResetPasswordMutation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -38,29 +39,38 @@ const PasswordResetScreen = () => {
   };
 
   return (
-    <Form onSubmit={submitHandler}>
-      <h1>Reset Password</h1>
+    <Form onSubmit={submitHandler} style={{ maxWidth: '400px', margin: '0 auto' }}>
+      <h3>Reset Password</h3>
       <Form.Group controlId="password">
-        <Form.Label>New Password</Form.Label>
+      <Form.Label style={{ fontSize: '0.9rem' }}>New Password</Form.Label>
         <Form.Control
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           placeholder="Enter new password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          style={{ fontSize: '0.85rem' }}
         />
       </Form.Group>
 
       <Form.Group controlId="confirmPassword">
-        <Form.Label>Confirm New Password</Form.Label>
+      <Form.Label style={{ fontSize: '0.9rem' }}>Confirm New Password</Form.Label>
         <Form.Control
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           placeholder="Confirm new password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
+        <Form.Check 
+          type="checkbox" 
+          label="Show Password"
+          className="mt-2"
+          checked={showPassword}
+          onChange={(e) => setShowPassword(e.target.checked)}
+          style={{ fontSize: '0.85rem' }}
+        />
       </Form.Group>
 
-      <Button type="submit" variant="primary" disabled={!password || !confirmPassword} className="mt-3">
+      <Button type="submit" variant="primary" disabled={!password || !confirmPassword} className="mt-3" style={{ fontSize: '0.85rem', padding: '0.4rem 1rem' }}>
         Reset Password
       </Button>
     </Form>

@@ -3,29 +3,27 @@
 // ===================== Importing necessary modules/files =====================
 import asyncHandler from "express-async-handler";
 import Cron from "../models/cronModel.js";
-import User from "../models/userModel.js";
-import { BadRequestError, NotAuthorizedError } from "base-error-handler";
-import winston, { Logger, format } from "winston";
-import CronService from '../services/cronService.js';
+import { BadRequestError, UnauthorizedError, NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
+import { localToUtc, utcToLocal, localTimeToUtcTime, utcTimeToLocalTime } from "../utils/timeZoneConverter.js";
+
 
 /*
   # Desc: Add a new cron
-  # Route: POST /api/v1/admin/add-cron
+  # Route: POST /api/v1/crons/add-cron
   # Access: PRIVATE
 */
 const addCron = asyncHandler(async (req, res) => {
-  const cronService = new CronService(req.user.userId);
   try {
     const { userId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, typesOfWorkOrder, status,
       isFixed, fixedPayment, isHourly, hourlyPayment, isPerDevice, perDevicePayment, isBlended, firstHourlyPayment, additionalHourlyPayment,
-      isEnabledCounterOffer, offDays, timeOffStartAt, timeOffEndAt, timeZone } = req.body;
+      isEnabledCounterOffer, offDays, timeOffStartAt, timeOffEndAt, timeZone, scheduleChangeNote, paymentChangeNote, scheduleAndPayChangeNote } = req.body;
     const cron = await Cron.create({
-      userId: req.user.isAdmin ? userId: req.user.userId,
+      userId: req.user.isAdmin ? userId : req.user.userId,
       centerZip: centerZip,
-      cronStartAt: cronService.localToUtc(cronStartAt, timeZone),
-      cronEndAt: cronService.localToUtc(cronEndAt, timeZone),
-      workingWindowStartAt: cronService.localTimeToUtcTime(workingWindowStartAt, timeZone),
-      workingWindowEndAt: cronService.localTimeToUtcTime(workingWindowEndAt, timeZone),
+      cronStartAt: localToUtc(cronStartAt, timeZone),
+      cronEndAt: localToUtc(cronEndAt, timeZone),
+      workingWindowStartAt: localTimeToUtcTime(workingWindowStartAt, timeZone),
+      workingWindowEndAt: localTimeToUtcTime(workingWindowEndAt, timeZone),
       drivingRadius: drivingRadius,
       requestedWoIds: [],
       totalRequested: 0,
@@ -42,30 +40,32 @@ const addCron = asyncHandler(async (req, res) => {
       additionalHourlyPayment: additionalHourlyPayment,
       isEnabledCounterOffer: isEnabledCounterOffer,
       offDays: offDays,
-      timeOffStartAt: cronService.localToUtc(timeOffStartAt, timeZone),
-      timeOffEndAt: cronService.localToUtc(timeOffEndAt, timeZone),
+      timeOffStartAt: localToUtc(timeOffStartAt, timeZone),
+      timeOffEndAt: localToUtc(timeOffEndAt, timeZone),
       timeZone: timeZone,
+      scheduleChangeNote: scheduleChangeNote,
+      paymentChangeNote: paymentChangeNote,
+      scheduleAndPayChangeNote: scheduleAndPayChangeNote,
       deleted: false,
     });
     if (cron) {
       res.status(201).json({ message: "Successfully added the cron", cron: cron });
     }
   } catch (error) {
-    console.error("Error adding cron:", error.message); // Print the error message to the console
-    res.status(500).json({ message: "Failed to add cron", error: error.message }); // Send a response with the error message
+    throw new InternalServerError("Failed to add cron.");
   }
 });
 
 
 /*
    # Desc: Update an existing cron
-   # Route: PUT /api/v1/admin/update-cron
+   # Route: PUT /api/v1/crons/update-cron
    # Access: PRIVATE
   */
 const updateCron = asyncHandler(async (req, res) => {
   const { cronId, centerZip, cronStartAt, cronEndAt, workingWindowStartAt, workingWindowEndAt, drivingRadius, requestedWoIds, totalRequested, typesOfWorkOrder, status,
     isFixed, fixedPayment, isHourly, hourlyPayment, isPerDevice, perDevicePayment, isBlended, firstHourlyPayment, additionalHourlyPayment, isEnabledCounterOffer, offDays,
-    timeOffStartAt, timeOffEndAt, timeZone, deleted } = req.body;
+    timeOffStartAt, timeOffEndAt, timeZone, scheduleChangeNote, paymentChangeNote, scheduleAndPayChangeNote, deleted } = req.body;
   if (!cronId) {
     throw new BadRequestError("Cron id is missing in the request - cron updating failed.");
   }
@@ -73,19 +73,18 @@ const updateCron = asyncHandler(async (req, res) => {
   // Find the existing cron by Id
   const cronExist = await Cron.findOne({ cronId });
   if (req.user && !req.user.isAdmin && req.user.userId !== cronExist.userId) {
-    throw new NotAuthorizedError("Authorization Error - you do not have permission to update this cron");
+    throw new UnauthorizedError("Authorization Error - you do not have permission to update this cron");
   }
 
-  const cronService = new CronService(req.user.userId);
   try {
     if (cronExist) {
       // Update only the fields that are provided in the request
       const updatedFields = {};
       if (centerZip !== undefined) updatedFields.centerZip = centerZip;
-      if (cronStartAt !== undefined) updatedFields.cronStartAt = cronService.localToUtc(cronStartAt, timeZone);
-      if (cronEndAt !== undefined) updatedFields.cronEndAt = cronService.localToUtc(cronEndAt, timeZone);
-      if (workingWindowStartAt !== undefined) updatedFields.workingWindowStartAt = cronService.localTimeToUtcTime(workingWindowStartAt, timeZone);
-      if (workingWindowEndAt !== undefined) updatedFields.workingWindowEndAt = cronService.localTimeToUtcTime(workingWindowEndAt, timeZone);
+      if (cronStartAt !== undefined) updatedFields.cronStartAt = localToUtc(cronStartAt, timeZone);
+      if (cronEndAt !== undefined) updatedFields.cronEndAt = localToUtc(cronEndAt, timeZone);
+      if (workingWindowStartAt !== undefined) updatedFields.workingWindowStartAt = localTimeToUtcTime(workingWindowStartAt, timeZone);
+      if (workingWindowEndAt !== undefined) updatedFields.workingWindowEndAt = localTimeToUtcTime(workingWindowEndAt, timeZone);
       if (drivingRadius !== undefined) updatedFields.drivingRadius = drivingRadius;
       if (requestedWoIds !== undefined) updatedFields.requestedWoIds = requestedWoIds;
       if (totalRequested !== undefined) updatedFields.totalRequested = totalRequested;
@@ -102,9 +101,12 @@ const updateCron = asyncHandler(async (req, res) => {
       if (additionalHourlyPayment !== undefined) updatedFields.additionalHourlyPayment = additionalHourlyPayment;
       if (isEnabledCounterOffer !== undefined) updatedFields.isEnabledCounterOffer = isEnabledCounterOffer;
       if (offDays !== undefined) updatedFields.offDays = offDays;
-      if (timeOffStartAt !== undefined) updatedFields.timeOffStartAt = cronService.localToUtc(timeOffStartAt, timeZone);
-      if (timeOffEndAt !== undefined) updatedFields.timeOffEndAt = cronService.localToUtc(timeOffEndAt, timeZone);
+      if (timeOffStartAt !== undefined) updatedFields.timeOffStartAt = localToUtc(timeOffStartAt, timeZone);
+      if (timeOffEndAt !== undefined) updatedFields.timeOffEndAt = localToUtc(timeOffEndAt, timeZone);
       if (timeZone !== undefined) updatedFields.timeZone = timeZone;
+      if (scheduleChangeNote !== undefined) updatedFields.scheduleChangeNote = scheduleChangeNote;
+      if (paymentChangeNote !== undefined) updatedFields.paymentChangeNote = paymentChangeNote;
+      if (scheduleAndPayChangeNote !== undefined) updatedFields.scheduleAndPayChangeNote = scheduleAndPayChangeNote;
       if (deleted !== undefined) updatedFields.deleted = deleted;
 
       // Perform the update
@@ -114,15 +116,14 @@ const updateCron = asyncHandler(async (req, res) => {
       throw new BadRequestError("Cron not found - updating failed.");
     }
   } catch (error) {
-    console.error("Error updating cron:", error.message);
-    res.status(500).json({ message: "Failed to update cron", error: error.message });
+    throw new InternalServerError("Failed to update cron.");
   }
 });
 
 
 /*
    # Desc: Get all crons
-   # Route: PUT /api/v1/admin/get-crons
+   # Route: GET /api/v1/crons/get-crons
    # Access: PRIVATE
   */
 const getAllCrons = asyncHandler(async (req, res) => {
@@ -135,20 +136,21 @@ const getAllCrons = asyncHandler(async (req, res) => {
     $or: [
       { deleted: { $exists: false } },
       { deleted: false }
-    ]});
+    ]
+  });
   try {
     // Build match conditionally based on user role
     const matchCondition = req.user.isAdmin ? {} : { userId: req.user.userId };
     const cronsData = await Cron.aggregate([
-        {
-            $match: {
-              ...matchCondition,
-              $or: [
-                { deleted: { $exists: false } },
-                { deleted: false }
-              ]
-            } // Match based on user role
-          },
+      {
+        $match: {
+          ...matchCondition,
+          $or: [
+            { deleted: { $exists: false } },
+            { deleted: false }
+          ]
+        } // Match based on user role
+      },
       {
         $lookup: {
           from: 'users', // The collection name in MongoDB
@@ -165,10 +167,10 @@ const getAllCrons = asyncHandler(async (req, res) => {
       },
       {
         $project: {
-            password: 0, // Exclude sensitive fields from userDetails
-            'userDetails.password': 0,
-            'userDetails.email': 0 // Exclude unnecessary fields
-          }
+          password: 0, // Exclude sensitive fields from userDetails
+          'userDetails.password': 0,
+          'userDetails.email': 0 // Exclude unnecessary fields
+        }
       },
       {
         $sort: sort  // Sort by timestamp in descending order
@@ -182,17 +184,17 @@ const getAllCrons = asyncHandler(async (req, res) => {
     ]);
     res.status(200).json({ cronsData, totalCrons });
   } catch (error) {
-    res.status(500).json({ message: "Failed to get crons", error: error.message });
+    throw new InternalServerError("Failed to get crons.");
   }
 })
 
+
 /*
-   # Desc: Get single cron
-   # Route: PUT /api/v1/admin/get-cron/:cronId
+   # Desc: Get a cron detail
+   # Route: GET /api/v1/crons/get-cron/:cronId
    # Access: PRIVATE
   */
 const getCron = asyncHandler(async (req, res) => {
-  const cronService = new CronService(req.user.userId);
   const { cronId } = req.params;
   try {
     let cronData = await Cron.aggregate([
@@ -221,27 +223,34 @@ const getCron = asyncHandler(async (req, res) => {
         }
       }
     ]);
-    
+
     cronData = cronData.length > 0 ? cronData[0] : null;
 
     if (cronData.cronStartAt) {
-      cronData.cronStartAt = cronService.utcToLocal(cronData.cronStartAt, cronData.timeZone);
+      cronData.cronStartAt = utcToLocal(cronData.cronStartAt, cronData.timeZone);
     }
     if (cronData.cronEndAt) {
-      cronData.cronEndAt = cronService.utcToLocal(cronData.cronEndAt, cronData.timeZone);
+      cronData.cronEndAt = utcToLocal(cronData.cronEndAt, cronData.timeZone);
     }
     if (cronData.timeOffStartAt) {
-      cronData.timeOffStartAt = cronService.utcToLocal(cronData.timeOffStartAt, cronData.timeZone);
+      cronData.timeOffStartAt = utcToLocal(cronData.timeOffStartAt, cronData.timeZone);
     }
     if (cronData.timeOffEndAt) {
-      cronData.timeOffEndAt = cronService.utcToLocal(cronData.timeOffEndAt, cronData.timeZone);
+      cronData.timeOffEndAt = utcToLocal(cronData.timeOffEndAt, cronData.timeZone);
     }
 
     if (cronData.workingWindowStartAt) {
-      cronData.workingWindowStartAt = cronService.utcTimeToLocalTime(cronData.workingWindowStartAt, cronData.timeZone);
+      cronData.workingWindowStartAt = utcTimeToLocalTime(cronData.workingWindowStartAt, cronData.timeZone);
     }
     if (cronData.workingWindowEndAt) {
-      cronData.workingWindowEndAt = cronService.utcTimeToLocalTime(cronData.workingWindowEndAt, cronData.timeZone);
+      cronData.workingWindowEndAt = utcTimeToLocalTime(cronData.workingWindowEndAt, cronData.timeZone);
+    }
+
+    if (cronData.createdAt) {
+      cronData.createdAt = utcToLocal(cronData.createdAt, cronData.timeZone);
+    }
+    if (cronData.updatedAt) {
+      cronData.updatedAt = utcToLocal(cronData.updatedAt, cronData.timeZone);
     }
 
     res.status(200).json({ cronData });
@@ -262,14 +271,14 @@ const deleteCron = asyncHandler(async (req, res) => {
 
     // If cron does not exist, send a 404 error
     if (!cron) {
-      return res.status(404).json({ message: 'Cron not found' });
+      throw new NotFoundError("Not found cron.");
     }
 
     // Respond with success message
     res.status(200).json({ message: 'Successfully deleted the cron' });
 
   } catch (error) {
-    res.status(500).json({ message: "Failed to delete cron", error: error.message });
+    throw new InternalServerError("Failed to delete cron.");
   }
 });
 

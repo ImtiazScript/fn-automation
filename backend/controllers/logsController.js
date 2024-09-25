@@ -3,13 +3,15 @@
 // ===================== Importing necessary modules/files =====================
 import asyncHandler from "express-async-handler";
 import mongoose from "mongoose";
-import winston, { Logger, format } from "winston";
 import moment from 'moment-timezone';
+import { NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
 
-/**
- * Desc: Get all crons
- * Route: /api/v1/admin/get-logs
- */
+
+/*
+   # Desc: Get all crons following pagination
+   # Route: GET /api/v1/logs/get-logs/from/:fromDate/until/:untilDate/page/:page
+   # Access: PRIVATE
+  */
 const getLogs = asyncHandler(async (req, res) => {
   try {
     const { fromDate, untilDate, page } = req.params;
@@ -25,22 +27,23 @@ const getLogs = asyncHandler(async (req, res) => {
     const totalLogs = await Log.countDocuments({ timestamp: { $gte: from, $lte: until } });
     // Query the logs from MongoDB
     const logs = await Log.find({ timestamp: { $gte: from, $lte: until } })
-      .select('message timestamp level')
+      .select('message timestamp level meta')
       .skip(start)
       .limit(limit)
       .sort(sort)
       .lean();
     res.status(200).json({ logs, totalLogs });
   } catch (error) {
-    console.error('Error fetching logs:', error);
-    res.status(500).json({ message: 'Failed to fetch logs', error: error.message });
+    throw new InternalServerError("Failed to fetch logs.");
   }
 });
 
-/**
- * Desc: Get single cron by cron id
- * Route: /api/v1/admin/get-log/:log-id
- */
+
+/*
+   # Desc: Get cron detail by id
+   # Route: GET /api/v1/logs/get-log/:id
+   # Access: PRIVATE
+  */
 const getLogById = asyncHandler(async (req, res) => {
   try {
     // Define the log model based on the MongoDB collection schema
@@ -50,12 +53,11 @@ const getLogById = asyncHandler(async (req, res) => {
     // Query the log from MongoDB by its _id
     const log = await Log.findById(id).lean();
     if (!log) {
-      return res.status(404).json({ message: 'Log not found' });
+      throw new NotFoundError("Not found log.");
     }
     res.status(200).json({ log });
   } catch (error) {
-    console.error('Error fetching log:', error);
-    res.status(500).json({ message: 'Failed to fetch log', error: error.message });
+    throw new InternalServerError("Failed to fetch log.");
   }
 });
 

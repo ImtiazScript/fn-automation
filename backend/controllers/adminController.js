@@ -3,10 +3,8 @@
 // ===================== Importing necessary modules/files =====================
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
-import { BadRequestError, NotAuthorizedError, NotFoundError } from "base-error-handler";
 import generateAuthToken from "../utils/jwtHelpers/generateAuthToken.js";
 import destroyAuthToken from "../utils/jwtHelpers/destroyAuthToken.js";
-import winston, { Logger, format } from "winston";
 import CronService from '../services/cronService.js';
 import {
   fetchAllUsers,
@@ -17,6 +15,8 @@ import {
   fetchAllActiveProviders,
 } from "../utils/adminHelpers.js";
 import { sendUserActivatedEmail, sendUserBlockedEmail, sendUserUnblockedEmail } from '../utils/emailHelpers/SendMail.js';
+import { BadRequestError, UnauthorizedError, NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
+
 
 /*
    # Desc: Auth user/set token
@@ -52,11 +52,12 @@ const authAdmin = asyncHandler(async (req, res) => {
   }
 });
 
-  /*
-     # Desc: Register new user
-     # Route: POST /api/v1/admin/auth
-     # Access: PUBLIC
-    */
+
+/*
+   # Desc: Register new user
+   # Route: POST /api/v1/admin/
+   # Access: PUBLIC
+  */
 const registerAdmin = asyncHandler(async (req, res) => {
   const { name, email, password, adminRegistrationKey } = req.body;
   if (!email || !password) {
@@ -69,7 +70,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
   } else {
     // Check if Admin registration key is valid
     if (process.env.ADMIN_REGISTRATION_KEY !== adminRegistrationKey) {
-      throw new NotAuthorizedError();
+      throw new UnauthorizedError("Incorrect admin registration key.");
     }
   }
   // Check if user already exist
@@ -105,21 +106,23 @@ const registerAdmin = asyncHandler(async (req, res) => {
   }
 });
 
-  /*
-     # Desc: Logout user / clear cookie
-     # Route: POST /api/v1/admin/logout
-     # Access: PUBLIC
-    */
+
+/*
+   # Desc: Logout user / clear cookie
+   # Route: POST /api/v1/admin/logout
+   # Access: PUBLIC
+  */
 const logoutAdmin = asyncHandler(async (req, res) => {
   destroyAuthToken(res);
   res.status(200).json({ message: "Admin Logged Out" });
 });
 
-  /*
-     # Desc: Get user profile
-     # Route: GET /api/v1/admin/profile
-     # Access: PRIVATE
-    */
+
+/*
+   # Desc: Get user profile
+   # Route: GET /api/v1/admin/profile
+   # Access: PRIVATE
+  */
 const getAdminProfile = asyncHandler(async (req, res) => {
   const user = {
     name: req.user.name,
@@ -128,11 +131,12 @@ const getAdminProfile = asyncHandler(async (req, res) => {
   res.status(200).json({ user });
 });
 
-  /*
-     # Desc: Update Admin profile
-     # Route: PUT /api/v1/admin/profile
-     # Access: PRIVATE
-    */
+
+/*
+   # Desc: Update Admin profile
+   # Route: PUT /api/v1/admin/profile
+   # Access: PRIVATE
+  */
 const updateAdminProfile = asyncHandler(async (req, res) => {
   // Find the user data with user id in the request object
   const admin = await User.findById(req.user._id);
@@ -158,10 +162,16 @@ const updateAdminProfile = asyncHandler(async (req, res) => {
     });
   } else {
     // If requested admin was not found in db, return error
-    throw new NotFoundError();
+    throw new NotFoundError("Admin account not found.");
   }
 });
 
+
+/*
+   # Desc: Get all users
+   # Route: POST /api/v1/admin/get-users/page/:page
+   # Access: PRIVATE
+  */
 const getAllUsers = asyncHandler(async (req, res) => {
   const { page } = req.params;
 
@@ -174,25 +184,38 @@ const getAllUsers = asyncHandler(async (req, res) => {
     $or: [
       { deleted: { $exists: false } },
       { deleted: false }
-    ]});
+    ]
+  });
 
   const usersData = await fetchAllUsers(start, limit, sort);
   if (usersData) {
     res.status(200).json({ usersData, totalUsers });
   } else {
-    throw new NotFoundError();
+    throw new NotFoundError("Users not found.");
   }
 });
 
+
+/*
+   # Desc: Get all active users
+   # Route: GET /api/v1/admin/get-providers
+   # Access: PRIVATE
+  */
 const getAllActiveProviders = asyncHandler(async (req, res) => {
   const providers = await fetchAllActiveProviders();
   if (providers) {
     res.status(200).json({ providers });
   } else {
-    throw new NotFoundError();
+    throw new NotFoundError("Not found active providers.");
   }
 });
 
+
+/*
+   # Desc: Activate a user
+   # Route: PATCH /api/v1/admin/activate-user
+   # Access: PRIVATE
+  */
 const activateUser = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   if (!userId) {
@@ -205,10 +228,16 @@ const activateUser = asyncHandler(async (req, res) => {
 
     res.status(201).json({ message: "User activated successfully." });
   } else {
-    throw new BadRequestError('User activation failed.');
+    throw new InternalServerError('User activation failed.');
   }
 });
 
+
+/*
+   # Desc: Block a user
+   # Route: PATCH /api/v1/admin/block-user
+   # Access: PRIVATE
+  */
 const blockUser = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   if (!userId) {
@@ -221,10 +250,16 @@ const blockUser = asyncHandler(async (req, res) => {
 
     res.status(201).json({ message: "User blocked successfully." });
   } else {
-    throw new BadRequestError("Failed to block user.");
+    throw new InternalServerError("Failed to block user.");
   }
 });
 
+
+/*
+   # Desc: Unblock a user
+   # Route: PATCH /api/v1/admin/unblock-user
+   # Access: PRIVATE
+  */
 const unBlockUser = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   if (!userId) {
@@ -237,10 +272,16 @@ const unBlockUser = asyncHandler(async (req, res) => {
 
     res.status(201).json({ message: "User un-blocked successfully." });
   } else {
-    throw new BadRequestError("Failed to un-block user.");
+    throw new InternalServerError("Failed to un-block user.");
   }
 });
 
+
+/*
+   # Desc: Update a user
+   # Route: PUT /api/v1/admin/update-user
+   # Access: PRIVATE
+  */
 const updateUserData = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   const name = req.body.name;
@@ -254,12 +295,12 @@ const updateUserData = asyncHandler(async (req, res) => {
     const response = usersUpdateStatus.message;
     res.status(200).json({ message: response });
   } else {
-    throw new BadRequestError("User update failed.");
+    throw new InternalServerError("User update failed.");
   }
 });
 
 // PUT endpoint to update isFnServiceCompanyAdmin for a specific userId
-const updateFnServiceCompanyAdmin =  asyncHandler(async (req, res) => {
+const updateFnServiceCompanyAdmin = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   // Step 1: Set isFnServiceCompanyAdmin = false for all existing admins
@@ -274,8 +315,7 @@ const updateFnServiceCompanyAdmin =  asyncHandler(async (req, res) => {
 
   // Step 3: Check if the user exists
   if (!user) {
-    res.status(404);
-    throw new Error('User not found');
+    throw new NotFoundError("User not found.");
   }
 
   res.status(200).json({
@@ -284,6 +324,12 @@ const updateFnServiceCompanyAdmin =  asyncHandler(async (req, res) => {
   });
 });
 
+
+/*
+   # Desc: Delete a user
+   # Route: DELETE /api/v1/admin/delete-user/:userId
+   # Access: PRIVATE
+  */
 const deleteUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   if (!userId) {
@@ -306,7 +352,7 @@ const deleteUser = asyncHandler(async (req, res) => {
   if (deleteUser) {
     res.status(204).json({ message: "User deleted successfully." });
   } else {
-    throw new BadRequestError("Failed to delete user.");
+    throw new InternalServerError("Failed to delete user.");
   }
 });
 

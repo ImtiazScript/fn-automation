@@ -8,9 +8,9 @@ cron.schedule('55 */23 * * *', async () => {
     if(process.env.DISABLED_CRONS === 'true') {
         return;
     }
+    const cronName = 'cleanOlderLogs';
     const logRetentionDays = process.env.LOG_RETENTION_DAYS ? parseInt(process.env.LOG_RETENTION_DAYS) : 7;
-    const currentDateTime = moment.utc().toDate().toLocaleString();
-    logger.info(`CLEAN LOG:: Older than ${logRetentionDays} days log deletion cron running at: ${currentDateTime}`);
+    logger.info(`Cron job '${cronName}' started.`, { cron: cronName });
 
     try {
         // Calculate the date 7 days ago
@@ -23,12 +23,14 @@ cron.schedule('55 */23 * * *', async () => {
         const result = await Log.deleteMany({ timestamp: { $lt: sevenDaysAgo } });
 
         if (result.deletedCount > 0) {
-            logger.info(`CLEAN LOG:: Successfully deleted ${result.deletedCount} logs older than ${logRetentionDays} days at: ${currentDateTime}`);
+            logger.info(`Successfully deleted ${result.deletedCount} logs older than ${logRetentionDays} days.`, { cron: cronName });
         } else {
-            logger.info(`CLEAN LOG:: No logs found older than ${logRetentionDays} days at: ${currentDateTime}`);
+            logger.info(`No logs found older than ${logRetentionDays} days.`, { cron: cronName });
         }
     } catch (error) {
-        logger.error(`CLEAN LOG:: Failed to delete logs: ${error.message}`);
+        logger.error(`Failed to delete logs, error: ${error.message}`, { error: error, cron: cronName });
+    } finally {
+        logger.info(`Cron job '${cronName}' ended.`, { cron: cronName });
     }
 });
 

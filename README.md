@@ -9,12 +9,12 @@
 
  Front-end is built with Reactjs using Vitejs. 
  
- It leverages two custom npm modules, [base-auth-handler](https://www.npmjs.com/package/base-auth-handler) for authentication handling and [base-error-handler](https://www.npmjs.com/package/base-error-handler) for error management.
+ It leverages two custom npm modules, [base-auth-handler](https://www.npmjs.com/package/base-auth-handler) for authentication handling and [@emtiaj/custom-errors](https://www.npmjs.com/package/@emtiaj/custom-errors) for error management.
 
 ## Features
 
 - **Authentication Handling:** Uses [base-auth-handler](https://www.npmjs.com/package/base-auth-handler) for robust authentication with JWT sent in cookies.
-- **Error Management:** Utilizes [base-error-handler](https://www.npmjs.com/package/base-error-handler) for effective error handling.
+- **Error Management:** Utilizes [@emtiaj/custom-errors](https://www.npmjs.com/package/@emtiaj/custom-errors) for effective error handling.
 - **Logger:** Implements a production-level logger created with Winston and Morgan, saving logs into a remote MongoDB instance.
 
 

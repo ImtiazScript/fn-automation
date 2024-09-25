@@ -9,7 +9,8 @@ import cookieParser from "cookie-parser";
 // Custom Authentication & Error middleware from my npm package.
 // Reference: https://www.npmjs.com/package/base-auth-handler
 import { currentUser } from "base-auth-handler";
-import { NotFoundError, errorHandler } from "base-error-handler";
+import { NotFoundError } from '@emtiaj/custom-errors';
+import customErrorHandler from './utils/customErrorHandler.js';
 
 // ===================== Importing necessary files =====================
 import v1APIs from "./routes/api-v1-routes.js";
@@ -63,8 +64,8 @@ app.use("/api/v1", v1APIs);
 
 //? ===================== Configuring Frontend for Production =====================
 
-if(process.env.NODE_ENV === 'production') {
-  
+if (process.env.NODE_ENV === 'production') {
+
   // Setting Frontend build directory as static directory
   const __dirname = path.resolve();
   const frontEndBuildDir = path.join(__dirname, 'frontend/dist');
@@ -72,9 +73,9 @@ if(process.env.NODE_ENV === 'production') {
   app.use(express.static(frontEndBuildDir));
 
   // ===================== Sending Index HTML page as response =====================
-  
+
   const frontEndIndexPage = path.resolve(__dirname, 'frontend', 'dist', 'index.html');
-  
+
   // Serve Home Page request
   app.get('/', (req, res) => {
 
@@ -99,9 +100,7 @@ app.all("*", () => {
   throw new NotFoundError();
 });
 
-//  TODO: Enable or replace with a better error handler
-// Custom Error Handler Configuration
-// app.use(errorHandler);
+app.use(customErrorHandler);
 
 
 export { app };

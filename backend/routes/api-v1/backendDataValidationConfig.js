@@ -66,7 +66,7 @@ const addCronDataValidation = [
   body("cronEndAt")
     .isISO8601()
     .withMessage("Provide a valid cronEndAt in ISO 8601 format."),
-    body("workingWindowStartAt")
+  body("workingWindowStartAt")
     .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)  // Regex for time in HH:mm format
     .withMessage("Provide a valid workingWindowStartAt in HH:mm format."),
   body("workingWindowEndAt")
@@ -99,7 +99,7 @@ const updateCronDataValidation = [
     .isISO8601()
     .withMessage("Provide a valid cronEndAt in ISO 8601 format."),
 
-    body("workingWindowStartAt")
+  body("workingWindowStartAt")
     .optional()
     .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)  // Regex for time in HH:mm format
     .withMessage("Provide a valid workingWindowStartAt in HH:mm format."),
