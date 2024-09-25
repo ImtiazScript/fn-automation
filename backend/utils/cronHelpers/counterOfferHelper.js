@@ -283,7 +283,6 @@ export const getNextAvailableTimeSchedule = async (workOrderSchedule, cron) => {
                 potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
             }
             potentialEndTime.setUTCHours(potentialStartTime.getUTCHours() + (workOrderSchedule.est_labor_hours || 1), potentialStartTime.getUTCMinutes(), 0, 0);
-            console.log(`In off-day, ${workOrderId}`);
             continue;
         }
 
@@ -301,7 +300,6 @@ export const getNextAvailableTimeSchedule = async (workOrderSchedule, cron) => {
                 potentialEndTime.setUTCDate(potentialStartTime.getUTCDate());
             }
             potentialEndTime.setUTCHours(potentialStartTime.getUTCHours() + (workOrderSchedule.est_labor_hours || 1), potentialStartTime.getUTCMinutes(), 0, 0);
-            console.log(`In planned off-day, ${workOrderId}`);
             continue;
         }
 
