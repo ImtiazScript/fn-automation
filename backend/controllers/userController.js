@@ -4,11 +4,13 @@
 import asyncHandler from "express-async-handler";
 
 import User from "../models/userModel.js";
+import Integration from "../models/integrationModel.js";
 import generateAuthToken from "../utils/jwtHelpers/generateAuthToken.js";
 import destroyAuthToken from "../utils/jwtHelpers/destroyAuthToken.js";
 import generatePasswordResetToken from '../utils/jwtHelpers/generatePasswordResetToken.js';
 import { sendResetPasswordEmail, sendUserSignedUpEmail, sendAdminNewUserNotificationEmail } from '../utils/emailHelpers/SendMail.js';
 import { BadRequestError, UnauthorizedError, NotFoundError } from '@emtiaj/custom-errors';
+import CronService from '../services/cronService.js';
 
 
 /*
@@ -209,6 +211,28 @@ const resetPassword = asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'Password updated successfully' });
 });
 
+/*
+   # Desc: Retrieve user-related context, including user details, cron jobs, and integration info
+   # Route: GET /api/v1/user/user-context
+   # Access: PRIVATE
+ */
+   const fetchUserContext = asyncHandler(async (req, res) => {
+    const user = await User.findOne({ userId: req.user?.userId }).select('-_id -password -resetPasswordToken -resetPasswordExpires -__v');
+  
+    const cronService = new CronService(req.user?.userId);
+    const crons = await cronService.fetchAllCrons();
+  
+    const integration = await Integration.findOne({userId: req.user?.userId}).select('-_id -fnAccessToken -fnRefreshToken -__v');
+  
+    const userContext = {
+      user,
+      integration,
+      crons,
+    };
+  
+    res.status(200).json(userContext);
+  });  
+
 
 
 export {
@@ -219,4 +243,5 @@ export {
   updateUserProfile,
   forgotPassword,
   resetPassword,
+  fetchUserContext,
 };

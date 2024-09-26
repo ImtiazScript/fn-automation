@@ -6,6 +6,7 @@ import authReducer from './slices/authSlice.js';
 import { apiSlice } from "./slices/apiSlice.js";
 import integrationReducer from './slices/integrationSlice.js';
 import cronsReducer from './slices/cronsSlice.js';
+import userContextReducer from './slices/userContextSlice.js';
 
 // Persist configuration
 const persistConfig = {
@@ -21,6 +22,7 @@ const rootReducer = combineReducers({
     [apiSlice.reducerPath]: apiSlice.reducer,
     integration: integrationReducer,
     crons: cronsReducer,
+    userContext: userContextReducer,
 });
 
 // Create a persisted reducer

@@ -9,12 +9,10 @@ import { toast } from 'react-toastify';
 import Loader from '../../components/Loader';
 import {
   useIntegrationInfoByUserIdMutation,
+  useUserContextMutation,
 } from '../../slices/userApiSlice';
 import { setIntegrationInfo } from '../../slices/integrationSlice';
-import {
-  useGetCronsDataMutation,
-} from '../../slices/commonApiSlice';
-import { setCrons } from '../../slices/cronsSlice';
+import { setuserContext } from '../../slices/userContextSlice';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -32,11 +30,8 @@ const LoginScreen = () => {
     }
   }, [navigate, userInfo]);
 
-  const [
-    getIntegrationInfoByUserId,
-    { data: integrateUserInfo, isLoading: isLoadingIntegrationInfo },
-  ] = useIntegrationInfoByUserIdMutation();
-  const [cronsDataFromAPI, { isCronsLoading }] = useGetCronsDataMutation();
+  const [getIntegrationInfoByUserId] = useIntegrationInfoByUserIdMutation();
+  const [getUserContext] = useUserContextMutation();
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -44,17 +39,13 @@ const LoginScreen = () => {
       const loginResponse = await login({ email, password }).unwrap();
       dispatch(setCredentials({ ...loginResponse }));
 
-      if (loginResponse?.userId && loginResponse?.isActive) {
+      if (loginResponse?.userId) {
         try {
-        const integrationResponse = await getIntegrationInfoByUserId(loginResponse.userId).unwrap();
-        dispatch(setIntegrationInfo(integrationResponse));
+          const userContext = await getUserContext().unwrap();
+          dispatch(setuserContext(userContext));
 
-        // if integrated with fn and not an admin, pull users crons
-        if (!loginResponse.isAdmin && integrationResponse) {
-          const cronsResponse = await cronsDataFromAPI({ currentPage: 1 });
-          const cronsData = cronsResponse.data.cronsData;
-          dispatch(setCrons(cronsData));
-        }
+          const integrationResponse = await getIntegrationInfoByUserId(loginResponse.userId).unwrap();
+          dispatch(setIntegrationInfo(integrationResponse));
         } catch (err) {
           // console.error('Integration error:', err);
         }
