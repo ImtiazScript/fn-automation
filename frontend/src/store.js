@@ -12,7 +12,7 @@ import userContextReducer from './slices/userContextSlice.js';
 const persistConfig = {
     key: 'root',
     storage,
-    whitelist: ['auth', 'integration', 'crons'], // Only persist these slices
+    whitelist: ['auth', 'integration', 'userContext'], // Only persist these slices
     // blacklist: ['someNonPersistentSlice'], // or blacklist slices you don't want to persist
 };
 
