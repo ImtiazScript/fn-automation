@@ -7,6 +7,12 @@ import { setCredentials } from '../../slices/authSlice';
 import FormContainer from '../../components/FormContainer';
 import { toast } from 'react-toastify';
 import Loader from '../../components/Loader';
+import {
+  useIntegrationInfoByUserIdMutation,
+  useUserContextMutation,
+} from '../../slices/userApiSlice';
+import { setIntegrationInfo } from '../../slices/integrationSlice';
+import { setuserContext } from '../../slices/userContextSlice';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -24,11 +30,26 @@ const LoginScreen = () => {
     }
   }, [navigate, userInfo]);
 
+  const [getIntegrationInfoByUserId] = useIntegrationInfoByUserIdMutation();
+  const [getUserContext] = useUserContextMutation();
+
   const submitHandler = async (e) => {
     e.preventDefault();
     try {
-      const responseFromApiCall = await login({ email, password }).unwrap();
-      dispatch(setCredentials({ ...responseFromApiCall }));
+      const loginResponse = await login({ email, password }).unwrap();
+      dispatch(setCredentials({ ...loginResponse }));
+
+      if (loginResponse?.userId) {
+        try {
+          const userContext = await getUserContext().unwrap();
+          dispatch(setuserContext(userContext));
+
+          const integrationResponse = await getIntegrationInfoByUserId(loginResponse.userId).unwrap();
+          dispatch(setIntegrationInfo(integrationResponse));
+        } catch (err) {
+          // console.error('Integration error:', err);
+        }
+      }
       navigate('/');
     } catch (err) {
       toast.error(err?.data?.message || err?.error);

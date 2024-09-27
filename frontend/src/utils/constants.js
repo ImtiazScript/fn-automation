@@ -3,6 +3,7 @@ export const USER_AUTHENTICATION_URL = '/api/v1/user/auth'
 export const USER_LOGOUT_URL = '/api/v1/user/logout'
 export const USER_REGISTRATION_URL = '/api/v1/user'
 export const USER_PROFILE_URL = '/api/v1/user/profile'
+export const USER_CONTEXT_URL = '/api/v1/user/user-context'
 export const INTEGRATE_USER_URL= '/api/v1/integration/connect-account';
 export const FORGOT_PASSWORD_URL = '/api/v1/user/forgot-password';
 export const RESET_PASSWORD_URL = '/api/v1/user/reset-password';

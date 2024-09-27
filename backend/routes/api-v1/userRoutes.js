@@ -11,6 +11,7 @@ import {
   updateUserProfile,
   forgotPassword,
   resetPassword,
+  fetchUserContext,
 } from "../../controllers/userController.js";
 import { userSignUpDataValidation, userSignInDataValidation } from "./backendDataValidationConfig.js";
 import { multerUploadUserProfile } from "../../config/multerConfig.js";
@@ -24,6 +25,9 @@ router.post("/logout", logoutUser);
 //* ==================== Reset password Routes ====================
 router.post("/forgot-password", validateRequest, forgotPassword);
 router.post("/reset-password", validateRequest, resetPassword);
+
+//* ==================== Onboarding ====================
+router.get("/user-context", validateRequest, verifyUser, fetchUserContext);
 
 //* ==================== User Profile Routes ====================
 router

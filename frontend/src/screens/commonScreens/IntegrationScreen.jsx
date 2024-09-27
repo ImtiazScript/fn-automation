@@ -1,75 +1,42 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Form, Button, Badge, Alert } from 'react-bootstrap';
 import FormContainer from '../../components/FormContainer';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   useIntegrateUserMutation,
-  useIntegrationInfoByUserIdMutation,
 } from '../../slices/userApiSlice';
 import { toast } from 'react-toastify';
 import Loader from '../../components/Loader';
 import { Breadcrumb } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { setIntegrationInfo } from '../../slices/integrationSlice';
 
 const IntegrationScreen = () => {
-  const [userId, setUserId] = useState(0);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [userName, setUserName] = useState('');
+  const dispatch = useDispatch();
+  const { userInfo } = useSelector((state) => state.auth);
+  const integrationInfo = useSelector((state) => state.integration.integrationInfo);
+  const [userName, setUserName] = useState(integrationInfo?.fnUserName);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [integrationStatus, setIntegrationStatus] = useState('');
-  const [lastTimeRefreshTokenGeneratedAt, setLastTimeRefreshTokenGeneratedAt] =
-    useState('');
-
-  const [
-    getIntegrationInfoByUserId,
-    { data: integrateUserInfo, isLoading: isLoadingIntegrationInfo },
-  ] = useIntegrationInfoByUserIdMutation();
 
   const [integrateUser, { isLoading }] = useIntegrateUserMutation();
-  const { userInfo } = useSelector((state) => state.auth);
-
-  useEffect(() => {
-    if (userInfo.userId) {
-      setUserId(userInfo.userId);
-      setIsAdmin(userInfo.isAdmin);
-      getIntegrationInfoByUserId(userInfo.userId);
-    }
-  }, [userInfo, getIntegrationInfoByUserId]);
-
-  useEffect(() => {
-    if (integrateUserInfo) {
-      setUserName(integrateUserInfo.fnUserName || '');
-      setIntegrationStatus(integrateUserInfo.integrationStatus || '');
-      setLastTimeRefreshTokenGeneratedAt(
-        integrateUserInfo.lastTimeRefreshTokenGeneratedAt || '',
-      );
-    }
-  }, [integrateUserInfo]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
-
     if (!userName || !password) {
       toast.error('Please fill in both username and password!');
       return;
     }
-
     try {
       const data = {
-        userId: userId,
+        userId: userInfo?.userId,
         username: userName,
         password: password,
       };
-
       const result = await integrateUser(data).unwrap();
-      setIntegrationStatus(result.integrationStatus || '');
-      setLastTimeRefreshTokenGeneratedAt(
-        result.lastTimeRefreshTokenGeneratedAt || '',
-      );
+      dispatch(setIntegrationInfo(result));
       toast.success('Account connected successfully');
     } catch (err) {
-      setIntegrationStatus('Not Connected');
       toast.error(
         'Unable to connect. Please ensure your Field Nation username and password are both entered correctly.',
       );
@@ -90,13 +57,13 @@ const IntegrationScreen = () => {
         </h3>
         <Badge
           pill
-          bg={integrationStatus === 'Connected' ? 'success' : 'danger'}
+          bg={integrationInfo?.integrationStatus === 'Connected' ? 'success' : 'danger'}
           style={{ margin: '5px auto 10px auto' }}
         >
-          {lastTimeRefreshTokenGeneratedAt && integrationStatus === 'Connected'
-            ? integrationStatus + ': ' + lastTimeRefreshTokenGeneratedAt
-            : integrationStatus
-            ? integrationStatus
+          {integrationInfo?.lastTimeRefreshTokenGeneratedAt && integrationInfo?.integrationStatus === 'Connected'
+            ? integrationInfo?.integrationStatus + ': ' + integrationInfo?.lastTimeRefreshTokenGeneratedAt
+            : integrationInfo?.integrationStatus
+            ? integrationInfo?.integrationStatus
             : 'Not connected yet'}
         </Badge>
 
@@ -136,11 +103,11 @@ const IntegrationScreen = () => {
           </div>
         </Form>
 
-        {(isLoading || isLoadingIntegrationInfo) && <Loader />}
+        {(isLoading) && <Loader />}
         {/* Info Box */}
         <div style={{ marginTop: '20px' }}>
           <Alert variant="info">
-            {isAdmin
+            {userInfo?.isAdmin
               ? 'As a service company admin, you must connect once every 14 days to maintain your connection.'
               : 'As a service company managed provider, you should connect your account with Field Nation at least once.'}
           </Alert>
