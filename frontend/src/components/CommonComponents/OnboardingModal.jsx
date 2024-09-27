@@ -40,68 +40,84 @@ const OnboardingModal = () => {
   useEffect(() => {
     const allCompleted = steps.every((step) => step.completed);
     setAllStepsCompleted(allCompleted);
-  }, [steps]);
+  }, [steps, userContext]);
 
-  // Handle "Remind me later" functionality
+  useEffect(() => {
+    const remindTime = localStorage.getItem(`remindMeLater:${userInfo?.userId}`);
+    if (remindTime) {
+      const timeDiff = Date.now() - remindTime;
+      if (timeDiff < 24 * 60 * 60 * 1000) {
+        setRemindMeLater(true);
+        setShow(false);
+        return;
+      }
+    }
+
+    const onboardingComplete = localStorage.getItem(`onboardingComplete:${userInfo?.userId}`);
+    if (!userInfo || userInfo?.isAdmin || remindMeLater || onboardingComplete) {
+      setShow(false);
+      return;
+    } else {
+      setShow(true);
+      return;
+    }
+  }, [allStepsCompleted, userInfo, remindMeLater]);
+
   const handleRemindMeLater = () => {
-    localStorage.setItem('remindMeLater', Date.now());
+    localStorage.setItem(`remindMeLater:${userInfo?.userId}`, Date.now());
     setRemindMeLater(true);
     setShow(false);
   };
 
-  // Check if we should show the modal based on "Remind me later" logic
-  useEffect(() => {
-    const remindTime = localStorage.getItem('remindMeLater');
-    if (remindTime) {
-      const timeDiff = Date.now() - remindTime;
-      if (timeDiff < 24 * 60 * 60 * 1000) {
-        // 24 hours in milliseconds
-        setRemindMeLater(true);
-      }
+  const handleCloseModal = () => {
+    if (allStepsCompleted) {
+      localStorage.setItem(`onboardingComplete:${userInfo?.userId}`, 'true');
     }
-  }, []);
-
-  // Show modal if not all steps completed and no "remind me later"
-  useEffect(() => {
-    if (!userInfo || userInfo.isAdmin || remindMeLater) {
-      setShow(false);
-    } else if (!remindMeLater && !allStepsCompleted) {
-      setShow(true);
-    }
-  }, [remindMeLater, allStepsCompleted]);
+    setShow(false);
+  };
 
   // Render completed steps with checkmarks and incomplete with links
   const renderSteps = () => {
     return steps.map((step, index) => (
-        <div key={index}>
-          <a 
-            href={step.link || '#'} 
-            className={`d-flex align-items-center mb-2 ${step.completed ? 'text-success' : ''}`}
-            style={{ textDecoration: 'none' }}
+      <div key={index}>
+        <a
+          href={step.link || '#'}
+          className={`d-flex align-items-center mb-2 ${
+            step.completed ? 'text-success' : ''
+          }`}
+          style={{ textDecoration: 'none' }}
+        >
+          <input
+            type="checkbox"
+            checked={step.completed}
+            readOnly
+            className="me-2"
+          />
+          <span>{step.label}</span>
+        </a>
+
+        {/* Conditionally render the message under 'Activated by Admin' */}
+        {step.label === 'Activated by admin' && !step.completed && (
+          <div
+            style={{
+              fontSize: '12px',
+              color: '#666',
+              marginTop: '-7px',
+              marginBottom: '5px',
+            }}
           >
-            <input 
-              type="checkbox" 
-              checked={step.completed} 
-              readOnly 
-              className="me-2"
-            />
             <span>
-              {step.label}
+              Wait for 24 hours, we already notified the admin about your login.
+              They will get back to you within 24 hours.
             </span>
-          </a>
-      
-          {/* Conditionally render the message under 'Activated by Admin' */}
-          {step.label === 'Activated by admin' && !step.completed && (
-            <div style={{ fontSize: '12px', color: '#666', marginTop: '-7px', marginBottom: '5px' }}>
-              <span>Wait for 24 hours, we already notified the admin about your login. They will get back to you within 24 hours.</span>
-            </div>
-          )}
-        </div>
-      ));
+          </div>
+        )}
+      </div>
+    ));
   };
 
   return (
-    <Modal show={show} onHide={() => setShow(false)}>
+    <Modal show={show} onHide={handleCloseModal}>
       <Modal.Header closeButton>
         <Modal.Title>Welcome Onboard!</Modal.Title>
       </Modal.Header>
@@ -125,7 +141,7 @@ const OnboardingModal = () => {
             Remind Me Later
           </Button>
         )}
-        <Button variant="secondary" onClick={() => setShow(false)}>
+        <Button variant="secondary" onClick={handleCloseModal}>
           Close
         </Button>
       </Modal.Footer>
