@@ -20,7 +20,7 @@ import UserService from '../services/userService.js';
 
 
 /*
-   # Desc: Auth user/set token
+   # Desc: admin authentication
    # Route: POST /api/v1/admin/auth
    # Access: PUBLIC
   */
