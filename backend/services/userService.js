@@ -31,7 +31,7 @@ class UserService {
    *
    * @async
    * @function fetchAllAdminUsers
-   * @returns {Promise<Array<Object>>} A promise that resolves to an array of admin user objects without the password field.
+   * @returns {Promise<Boolean>} A promise that resolves to an array of admin user objects without the password field.
    * @throws {Error} If there is an error while fetching admin users.
    *
    * @example
@@ -44,6 +44,23 @@ class UserService {
       return admins;
     } catch (error) {
       throw new Error('Error fetching users');
+    }
+  }
+
+    /**
+   * Checking whether if an active admin is already available in the database.
+   *
+   * @async
+   * @function isActiveAdminExist
+   * @returns {Promise<Array<Object>>} A promise
+   * @throws {Error} If there is an error while checking active admin users.
+   */
+  async isActiveAdminExist() {
+    try {
+      const admins = await User.find({ isAdmin: true, isActive: true });
+      return admins.length > 0;
+    } catch (error) {
+      throw new Error('Error checking active admin user');
     }
   }
 

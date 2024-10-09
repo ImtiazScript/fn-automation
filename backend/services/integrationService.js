@@ -47,7 +47,7 @@ class IntegrationService {
       return false;
     }
 
-    const url = process.env.FN_REFRESH_AUTHENTICATION_URL;
+    const url = `${process.env.FN_BASE_URL}/authentication/api/oauth/refresh`;
     const data = new URLSearchParams({
       grant_type: 'refresh_token',
       client_id: process.env.FN_AUTHENTICATE_CLIENT_ID,

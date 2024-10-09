@@ -14,8 +14,9 @@ import {
   activateUserHelper,
   fetchAllActiveProviders,
 } from "../utils/adminHelpers.js";
-import { sendUserActivatedEmail, sendUserBlockedEmail, sendUserUnblockedEmail } from '../utils/emailHelpers/SendMail.js';
+import { sendUserActivatedEmail, sendUserBlockedEmail, sendUserUnblockedEmail, sendUserSignedUpEmail } from '../utils/emailHelpers/SendMail.js';
 import { BadRequestError, UnauthorizedError, NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
+import UserService from '../services/userService.js';
 
 
 /*
@@ -79,12 +80,17 @@ const registerAdmin = asyncHandler(async (req, res) => {
   if (userExists) {
     throw new BadRequestError("Admin already exists.");
   }
+
+  const userService = new UserService();
+  const adminExist = await userService.isActiveAdminExist();
+
   // Store the user data to DB if the user dosen't exist already.
   const user = await User.create({
     name: name,
     email: email,
     password: password,
     isAdmin: true,
+    isActive: adminExist ? false : true,
   });
   if (user) {
     // If user is created, send response back with jwt token
@@ -96,8 +102,10 @@ const registerAdmin = asyncHandler(async (req, res) => {
       isActive: user.isActive,
     };
 
-    // Send mail to admin
-    await sendUserSignedUpEmail(user.userId, user.name, user.email, user.isAdmin);
+    if (!user.isActive) {
+      // Send mail to admin, if admin account is not activated
+      await sendUserSignedUpEmail(user.userId, user.name, user.email, user.isAdmin);
+    }
 
     res.status(201).json(registeredUserData);
   } else {

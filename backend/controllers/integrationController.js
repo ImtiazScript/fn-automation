@@ -16,7 +16,7 @@ import { NotFoundError, InternalServerError } from '@emtiaj/custom-errors';
 const connectAccount = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
     const integrationService = new IntegrationService(req.user.userId);
-    const url = process.env.FN_AUTHENTICATE_URL;
+    const url = `${process.env.FN_BASE_URL}/authentication/api/oauth/token`;
     const data = new URLSearchParams({
         username,
         password,
@@ -111,7 +111,7 @@ const refreshConnection = asyncHandler(async (req, res) => {
     if (!integrationInfo.fnRefreshToken) {
         throw new NotFoundError("Failed to retrieve existing refresh token.");
     }
-    const url = process.env.FN_REFRESH_AUTHENTICATION_URL;
+    const url = `${process.env.FN_BASE_URL}/authentication/api/oauth/refresh`;
     const data = new URLSearchParams({
         grant_type: 'refresh_token',
         client_id: process.env.FN_AUTHENTICATE_CLIENT_ID,

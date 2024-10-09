@@ -46,16 +46,52 @@ You can also access the API documentation in JSON format:
 - MongoDB
 
 ## Environment Variables
+Create a .env file in the project root with following environment variables
 
 ```bash
-APPLICATION_NAME = fn-automation  
-PORT = 5000  
-NODE_ENV = development  
-(Use development for dev environment and production for prod environment)  
-JWT_KEY = your_jwt_key_here  
-JWT_TOKEN_DURATION = 30d  
-MONGO_DB_URI = your_mongodburi_here  
-ADMIN_REGISTRATION_KEY = your_adminSecret  
+APPLICATION_NAME = fn-automation
+PORT = 5000
+
+# Use development for dev environment and production for prod environment
+NODE_ENV = development
+# NODE_ENV = production
+
+# your JWT Secrets
+JWT_KEY = jwt_secret
+JWT_TOKEN_DURATION = 30d
+
+# your mongodb uri
+MONGO_DB_URI = mongodb://localhost:27017/fn_automation
+
+ADMIN_REGISTRATION_KEY = your_secret
+
+# your targeted fn server
+FN_BASE_URL = https://mono-sandbox.fndev.net
+
+# your fn api access
+FN_AUTHENTICATE_CLIENT_ID = your_client_id
+FN_AUTHENTICATE_CLIENT_SECRET = your_client_pass
+
+WORKORDERS_PER_PAGE = 100
+
+DISABLED_CRONS = true
+DISABLED_AUTHENTICATION_CRONS = true
+
+LOG_RETENTION_DAYS = 7
+
+# Mail sending credentials
+# Email you would like to use to send emails to users
+EMAIL_USER = emtiaj2011@gmail.com
+EMAIL_PASS = your_email_app_password
+
+COMPANY_NAME = Fn-Automation
+
+# your support email
+SUPPORT_MAIL = support@fn-automation.com
+LOGIN_URL = http://localhost:3000
+
+# Email where you would like to get the system notifications
+ADMIN_EMAIL = admin_email
 ```
 
 ## Getting Started
